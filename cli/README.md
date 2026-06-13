@@ -5,6 +5,7 @@ Read-only CLI for your own Kickbacks.ai earnings. Not affiliated with Kickbacks.
 ```bash
 bun run src/cli.ts login        # Google sign-in (own session)
 bun run src/cli.ts              # portfolio (default)
+bun run src/cli.ts watch        # live dashboard — auto-refresh · r refresh · q quit
 bun run src/cli.ts earnings
 bun run src/cli.ts raw          # dump raw portfolio + earnings JSON (debug API drift)
 bun run src/cli.ts status
@@ -20,6 +21,7 @@ Never sends billing events — only reads `/v1/portfolio` and `/v1/earnings`. Th
 | `KICKBACK_BASE` | the backend Cloud Run URL | override the API base |
 | `KICKBACK_CC_VERSION` | `2.1.177` | `claude_code_version` sent with portfolio reads |
 | `KICKBACK_CONFIG_DIR` | `~/.config/kickback` | where `auth.json` + `history.db` live |
+| `KICKBACK_WATCH_SECONDS` | `30` | `watch` refresh interval (min 5) |
 
 Tokens are stored at `$KICKBACK_CONFIG_DIR/auth.json` (chmod 600, in a 700 dir). Local history accumulates in `history.db`.
 

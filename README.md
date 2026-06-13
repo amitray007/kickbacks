@@ -4,12 +4,13 @@ A reliable, open-source companion for [Kickbacks.ai](https://kickbacks.ai) — a
 
 > **Not affiliated** with Kickbacks.ai or ShiftKeys, Inc. It reads only your own account data (`/v1/portfolio`, `/v1/earnings`) and **never** sends billing/impression events.
 
-## Status — design & planning
+## Status — Plans 1–2 shipped
 
-This repo currently holds the design and the first build plan. Implementation is queued.
+The TypeScript core + CLI (**Plan 1**) and the live OpenTUI `watch` dashboard (**Plan 2**) are built and tested in [`cli/`](cli/). Next: the launchd poller + stall watchdog (Plan 3), the Swift menu-bar app (Plan 4), and Homebrew packaging (Plan 5).
 
-- **[docs/design.md](docs/design.md)** — full design: vision, the (reverse-engineered) read-only API surface, architecture, open-source / launch / earning strategy, risks, and the UI/UX for both surfaces.
-- **[docs/plans/2026-06-13-kickback-core-cli.md](docs/plans/2026-06-13-kickback-core-cli.md)** — TDD plan for **Plan 1** (the core + CLI data layer both UIs read from).
+- **[docs/design.md](docs/design.md)** — full design: vision, the (reverse-engineered) read-only API surface, architecture, strategy, risks, and the UI/UX for both surfaces.
+- **[docs/plans/2026-06-13-kickback-core-cli.md](docs/plans/2026-06-13-kickback-core-cli.md)** — Plan 1 (core + CLI).
+- **[docs/plans/2026-06-13-kickback-opentui-watch.md](docs/plans/2026-06-13-kickback-opentui-watch.md)** — Plan 2 (OpenTUI `watch`).
 
 ## What it will be
 
@@ -40,8 +41,8 @@ Two tools, two languages — bridged by a shared local SQLite store, not shared 
 
 | Plan | Scope |
 |---|---|
-| 1 | Core + CLI MVP — auth, API client, SQLite history, text commands |
-| 2 | OpenTUI dashboard |
+| 1 ✅ | Core + CLI MVP — auth, API client, SQLite history, text commands |
+| 2 ✅ | OpenTUI `watch` dashboard |
 | 3 | Poller + stall watchdog (launchd) |
 | 4 | Native Swift menu-bar app |
 | 5 | Homebrew tap (formula + cask) |
