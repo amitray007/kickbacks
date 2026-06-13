@@ -5,6 +5,8 @@ import { fetchPortfolio, fetchEarnings, fetchRaw } from "./api";
 import { openStore, type Store } from "./store";
 import { ratePerHour } from "./derive";
 import { renderDashboard, renderEarnings, renderStatus, palette, useColor } from "./ui";
+import { runWatch } from "./watch";
+import { loadModel } from "./tui";
 import { spawn } from "node:child_process";
 import type { Portfolio } from "./types";
 
@@ -77,6 +79,27 @@ async function cmdEarnings() {
   console.log(renderEarnings(p, e, rateLast6h(), useColor()));
 }
 
+// Live framed dashboard. Non-TTY (piped) → one static render so it stays scriptable.
+// Interval via KICKBACK_WATCH_SECONDS (default 30, min 5).
+async function cmdWatch() {
+  if (!process.stdout.isTTY) { await cmdPortfolio(); return; }
+  const seconds = Math.max(5, Number(process.env.KICKBACK_WATCH_SECONDS) || 30);
+  const store = openStore(DB_FILE);
+  try {
+    await runWatch({
+      now: () => Date.now(),
+      intervalMs: seconds * 1000,
+      load: (now) => loadModel({
+        fetchPortfolio: () => runAuthed((tk) => fetchPortfolio(deps(tk))),
+        fetchEarnings: () => runAuthed((tk) => fetchEarnings(deps(tk))),
+        store, now,
+      }),
+    });
+  } finally {
+    store.close();
+  }
+}
+
 async function cmdRaw() {
   const portfolio = await authed((tk) => fetchRaw(deps(tk), `/v1/portfolio?claude_code_version=${encodeURIComponent(CC_VERSION)}`));
   const earnings = await authed((tk) => fetchRaw(deps(tk), "/v1/earnings"));
@@ -98,11 +121,11 @@ async function cmdLogout() {
 
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
 const table: Record<string, () => unknown> = {
-  login: cmdLogin, portfolio: cmdPortfolio, earnings: cmdEarnings,
+  login: cmdLogin, portfolio: cmdPortfolio, watch: cmdWatch, earnings: cmdEarnings,
   raw: cmdRaw, status: cmdStatus, logout: cmdLogout,
 };
 const fn = table[cmd];
-if (!fn) { console.error("commands: login | portfolio | earnings | raw | status | logout"); process.exit(2); }
+if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout"); process.exit(2); }
 try {
   await fn();
 } catch (e) {
