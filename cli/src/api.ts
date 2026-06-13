@@ -63,7 +63,7 @@ export async function fetchEarnings(d: ApiDeps): Promise<Earnings> {
   return parseEarnings(await r.json());
 }
 
-// Unparsed passthrough for `kicker raw` — surfaces server fields verbatim so an
+// Unparsed passthrough for `kickback raw` — surfaces server fields verbatim so an
 // API-shape drift is visible instead of silently normalized away. `path` must be a
 // static, trusted literal (never user/env input): it is concatenated onto the base
 // URL and the bearer token is attached.

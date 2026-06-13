@@ -1,4 +1,4 @@
-# Kicker
+# Kickback
 
 A reliable, open-source companion for [Kickbacks.ai](https://kickbacks.ai) — a **read-only** CLI + native macOS menu-bar app that shows your *own* earnings outside VS Code, keeps the local history the API doesn't, and warns you when the ad injection silently stops earning.
 
@@ -9,11 +9,11 @@ A reliable, open-source companion for [Kickbacks.ai](https://kickbacks.ai) — a
 This repo currently holds the design and the first build plan. Implementation is queued.
 
 - **[docs/design.md](docs/design.md)** — full design: vision, the (reverse-engineered) read-only API surface, architecture, open-source / launch / earning strategy, risks, and the UI/UX for both surfaces.
-- **[docs/plans/2026-06-13-kicker-core-cli.md](docs/plans/2026-06-13-kicker-core-cli.md)** — TDD plan for **Plan 1** (the core + CLI data layer both UIs read from).
+- **[docs/plans/2026-06-13-kickback-core-cli.md](docs/plans/2026-06-13-kickback-core-cli.md)** — TDD plan for **Plan 1** (the core + CLI data layer both UIs read from).
 
 ## What it will be
 
-- **CLI** (`kicker`) — TypeScript + OpenTUI framed dashboard; `kicker watch` for a live view.
+- **CLI** (`kickback`) — TypeScript + OpenTUI framed dashboard; `kickback watch` for a live view.
 - **Menu bar** — native Swift `MenuBarExtra`; today's earnings + trend always visible, dropdown with cap / rate / served ad, stall notifications.
 - **Core** (TypeScript) — API client, Google-OAuth (its own session), SQLite history, poller + stall watchdog.
 - **Distribution** — Homebrew tap (formula + cask).
@@ -29,7 +29,7 @@ This repo currently holds the design and the first build plan. Implementation is
 ```
 kickbacks/    ← this repo (umbrella)
   docs/       ← design + plans
-  cli/        ← the `kicker` CLI (TypeScript/Bun) — also hosts the shared core + poller
+  cli/        ← the `kickback` CLI (TypeScript/Bun) — also hosts the shared core + poller
   app/        ← the menu-bar app (Swift)              · Plan 4
   packaging/  ← Homebrew tap (formula + cask)          · Plan 5
 ```

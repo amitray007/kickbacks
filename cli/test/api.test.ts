@@ -1,4 +1,4 @@
-// kicker/test/api.test.ts
+// kickback/test/api.test.ts
 import { test, expect } from "bun:test";
 import { parsePortfolio, parseEarnings, fetchPortfolio, fetchRaw } from "../src/api";
 

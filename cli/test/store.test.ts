@@ -1,4 +1,4 @@
-// kicker/test/store.test.ts
+// kickback/test/store.test.ts
 import { test, expect } from "bun:test";
 import { openStore } from "../src/store";
 

@@ -17,7 +17,7 @@ function openBrowser(url: string): boolean {
 
 async function withToken(): Promise<Tokens> {
   const t = loadTokens();
-  if (!t) { console.error("Not signed in. Run: kicker login"); process.exit(1); }
+  if (!t) { console.error("Not signed in. Run: kickback login"); process.exit(1); }
   return t;
 }
 
@@ -30,7 +30,7 @@ async function authed<T>(call: (token: string) => Promise<T>): Promise<T> {
   catch (e) {
     if (!(e instanceof HttpError) || e.status !== 401 || !t.refresh_token) throw e;
     const nt = await refresh({ fetch, base: BASE }, t.refresh_token);
-    if (!nt) { console.error("Session expired. Run: kicker login"); process.exit(1); }
+    if (!nt) { console.error("Session expired. Run: kickback login"); process.exit(1); }
     saveTokens({ ...t, ...nt });
     return call(nt.access_token);
   }
@@ -61,9 +61,9 @@ async function cmdLogin() {
     await new Promise((r) => setTimeout(r, 1500));
     process.stdout.write(c.dim("."));
     const t = await pollOnce({ fetch, base: BASE }, state).catch(() => null);
-    if (t) { saveTokens(t); console.log(c.green("\n\n  ✓ Signed in.") + c.dim("  Run 'kicker' to see your earnings.\n")); return; }
+    if (t) { saveTokens(t); console.log(c.green("\n\n  ✓ Signed in.") + c.dim("  Run 'kickback' to see your earnings.\n")); return; }
   }
-  console.error(c.yellow("\n\n  Timed out. Run 'kicker login' to try again.\n")); process.exit(1);
+  console.error(c.yellow("\n\n  Timed out. Run 'kickback login' to try again.\n")); process.exit(1);
 }
 
 async function cmdPortfolio() {

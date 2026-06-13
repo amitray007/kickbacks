@@ -1,15 +1,15 @@
 {
-  "name": "kicker",
+  "name": "kickback",
   "version": "0.0.1",
   "type": "module",
   "private": true,
   "bin": {
-    "kicker": "./src/cli.ts"
+    "kickback": "./src/cli.ts"
   },
   "scripts": {
     "test": "bun test",
     "start": "bun run ./src/cli.ts",
-    "build": "bun build ./src/cli.ts --compile --outfile dist/kicker"
+    "build": "bun build ./src/cli.ts --compile --outfile dist/kickback"
   },
   "engines": {
     "bun": ">=1.1.0"
