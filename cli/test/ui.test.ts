@@ -1,6 +1,6 @@
 // kickback/test/ui.test.ts
 import { test, expect } from "bun:test";
-import { palette, bar, badge, renderDashboard, renderEarnings, renderStatus } from "../src/ui";
+import { palette, bar, badge, renderDashboard, renderEarnings, renderStatus, sparkline } from "../src/ui";
 import type { Portfolio, Earnings } from "../src/types";
 
 const P: Portfolio = {
@@ -70,4 +70,11 @@ test("renderDashboard with null earnings omits the cap section", () => {
   const out = renderDashboard(P, null, 0, false);
   expect(out).not.toContain("Daily cap");
   expect(out).toContain("$0.56"); // balances still render
+});
+
+test("sparkline maps values across the block ramp", () => {
+  expect(sparkline([0, 1, 2, 3, 4, 5, 6, 7])).toBe("▁▂▃▄▅▆▇█");
+  expect(sparkline([5, 5, 5])).toBe("▅▅▅");      // flat → mid band, never empty
+  expect(sparkline([])).toBe("");
+  expect(sparkline([1])).toBe("█");               // single point → max
 });

@@ -101,3 +101,15 @@ export function renderStatus(o: { signedIn: boolean; base: string; configDir: st
     "",
   ].join("\n");
 }
+
+const SPARKS = "▁▂▃▄▅▆▇█";
+/** Map numbers to an 8-level block sparkline. A flat series sits mid-band; empty → "". */
+export function sparkline(values: number[]): string {
+  if (values.length === 0) return "";
+  if (values.length === 1) return SPARKS[SPARKS.length - 1]!;
+  const min = Math.min(...values), max = Math.max(...values);
+  const span = max - min;
+  return values
+    .map((v) => SPARKS[span === 0 ? Math.floor(SPARKS.length / 2) : Math.round(((v - min) / span) * (SPARKS.length - 1))]!)
+    .join("");
+}
