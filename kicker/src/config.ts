@@ -6,6 +6,7 @@ export const BASE =
     .replace(/\/+$/, "");
 export const CC_VERSION = process.env.KICKER_CC_VERSION || "2.1.177";
 
-export const CONFIG_DIR = join(homedir(), ".config", "kicker");
+export const CONFIG_DIR =
+  process.env.KICKER_CONFIG_DIR || join(homedir(), ".config", "kicker");
 export const AUTH_FILE = join(CONFIG_DIR, "auth.json");
 export const DB_FILE = join(CONFIG_DIR, "history.db");
