@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR } from "./config";
+import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS } from "./config";
 import { startLogin, pollOnce, signout, loadTokens, saveTokens, clearTokens, makeAuthedRunner, AuthError } from "./auth";
 import { fetchPortfolio, fetchEarnings, fetchRaw } from "./api";
 import { openStore, type Store } from "./store";
@@ -7,6 +7,9 @@ import { ratePerHour } from "./derive";
 import { renderDashboard, renderEarnings, renderStatus, palette, useColor } from "./ui";
 import { runWatch } from "./watch";
 import { loadModel } from "./tui";
+import { runPoll } from "./poll";
+import { isActive } from "./activity";
+import { notify } from "./notify";
 import { spawn } from "node:child_process";
 import type { Portfolio } from "./types";
 
@@ -79,6 +82,24 @@ async function cmdEarnings() {
   console.log(renderEarnings(p, e, rateLast6h(), useColor()));
 }
 
+// One poll cycle for the launchd agent (also runnable by hand): sample + stall/cap alerts.
+async function cmdPoll() {
+  if (!loadTokens()) { console.error("Not signed in. Run: kickback login"); process.exit(1); }
+  const store = openStore(DB_FILE);
+  const now = Date.now();
+  try {
+    await runPoll({
+      fetchPortfolio: () => runAuthed((tk) => fetchPortfolio(deps(tk))),
+      fetchEarnings: () => runAuthed((tk) => fetchEarnings(deps(tk))),
+      store,
+      isActive: () => isActive(ACTIVITY_DIRS, now, ACTIVITY_WINDOW_MS),
+      notify,
+      now,
+      stallWindowMs: STALL_WINDOW_MS,
+    });
+  } finally { store.close(); }
+}
+
 // Live framed dashboard. Non-TTY (piped) → one static render so it stays scriptable.
 // Interval via KICKBACK_WATCH_SECONDS (default 30, min 5).
 async function cmdWatch() {
@@ -123,10 +144,10 @@ async function cmdLogout() {
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
 const table: Record<string, () => unknown> = {
   login: cmdLogin, portfolio: cmdPortfolio, watch: cmdWatch, earnings: cmdEarnings,
-  raw: cmdRaw, status: cmdStatus, logout: cmdLogout,
+  raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll,
 };
 const fn = table[cmd];
-if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout"); process.exit(2); }
+if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout | poll"); process.exit(2); }
 try {
   await fn();
 } catch (e) {

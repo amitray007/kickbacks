@@ -10,3 +10,11 @@ export const CONFIG_DIR =
   process.env.KICKBACK_CONFIG_DIR || join(homedir(), ".config", "kickback");
 export const AUTH_FILE = join(CONFIG_DIR, "auth.json");
 export const DB_FILE = join(CONFIG_DIR, "history.db");
+
+// --- Plan 3 poller / watchdog ---
+export const POLL_SECONDS = Math.max(30, Number(process.env.KICKBACK_POLL_SECONDS) || 180);
+export const ACTIVITY_DIRS = (process.env.KICKBACK_ACTIVITY_DIRS || join(homedir(), ".claude", "projects"))
+  .split(":").filter(Boolean);
+export const ACTIVITY_WINDOW_MS = 5 * 60_000;  // "active" = a transcript touched in the last 5 min
+export const STALL_WINDOW_MS = 10 * 60_000;    // flat earnings over 10 min while active = stall
+export const LAUNCHD_LABEL = "ai.kickback.poller";
