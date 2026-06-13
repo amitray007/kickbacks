@@ -24,6 +24,18 @@ This repo currently holds the design and the first build plan. Implementation is
 - **Standalone & reliable** — works with VS Code closed; the watchdog catches silent earning failures.
 - **Open source, no subscription.**
 
+## Layout
+
+```
+kickbacks/    ← this repo (umbrella)
+  docs/       ← design + plans
+  cli/        ← the `kicker` CLI (TypeScript/Bun) — also hosts the shared core + poller
+  app/        ← the menu-bar app (Swift)              · Plan 4
+  packaging/  ← Homebrew tap (formula + cask)          · Plan 5
+```
+
+Two tools, two languages — bridged by a shared local SQLite store, not shared code.
+
 ## Roadmap
 
 | Plan | Scope |

@@ -136,8 +136,10 @@ test("openStore stamps schema version 1 (migration hook for Plan 3)", () => {
 
 ## File Structure
 
+> Renamed `kicker/` → `cli/` on 2026-06-13 (umbrella `kickbacks/` now holds `cli/` plus future `app/` + `packaging/`). The tree and the `cd kicker` commands below were authored pre-rename — read `kicker/` as `cli/`.
+
 ```
-kicker/
+cli/
   package.json          # bun package, "bin": { "kicker": "./src/cli.ts" }, scripts
   tsconfig.json         # strict TS
   README.md             # quickstart

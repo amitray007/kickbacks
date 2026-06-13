@@ -168,14 +168,17 @@ The single fragile boundary. Isolate it behind one module so an API change is a 
 
 - **License:** **Apache-2.0** (patent grant + explicit, good for a tool touching a third-party API) or **MIT** (simplest). Recommend Apache-2.0.
 - **Naming / affiliation note:** "Kickbacks Companion" uses their mark. For an *unofficial* OSS tool, prefer a **distinct name** + an "*for Kickbacks.ai*" descriptor + a prominent **"not affiliated with Kickbacks.ai"** disclaimer. Candidates: `kb` (CLI) + app names like **Tally**, **Sidecar**, **Kickback HUD**, **Stash**. Decide in §13.
-- **Repo layout (Option 1 example):**
+- **Repo layout — finalized 2026-06-13 (the locked hybrid):**
   ```
-  /KickbacksKit        Swift package (core; the API client is one file)
-  /cli                 swift-argument-parser CLI
-  /app                 SwiftUI MenuBarExtra app
-  /agent               launchd poller + plist
-  /docs                this doc + API contract + CONTRIBUTING
+  kickbacks/        umbrella repo (companion project; tools branded "Kicker")
+    docs/           this doc, API contract, plans, CONTRIBUTING
+    cli/            Tool 1 — TS/Bun: shared core + `kicker` CLI + launchd poller
+    app/            Tool 2 — Swift MenuBarExtra app (reads the shared store)   [Plan 4]
+    packaging/      Homebrew tap: formula (cli) + cask (app)                   [Plan 5]
   ```
+  The two tools are different languages, so they share **data, not code** — both read
+  `~/.config/kicker/history.db`. The TS core lives in `cli/` (imported by the CLI and the
+  poller); the Swift app is a thin reader of the store. _(The Swift-only Option-1 sketch is superseded.)_
 - **Contribution surface:** the isolated API client. Document the contract (§6) so when Kickbacks changes an endpoint, a contributor fixes one file. Add issue/PR templates, semver, signed releases.
 - **Security policy:** the tool handles OAuth tokens — store in Keychain, `chmod 600` for any file fallback, never log tokens, `SECURITY.md` for disclosure.
 
