@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS } from "./config";
+import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS, POLL_SECONDS, LAUNCHD_LABEL } from "./config";
 import { startLogin, pollOnce, signout, loadTokens, saveTokens, clearTokens, makeAuthedRunner, AuthError } from "./auth";
 import { fetchPortfolio, fetchEarnings, fetchRaw } from "./api";
 import { openStore, type Store } from "./store";
@@ -10,6 +10,7 @@ import { loadModel } from "./tui";
 import { runPoll } from "./poll";
 import { isActive } from "./activity";
 import { notify } from "./notify";
+import { installAgent, uninstallAgent, agentInstalled } from "./launchd";
 import { spawn } from "node:child_process";
 import type { Portfolio } from "./types";
 
@@ -100,6 +101,25 @@ async function cmdPoll() {
   } finally { store.close(); }
 }
 
+// Manage the launchd agent that runs `kickback poll` periodically. `install` must be
+// run from the standalone binary (not `bun run`) — launchd needs the binary's own path.
+async function cmdPoller() {
+  const sub = (process.argv[3] || "status").toLowerCase();
+  if (sub === "install") {
+    if (process.execPath.endsWith("/bun")) {
+      console.error("`poller install` needs the standalone `kickback` binary (build with `bun run build`), not `bun run`.");
+      process.exit(1);
+    }
+    const path = installAgent(LAUNCHD_LABEL, process.execPath, POLL_SECONDS);
+    console.log(`Installed launchd agent → ${path}\nPolling every ${POLL_SECONDS}s. Uninstall with: kickback poller uninstall`);
+  } else if (sub === "uninstall") {
+    uninstallAgent(LAUNCHD_LABEL);
+    console.log("Poller uninstalled.");
+  } else {
+    console.log(`Poller ${agentInstalled(LAUNCHD_LABEL) ? "installed" : "not installed"}  (${LAUNCHD_LABEL})`);
+  }
+}
+
 // Live framed dashboard. Non-TTY (piped) → one static render so it stays scriptable.
 // Interval via KICKBACK_WATCH_SECONDS (default 30, min 5).
 async function cmdWatch() {
@@ -144,10 +164,10 @@ async function cmdLogout() {
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
 const table: Record<string, () => unknown> = {
   login: cmdLogin, portfolio: cmdPortfolio, watch: cmdWatch, earnings: cmdEarnings,
-  raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll,
+  raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll, poller: cmdPoller,
 };
 const fn = table[cmd];
-if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout | poll"); process.exit(2); }
+if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout | poll | poller <install|uninstall|status>"); process.exit(2); }
 try {
   await fn();
 } catch (e) {
