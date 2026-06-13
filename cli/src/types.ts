@@ -30,4 +30,9 @@ export interface Sample {
   todayUsd: number;
   adId: string;
   kill: boolean;
+  // Plan 3 (poller) fields — null/undefined for Plan 1/2 samples:
+  active?: boolean | null;   // was the editor active at sample time
+  capScope?: string | null;  // "hourly" | "daily"
+  capUsd?: number | null;
+  capResetS?: number | null;
 }

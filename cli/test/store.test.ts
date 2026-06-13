@@ -15,6 +15,27 @@ test("latest returns null on empty store", () => {
   expect(openStore(":memory:").latest()).toBeNull();
 });
 
-test("openStore stamps schema version 1 (migration hook for Plan 3)", () => {
-  expect(openStore(":memory:").userVersion()).toBe(1);
+test("openStore migrates to schema v2 (cap_*/active) and round-trips them", () => {
+  const store = openStore(":memory:");
+  expect(store.userVersion()).toBe(2);
+  store.insertSample({ ts: 1, lifetimeUsd: 1, todayUsd: 0.5, adId: "a", kill: false,
+    active: true, capScope: "daily", capUsd: 1, capResetS: 3600 });
+  const r = store.latest()!;
+  expect(r.active).toBe(true);
+  expect(r.capScope).toBe("daily");
+  expect(r.capResetS).toBe(3600);
+});
+
+test("samples without poller fields store null (Plan 1/2 compatibility)", () => {
+  const store = openStore(":memory:");
+  store.insertSample({ ts: 1, lifetimeUsd: 1, todayUsd: 0.1, adId: "a", kill: false });
+  expect(store.latest()!.active).toBeNull();
+  expect(store.latest()!.capScope).toBeNull();
+});
+
+test("kv state round-trips", () => {
+  const store = openStore(":memory:");
+  expect(store.getState("k")).toBeNull();
+  store.setState("k", "v");
+  expect(store.getState("k")).toBe("v");
 });
