@@ -1,5 +1,14 @@
 import type { Portfolio, Earnings, Cap, Ad } from "./types";
 
+/** Thrown by the fetch* helpers on a non-2xx response. Carries the status so
+ *  callers (e.g. cli's auto-refresh) can branch on 401 without string-matching. */
+export class HttpError extends Error {
+  constructor(public readonly status: number, endpoint: string) {
+    super(`${endpoint} HTTP ${status}`);
+    this.name = "HttpError";
+  }
+}
+
 const num = (v: unknown): number => {
   const n = typeof v === "string" ? parseFloat(v) : typeof v === "number" ? v : NaN;
   return Number.isFinite(n) ? n : 0;
@@ -44,20 +53,22 @@ export interface ApiDeps {
 export async function fetchPortfolio(d: ApiDeps): Promise<Portfolio> {
   const url = `${d.base}/v1/portfolio?claude_code_version=${encodeURIComponent(d.ccVersion)}`;
   const r = await d.fetch(url, { headers: { authorization: `Bearer ${d.token}` } });
-  if (!r.ok) throw new Error(`portfolio HTTP ${r.status}`);
+  if (!r.ok) throw new HttpError(r.status, "portfolio");
   return parsePortfolio(await r.json());
 }
 
 export async function fetchEarnings(d: ApiDeps): Promise<Earnings> {
   const r = await d.fetch(`${d.base}/v1/earnings`, { headers: { authorization: `Bearer ${d.token}` } });
-  if (!r.ok) throw new Error(`earnings HTTP ${r.status}`);
+  if (!r.ok) throw new HttpError(r.status, "earnings");
   return parseEarnings(await r.json());
 }
 
 // Unparsed passthrough for `kicker raw` — surfaces server fields verbatim so an
-// API-shape drift is visible instead of silently normalized away.
+// API-shape drift is visible instead of silently normalized away. `path` must be a
+// static, trusted literal (never user/env input): it is concatenated onto the base
+// URL and the bearer token is attached.
 export async function fetchRaw(d: ApiDeps, path: string): Promise<unknown> {
   const r = await d.fetch(`${d.base}${path}`, { headers: { authorization: `Bearer ${d.token}` } });
-  if (!r.ok) throw new Error(`raw HTTP ${r.status}`);
+  if (!r.ok) throw new HttpError(r.status, "raw");
   return r.json();
 }

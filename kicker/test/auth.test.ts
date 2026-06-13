@@ -14,6 +14,14 @@ test("startLogin parses location + state from the 307", async () => {
   expect(r.url).toContain("accounts.google.com");
 });
 
+test("startLogin rejects a non-https redirect (no OS opener abuse)", async () => {
+  const fakeFetch = async () => new Response(null, {
+    status: 307,
+    headers: { location: "file:///etc/passwd?state=XYZ" },
+  });
+  await expect(startLogin({ fetch: fakeFetch as any, base })).rejects.toThrow("https");
+});
+
 test("pollOnce returns tokens when access_token present, else null", async () => {
   const withTokens = async () => new Response(JSON.stringify({ access_token: "AT", refresh_token: "RT" }), { status: 200 });
   const empty = async () => new Response(JSON.stringify({}), { status: 200 });

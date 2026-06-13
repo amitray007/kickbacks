@@ -12,15 +12,16 @@ export interface Store {
 }
 
 export function openStore(path: string): Store {
-  if (path !== ":memory:") { try { mkdirSync(dirname(path), { recursive: true }); } catch {} }
+  if (path !== ":memory:") { try { mkdirSync(dirname(path), { recursive: true, mode: 0o700 }); } catch {} }
   const db = new Database(path);
   db.run(`CREATE TABLE IF NOT EXISTS samples (
     ts INTEGER PRIMARY KEY, lifetime_usd REAL, today_usd REAL, ad_id TEXT, kill INTEGER
   )`);
-  // Schema version stamp so Plan 3's watchdog columns (active, cap_*) can migrate cleanly.
-  if (((db.query("PRAGMA user_version").get() as any)?.user_version ?? 0) < 1) {
-    db.run("PRAGMA user_version = 1");
-  }
+  const readVersion = (): number =>
+    Number((db.query("PRAGMA user_version").get() as any)?.user_version ?? 0);
+  // Stamp the schema version (forward-only) so Plan 3's watchdog columns
+  // (active, cap_*) can migrate cleanly without clobbering a newer version.
+  if (readVersion() < 1) db.run("PRAGMA user_version = 1");
   const rowToSample = (r: any): Sample => ({
     ts: r.ts, lifetimeUsd: r.lifetime_usd, todayUsd: r.today_usd,
     adId: r.ad_id, kill: !!r.kill,
@@ -38,7 +39,7 @@ export function openStore(path: string): Store {
       return (db.query("SELECT * FROM samples WHERE ts >= ? ORDER BY ts ASC").all(ts) as any[])
         .map(rowToSample);
     },
-    userVersion() { return (db.query("PRAGMA user_version").get() as any).user_version as number; },
+    userVersion() { return readVersion(); },
     close() { db.close(); },
   };
 }

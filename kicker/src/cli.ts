@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 import { BASE, CC_VERSION, DB_FILE } from "./config";
 import { startLogin, pollOnce, refresh, signout, loadTokens, saveTokens, clearTokens } from "./auth";
-import { fetchPortfolio, fetchEarnings, fetchRaw } from "./api";
-import { openStore } from "./store";
+import { fetchPortfolio, fetchEarnings, fetchRaw, HttpError } from "./api";
+import { openStore, type Store } from "./store";
 import { ratePerHour, projectSecondsToCap, fmtUsd, fmtDuration } from "./derive";
 import { spawn } from "node:child_process";
 import type { Tokens, Portfolio } from "./types";
@@ -24,8 +24,8 @@ async function withToken(): Promise<Tokens> {
 async function authed<T>(call: (token: string) => Promise<T>): Promise<T> {
   const t = await withToken();
   try { return await call(t.access_token); }
-  catch (e: any) {
-    if (!String(e?.message).includes("HTTP 401") || !t.refresh_token) throw e;
+  catch (e) {
+    if (!(e instanceof HttpError) || e.status !== 401 || !t.refresh_token) throw e;
     const nt = await refresh({ fetch, base: BASE }, t.refresh_token);
     if (!nt) { console.error("Session expired. Run: kicker login"); process.exit(1); }
     saveTokens({ ...t, ...nt });
@@ -33,11 +33,9 @@ async function authed<T>(call: (token: string) => Promise<T>): Promise<T> {
   }
 }
 
-function recordSample(p: Portfolio) {
-  const store = openStore(DB_FILE);
+function recordSample(store: Store, p: Portfolio): void {
   store.insertSample({ ts: Date.now(), lifetimeUsd: p.lifetimeUsd, todayUsd: p.todayUsd,
     adId: p.ads[0]?.adId ?? "", kill: p.kill });
-  return store;
 }
 
 async function cmdLogin() {
@@ -56,9 +54,10 @@ async function cmdLogin() {
 
 async function cmdPortfolio() {
   const p = await authed((tk) => fetchPortfolio(deps(tk)));
-  const store = recordSample(p);
-  const since = store.recentSince(Date.now() - 6 * 3_600_000);
-  const rate = ratePerHour(since);
+  const store = openStore(DB_FILE);
+  recordSample(store, p);
+  const rate = ratePerHour(store.recentSince(Date.now() - 6 * 3_600_000));
+  store.close();
   console.log("\n  Kicker — portfolio");
   console.log("  " + "-".repeat(40));
   console.log(`  Balance   ${fmtUsd(p.lifetimeUsd)} lifetime  ·  ${fmtUsd(p.todayUsd)} today`);
@@ -74,7 +73,9 @@ async function cmdEarnings() {
     authed((tk) => fetchPortfolio(deps(tk))),
     authed((tk) => fetchEarnings(deps(tk))),
   ]);
-  const rate = ratePerHour(openStore(DB_FILE).recentSince(Date.now() - 6 * 3_600_000));
+  const store = openStore(DB_FILE);
+  const rate = ratePerHour(store.recentSince(Date.now() - 6 * 3_600_000));
+  store.close();
   console.log("\n  Earnings");
   console.log(`  lifetime ${fmtUsd(p.lifetimeUsd)}  ·  today ${fmtUsd(p.todayUsd)}`);
   if (e.cap) {
@@ -115,4 +116,9 @@ const table: Record<string, () => unknown> = {
 };
 const fn = table[cmd];
 if (!fn) { console.error("commands: login | portfolio | earnings | raw | status | logout"); process.exit(2); }
-await (async () => fn())().catch((e: any) => { console.error("error:", e?.message ?? e); process.exit(1); });
+try {
+  await fn();
+} catch (e) {
+  console.error("error:", e instanceof Error ? e.message : e);
+  process.exit(1);
+}

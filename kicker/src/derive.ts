@@ -35,16 +35,15 @@ export function isStalled({ samples, now, windowMs, active }: StallInput): boole
   if (!active) return false;
   const recent = samples.filter((s) => s.ts >= now - windowMs && s.ts <= now);
   if (recent.length < 2) return false;
-  const min = Math.min(...recent.map((s) => s.todayUsd));
-  const max = Math.max(...recent.map((s) => s.todayUsd));
-  return max - min === 0;
+  const firstToday = recent[0]!.todayUsd;
+  return recent.every((s) => s.todayUsd === firstToday);
 }
 
 export const fmtUsd = (n: number): string => `$${(Number.isFinite(n) ? n : 0).toFixed(2)}`;
 
 export function fmtDuration(sec: number): string {
-  sec = Math.max(0, Math.floor(sec));
-  if (sec >= 3600) return `${Math.floor(sec / 3600)}h${Math.floor((sec % 3600) / 60)}m`;
-  if (sec >= 60) return `${Math.floor(sec / 60)}m`;
-  return `${sec}s`;
+  const s = Math.max(0, Math.floor(sec));
+  if (s >= 3600) return `${Math.floor(s / 3600)}h${Math.floor((s % 3600) / 60)}m`;
+  if (s >= 60) return `${Math.floor(s / 60)}m`;
+  return `${s}s`;
 }

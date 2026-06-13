@@ -23,7 +23,6 @@ export interface Earnings {
 export interface Tokens {
   access_token: string;
   refresh_token?: string;
-  client_id?: string;
 }
 export interface Sample {
   ts: number;          // unix ms

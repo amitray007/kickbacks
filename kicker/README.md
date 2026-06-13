@@ -21,4 +21,6 @@ Never sends billing events — only reads `/v1/portfolio` and `/v1/earnings`. Th
 | `KICKER_CC_VERSION` | `2.1.177` | `claude_code_version` sent with portfolio reads |
 | `KICKER_CONFIG_DIR` | `~/.config/kicker` | where `auth.json` + `history.db` live |
 
-Tokens are stored at `$KICKER_CONFIG_DIR/auth.json` (chmod 600). Local history accumulates in `history.db`.
+Tokens are stored at `$KICKER_CONFIG_DIR/auth.json` (chmod 600, in a 700 dir). Local history accumulates in `history.db`.
+
+> ⚠️ **`KICKER_BASE` sends your OAuth bearer token to whatever host you point it at.** Only set it to infrastructure you trust — never paste an unreviewed `KICKER_BASE=…` from elsewhere. The login redirect is also required to be `https`.
