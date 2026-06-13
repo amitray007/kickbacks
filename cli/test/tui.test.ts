@@ -49,4 +49,22 @@ test("buildDashboardTree renders the unified model headless", async () => {
   expect(frame).toContain("$0.56");
   expect(frame).toContain("$12.34");
   expect(frame).toContain("Inflowpay");
+  expect(frame).toContain("/hr");        // rate line (rate > 0)
+  expect(frame).toContain("Daily cap");  // cap section (e.cap present)
+  expect(frame).toContain("collecting"); // sparkline placeholder (<2 samples)
+});
+
+test("buildDashboardTree renders the bare-minimum state (no rate/cap/ad)", async () => {
+  const setup = await createTestRenderer({ width: 64, height: 20 });
+  const bare: Portfolio = { lifetimeUsd: 0, todayUsd: 0, viewThresholdSeconds: null, kill: false, ads: [] };
+  setup.renderer.root.add(buildDashboardTree(setup.renderer, {
+    p: bare, e: null, rate: 0, state: "no-serve", samples: [], ts: 0,
+  }));
+  await setup.renderOnce();
+  const frame = setup.captureCharFrame();
+  setup.renderer.destroy();
+  expect(frame).toContain("No ad serving"); // badge
+  expect(frame).toContain("your ad here");   // ad placeholder
+  expect(frame).not.toContain("/hr");        // rate line omitted
+  expect(frame).not.toContain("Daily cap");  // cap section omitted
 });

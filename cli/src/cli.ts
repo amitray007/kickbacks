@@ -83,6 +83,7 @@ async function cmdEarnings() {
 // Interval via KICKBACK_WATCH_SECONDS (default 30, min 5).
 async function cmdWatch() {
   if (!process.stdout.isTTY) { await cmdPortfolio(); return; }
+  if (!loadTokens()) { console.error("Not signed in. Run: kickback login"); process.exit(1); } // don't enter the alt-screen unauthenticated
   const seconds = Math.max(5, Number(process.env.KICKBACK_WATCH_SECONDS) || 30);
   const store = openStore(DB_FILE);
   try {

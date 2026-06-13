@@ -37,7 +37,7 @@ export function badge(state: EarningState, c: Palette = palette(false)): string 
 
 // Only ever called when rate > 0; the "—" branch makes the call contract explicit.
 const trend = (rate: number): "▴" | "—" => (rate > 0 ? "▴" : "—");
-const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+export const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** The default `kickback` view — the unified earnings model (design §15.2) as static
  *  colored text. The live framed/animated TUI is Plan 2 (OpenTUI). */
