@@ -3,16 +3,21 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
-/** A launchd user-agent plist that runs `<binPath> poll` every `seconds`. Pure. */
+const xmlEscape = (s: string): string =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** A launchd user-agent plist that runs `<binPath> poll` every `seconds`. Pure.
+ *  Interpolated values are XML-escaped (paths may legally contain `&`). */
 export function plistContent(label: string, binPath: string, seconds: number): string {
+  const logPath = join(homedir(), "Library/Logs", label + ".log");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>Label</key><string>${label}</string>
-  <key>ProgramArguments</key><array><string>${binPath}</string><string>poll</string></array>
+  <key>Label</key><string>${xmlEscape(label)}</string>
+  <key>ProgramArguments</key><array><string>${xmlEscape(binPath)}</string><string>poll</string></array>
   <key>StartInterval</key><integer>${seconds}</integer>
   <key>RunAtLoad</key><true/>
-  <key>StandardErrorPath</key><string>${join(homedir(), "Library/Logs", label + ".log")}</string>
+  <key>StandardErrorPath</key><string>${xmlEscape(logPath)}</string>
 </dict></plist>
 `;
 }
@@ -24,8 +29,9 @@ export function installAgent(label: string, binPath: string, seconds: number): s
   const path = plistPath(label);
   mkdirSync(join(homedir(), "Library/LaunchAgents"), { recursive: true });
   writeFileSync(path, plistContent(label, binPath, seconds));
-  spawnSync("launchctl", ["unload", path], { stdio: "ignore" }); // in case it was loaded
-  spawnSync("launchctl", ["load", path], { stdio: "ignore" });
+  spawnSync("launchctl", ["unload", path], { stdio: "ignore" }); // in case it was already loaded
+  const r = spawnSync("launchctl", ["load", path], { stdio: "pipe", encoding: "utf8" });
+  if (r.status !== 0) throw new Error(`launchctl load failed: ${(r.stderr || "").trim() || "unknown error"}`);
   return path;
 }
 

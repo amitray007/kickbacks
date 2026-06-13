@@ -1,6 +1,5 @@
 import type { Portfolio, Earnings } from "./types";
 import type { Store } from "./store";
-import { earningState } from "./derive";
 import { decideAlerts } from "./alerts";
 import type { Notifier } from "./notify";
 
@@ -34,5 +33,6 @@ export async function runPoll(d: PollDeps): Promise<void> {
   if (a.cap) d.notify("Kickback — cap reached", `Your ${a.cap.scope} cap is hit; no more earning until it resets.`);
   d.store.setState("stallActive", a.state.stallActive);
   if (a.state.capFired !== null) d.store.setState("capFired", a.state.capFired);
-  if (earningState(p, e) === "earning") d.store.setState("capFired", ""); // re-arm the cap alert once earning resumes
+  // No explicit cap re-arm: the period-bucket key in decideAlerts changes each reset
+  // period, so the next period's cap-hit fires on its own.
 }

@@ -21,13 +21,15 @@ export function openStore(path: string): Store {
   )`);
   const readVersion = (): number =>
     Number((db.query("PRAGMA user_version").get() as any)?.user_version ?? 0);
-  const hasColumn = (table: string, col: string): boolean =>
-    (db.query(`PRAGMA table_info(${table})`).all() as any[]).some((c) => c.name === col);
+  const hasColumn = (col: string): boolean =>
+    (db.query("PRAGMA table_info(samples)").all() as any[]).some((c) => c.name === col);
   // Forward-only migrations. v1: base table. v2: poller's cap/active columns (design §5).
-  if (readVersion() < 1) db.run("PRAGMA user_version = 1");
-  if (readVersion() < 2) {
+  // Each ALTER is hasColumn-guarded, so a crash mid-migration recovers idempotently.
+  const version = readVersion();
+  if (version < 1) db.run("PRAGMA user_version = 1");
+  if (version < 2) {
     for (const [col, type] of [["cap_scope", "TEXT"], ["cap_usd", "REAL"], ["cap_reset_s", "INTEGER"], ["active", "INTEGER"]] as const) {
-      if (!hasColumn("samples", col)) db.run(`ALTER TABLE samples ADD COLUMN ${col} ${type}`);
+      if (!hasColumn(col)) db.run(`ALTER TABLE samples ADD COLUMN ${col} ${type}`);
     }
     db.run("PRAGMA user_version = 2");
   }

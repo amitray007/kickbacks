@@ -33,7 +33,8 @@ export function decideAlerts(i: AlertInput): Alerts {
   const cap = i.earnings?.cap;
   const today = latest?.todayUsd ?? 0;
   if (cap && today >= cap.capUsd) {
-    const key = `${cap.scope}:${Math.floor(i.now / Math.max(1, cap.resetSeconds * 1000))}`;
+    // Period bucket, UTC-epoch-aligned (may lag the server's real reset by < 1 period).
+    const key = `${cap.scope}:${Math.floor(i.now / Math.max(1000, cap.resetSeconds * 1000))}`;
     if (i.state.capFired !== key) {
       out.cap = { scope: cap.scope, key };
       out.state.capFired = key;

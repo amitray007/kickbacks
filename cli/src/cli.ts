@@ -106,7 +106,7 @@ async function cmdPoll() {
 async function cmdPoller() {
   const sub = (process.argv[3] || "status").toLowerCase();
   if (sub === "install") {
-    if (process.execPath.endsWith("/bun")) {
+    if (process.argv[1]?.endsWith(".ts")) { // running via `bun run`, not the standalone binary
       console.error("`poller install` needs the standalone `kickback` binary (build with `bun run build`), not `bun run`.");
       process.exit(1);
     }

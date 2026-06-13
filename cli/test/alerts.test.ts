@@ -40,3 +40,11 @@ test("no cap alert below the cap", () => {
   const e: Earnings = { cap: { scope: "daily", capUsd: 1.0, resetSeconds: 3600 } };
   expect(decideAlerts({ samples, earnings: e, now, stallWindowMs: 300_000, state: {} }).cap).toBeUndefined();
 });
+
+test("stall re-arms after earning resumes", () => {
+  const now = 1_000_000;
+  const moved = [s(now - 240_000, 0.4, true), s(now - 60_000, 0.6, true)]; // earnings moved → not stalled
+  const a = decideAlerts({ samples: moved, earnings: { cap: null }, now, stallWindowMs: 300_000, state: { stallActive: "1" } });
+  expect(a.stall).toBe(false);
+  expect(a.state.stallActive).toBe(""); // cleared → a later flat episode can fire again
+});

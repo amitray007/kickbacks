@@ -1,6 +1,10 @@
 // kickback/test/store.test.ts
 import { test, expect } from "bun:test";
 import { openStore } from "../src/store";
+import { Database } from "bun:sqlite";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 test("insert + latest + recentSince round-trip", () => {
   const store = openStore(":memory:");
@@ -38,4 +42,22 @@ test("kv state round-trips", () => {
   expect(store.getState("k")).toBeNull();
   store.setState("k", "v");
   expect(store.getState("k")).toBe("v");
+});
+
+test("migrates a pre-existing v1 db to v2, preserving rows", () => {
+  const dir = mkdtempSync(join(tmpdir(), "kb-mig-"));
+  const file = join(dir, "history.db");
+  const seed = new Database(file);
+  seed.run("CREATE TABLE samples (ts INTEGER PRIMARY KEY, lifetime_usd REAL, today_usd REAL, ad_id TEXT, kill INTEGER)");
+  seed.run("PRAGMA user_version = 1");
+  seed.run("INSERT INTO samples VALUES (1, 1.0, 0.5, 'a', 0)");
+  seed.close();
+
+  const store = openStore(file); // opens an existing v1 db → migrates to v2
+  expect(store.userVersion()).toBe(2);
+  const r = store.latest()!;
+  expect(r.todayUsd).toBe(0.5);  // existing row preserved
+  expect(r.active).toBeNull();   // new column defaults to null
+  store.close();
+  rmSync(dir, { recursive: true, force: true });
 });
