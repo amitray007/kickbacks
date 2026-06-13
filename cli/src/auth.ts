@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, rmSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
 import { AUTH_FILE } from "./config";
+import { HttpError } from "./api";
 import type { Tokens } from "./types";
 
 export interface AuthDeps { fetch: typeof fetch; base: string; }
@@ -32,6 +33,28 @@ export async function refresh(d: AuthDeps, refreshToken: string): Promise<Tokens
   if (!r.ok) return null;
   const j: any = await r.json().catch(() => ({}));
   return j?.access_token ? { access_token: j.access_token, refresh_token: j.refresh_token } : null;
+}
+
+export class AuthError extends Error {
+  constructor(message: string) { super(message); this.name = "AuthError"; }
+}
+
+/** Runs an authed call, refreshing + retrying once on 401. Throws AuthError when there
+ *  is no token or the refresh fails — the caller decides whether to exit (one-shot CLI)
+ *  or show it and clean up (the TUI). No process side-effects. */
+export function makeAuthedRunner(d: AuthDeps) {
+  return async function run<T>(call: (token: string) => Promise<T>): Promise<T> {
+    const t = loadTokens();
+    if (!t) throw new AuthError("Not signed in. Run: kickback login");
+    try { return await call(t.access_token); }
+    catch (e) {
+      if (!(e instanceof HttpError) || e.status !== 401 || !t.refresh_token) throw e;
+      const nt = await refresh(d, t.refresh_token);
+      if (!nt) throw new AuthError("Session expired. Run: kickback login");
+      saveTokens({ ...t, ...nt });
+      return call(nt.access_token);
+    }
+  };
 }
 
 // Best-effort server-side session revoke (matches the prototype). Auth lifecycle

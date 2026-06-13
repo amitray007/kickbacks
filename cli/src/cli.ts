@@ -1,38 +1,29 @@
 #!/usr/bin/env bun
 import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR } from "./config";
-import { startLogin, pollOnce, refresh, signout, loadTokens, saveTokens, clearTokens } from "./auth";
-import { fetchPortfolio, fetchEarnings, fetchRaw, HttpError } from "./api";
+import { startLogin, pollOnce, signout, loadTokens, saveTokens, clearTokens, makeAuthedRunner, AuthError } from "./auth";
+import { fetchPortfolio, fetchEarnings, fetchRaw } from "./api";
 import { openStore, type Store } from "./store";
 import { ratePerHour } from "./derive";
 import { renderDashboard, renderEarnings, renderStatus, palette, useColor } from "./ui";
 import { spawn } from "node:child_process";
-import type { Tokens, Portfolio } from "./types";
+import type { Portfolio } from "./types";
 
 const deps = (token: string) => ({ fetch, token, base: BASE, ccVersion: CC_VERSION });
+const runAuthed = makeAuthedRunner({ fetch, base: BASE });
 
 function openBrowser(url: string): boolean {
   const cmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
   try { spawn(cmd, [url], { stdio: "ignore", detached: true }).unref(); return true; } catch { return false; }
 }
 
-async function withToken(): Promise<Tokens> {
-  const t = loadTokens();
-  if (!t) { console.error("Not signed in. Run: kickback login"); process.exit(1); }
-  return t;
-}
-
-// GET with auto-refresh on 401 (refresh consumes the CLI's own rotating token).
+// Authed GET with auto-refresh on 401; exits with a friendly message if signed out.
 // Call these sequentially, not in parallel: two concurrent 401s would each try to
 // spend the same single-use refresh token and the second would spuriously fail.
 async function authed<T>(call: (token: string) => Promise<T>): Promise<T> {
-  const t = await withToken();
-  try { return await call(t.access_token); }
+  try { return await runAuthed(call); }
   catch (e) {
-    if (!(e instanceof HttpError) || e.status !== 401 || !t.refresh_token) throw e;
-    const nt = await refresh({ fetch, base: BASE }, t.refresh_token);
-    if (!nt) { console.error("Session expired. Run: kickback login"); process.exit(1); }
-    saveTokens({ ...t, ...nt });
-    return call(nt.access_token);
+    if (e instanceof AuthError) { console.error(e.message); process.exit(1); }
+    throw e;
   }
 }
 
