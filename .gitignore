@@ -1,0 +1,15 @@
+# dependencies / build output
+node_modules/
+dist/
+.build/
+DerivedData/
+
+# local data / secrets
+*.db
+.env
+*.local
+
+# macOS / Xcode
+.DS_Store
+xcuserdata/
+*.xcuserstate
