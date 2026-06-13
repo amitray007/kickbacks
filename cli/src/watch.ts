@@ -17,7 +17,7 @@ export async function runWatch(d: WatchDeps): Promise<void> {
   let current: Renderable | null = null;
 
   const paint = (build: () => Renderable) => {
-    if (current) { renderer.root.remove(current); current.destroy(); }
+    if (current) { renderer.root.remove(current.id); current.destroy(); }
     current = build();
     renderer.root.add(current);
     renderer.requestRender();
@@ -39,6 +39,10 @@ export async function runWatch(d: WatchDeps): Promise<void> {
   });
 
   const timer = setInterval(() => void refresh(), d.intervalMs);
-  renderer.on("destroy", () => clearInterval(timer));
   await refresh(); // initial paint
+  // Resolve only once the renderer is destroyed (q / Ctrl-C) so the caller can clean
+  // up (e.g. close the store) after the session ends, not while it's still refreshing.
+  await new Promise<void>((resolve) => {
+    renderer.on("destroy", () => { clearInterval(timer); resolve(); });
+  });
 }
