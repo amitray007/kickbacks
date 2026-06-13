@@ -1,17 +1,18 @@
 #!/usr/bin/env bun
-import { BASE, CC_VERSION, DB_FILE } from "./config";
+import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR } from "./config";
 import { startLogin, pollOnce, refresh, signout, loadTokens, saveTokens, clearTokens } from "./auth";
 import { fetchPortfolio, fetchEarnings, fetchRaw, HttpError } from "./api";
 import { openStore, type Store } from "./store";
-import { ratePerHour, projectSecondsToCap, fmtUsd, fmtDuration } from "./derive";
+import { ratePerHour } from "./derive";
+import { renderDashboard, renderEarnings, renderStatus, palette, useColor } from "./ui";
 import { spawn } from "node:child_process";
 import type { Tokens, Portfolio } from "./types";
 
 const deps = (token: string) => ({ fetch, token, base: BASE, ccVersion: CC_VERSION });
 
-function openBrowser(url: string) {
+function openBrowser(url: string): boolean {
   const cmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
-  try { spawn(cmd, [url], { stdio: "ignore", detached: true }).unref(); } catch {}
+  try { spawn(cmd, [url], { stdio: "ignore", detached: true }).unref(); return true; } catch { return false; }
 }
 
 async function withToken(): Promise<Tokens> {
@@ -21,6 +22,8 @@ async function withToken(): Promise<Tokens> {
 }
 
 // GET with auto-refresh on 401 (refresh consumes the CLI's own rotating token).
+// Call these sequentially, not in parallel: two concurrent 401s would each try to
+// spend the same single-use refresh token and the second would spuriously fail.
 async function authed<T>(call: (token: string) => Promise<T>): Promise<T> {
   const t = await withToken();
   try { return await call(t.access_token); }
@@ -38,75 +41,68 @@ function recordSample(store: Store, p: Portfolio): void {
     adId: p.ads[0]?.adId ?? "", kill: p.kill });
 }
 
+function rateLast6h(): number {
+  const store = openStore(DB_FILE);
+  try { return ratePerHour(store.recentSince(Date.now() - 6 * 3_600_000)); }
+  finally { store.close(); }
+}
+
 async function cmdLogin() {
+  const c = palette(useColor());
   const { url, state } = await startLogin({ fetch, base: BASE });
-  console.log("\n  Sign in with Google:\n\n    " + url + "\n");
-  openBrowser(url);
-  process.stdout.write("  waiting");
+  console.log(`\n  ${c.bold("Sign in to Kickbacks with Google")}\n`);
+  console.log(`    ${c.cyan(url)}\n`);
+  const opened = openBrowser(url);
+  console.log(c.dim(opened
+    ? "  Opening your browser… (paste the link above if it doesn't appear)"
+    : "  Open the link above in your browser to continue."));
+  process.stdout.write(c.dim("\n  Waiting for sign-in"));
   for (let i = 0; i < 120; i++) {
     await new Promise((r) => setTimeout(r, 1500));
-    process.stdout.write(".");
+    process.stdout.write(c.dim("."));
     const t = await pollOnce({ fetch, base: BASE }, state).catch(() => null);
-    if (t) { saveTokens(t); console.log("\n\n  ✓ signed in.\n"); return; }
+    if (t) { saveTokens(t); console.log(c.green("\n\n  ✓ Signed in.") + c.dim("  Run 'kicker' to see your earnings.\n")); return; }
   }
-  console.error("\n\n  timed out.\n"); process.exit(1);
+  console.error(c.yellow("\n\n  Timed out. Run 'kicker login' to try again.\n")); process.exit(1);
 }
 
 async function cmdPortfolio() {
   const p = await authed((tk) => fetchPortfolio(deps(tk)));
+  const e = await authed((tk) => fetchEarnings(deps(tk))).catch(() => null); // cap is optional in the dashboard
   const store = openStore(DB_FILE);
-  recordSample(store, p);
-  const rate = ratePerHour(store.recentSince(Date.now() - 6 * 3_600_000));
-  store.close();
-  console.log("\n  Kicker — portfolio");
-  console.log("  " + "-".repeat(40));
-  console.log(`  Balance   ${fmtUsd(p.lifetimeUsd)} lifetime  ·  ${fmtUsd(p.todayUsd)} today`);
-  if (rate > 0) console.log(`  Rate      ${fmtUsd(rate)}/hr (last 6h)`);
-  console.log(`  Killswitch ${p.kill ? "ON" : "off"}   View gate ${p.viewThresholdSeconds ?? "?"}s`);
-  console.log(`\n  Served ads (${p.ads.length})`);
-  p.ads.forEach((a, i) => console.log(`   ${i + 1}. ${a.text}${a.clickUrl ? "  → " + a.clickUrl : ""}`));
-  console.log("");
+  let rate = 0;
+  try {
+    recordSample(store, p);
+    rate = ratePerHour(store.recentSince(Date.now() - 6 * 3_600_000));
+  } finally {
+    store.close();
+  }
+  console.log(renderDashboard(p, e, rate, useColor()));
 }
 
 async function cmdEarnings() {
-  const [p, e] = await Promise.all([
-    authed((tk) => fetchPortfolio(deps(tk))),
-    authed((tk) => fetchEarnings(deps(tk))),
-  ]);
-  const store = openStore(DB_FILE);
-  const rate = ratePerHour(store.recentSince(Date.now() - 6 * 3_600_000));
-  store.close();
-  console.log("\n  Earnings");
-  console.log(`  lifetime ${fmtUsd(p.lifetimeUsd)}  ·  today ${fmtUsd(p.todayUsd)}`);
-  if (e.cap) {
-    console.log(`  cap      ${e.cap.scope} ${fmtUsd(e.cap.capUsd)} (resets ${fmtDuration(e.cap.resetSeconds)})`);
-    const eta = projectSecondsToCap(p.todayUsd, e.cap.capUsd, rate);
-    if (eta !== null) console.log(`  to cap   ~${fmtDuration(eta)} at current rate`);
-  }
-  console.log("");
+  const p = await authed((tk) => fetchPortfolio(deps(tk)));
+  const e = await authed((tk) => fetchEarnings(deps(tk)));
+  console.log(renderEarnings(p, e, rateLast6h(), useColor()));
 }
 
 async function cmdRaw() {
-  const [portfolio, earnings] = await Promise.all([
-    authed((tk) => fetchRaw(deps(tk), `/v1/portfolio?claude_code_version=${encodeURIComponent(CC_VERSION)}`)),
-    authed((tk) => fetchRaw(deps(tk), "/v1/earnings")),
-  ]);
+  const portfolio = await authed((tk) => fetchRaw(deps(tk), `/v1/portfolio?claude_code_version=${encodeURIComponent(CC_VERSION)}`));
+  const earnings = await authed((tk) => fetchRaw(deps(tk), "/v1/earnings"));
   console.log(JSON.stringify({ portfolio, earnings }, null, 2));
 }
 
 function cmdStatus() {
   const t = loadTokens();
-  console.log("\n  kicker status");
-  console.log("  backend    " + BASE);
-  console.log("  signed in  " + (t ? "yes" : "no"));
-  console.log("  history db " + DB_FILE + "\n");
+  console.log(renderStatus({ signedIn: !!t, base: BASE, configDir: CONFIG_DIR, dbFile: DB_FILE, color: useColor() }));
 }
 
 async function cmdLogout() {
+  const c = palette(useColor());
   const t = loadTokens();
   if (t?.refresh_token) await signout({ fetch, base: BASE }, t.refresh_token).catch(() => {});
   clearTokens();
-  console.log("signed out.");
+  console.log(c.dim(`\n  Signed out${t?.refresh_token ? " — server session revoked, local tokens cleared." : " — local tokens cleared."}\n`));
 }
 
 const cmd = (process.argv[2] || "portfolio").toLowerCase();

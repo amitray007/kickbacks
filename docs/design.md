@@ -243,7 +243,7 @@ _These phases assume the incremental path (Option 3). Choosing **Option 1 (Swift
 2. ✅ **App form** — RESOLVED: menu-bar first (lightest); optional history window later.
 3. ◑ **Name + license** — Name = **Kicker**. License still open: **Apache-2.0** (recommended) vs MIT.
 4. ◑ **Contact ShiftKeys** — YES, before any public share (draft in §14.2). Not yet sent.
-5. ☐ **Auth default** — still OPEN: authed session vs passive mode — gated on the single-session test (run early in Phase 1).
+5. ✅ **Auth default** — RESOLVED (2026-06-13): CLI `login` tested working end-to-end by the user; **authed (own-session) mode confirmed as the primary path**. Passive mode stays an optional P2 fallback, not needed for MVP.
 
 ---
 

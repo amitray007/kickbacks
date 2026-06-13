@@ -1,4 +1,4 @@
-import type { Sample } from "./types";
+import type { Sample, Portfolio, Earnings } from "./types";
 
 /** Average $/hr of today_usd growth across the provided samples (sorted or not).
  *  Returns 0 with <2 samples, no positive gain, or a zero time span. A midday
@@ -46,4 +46,15 @@ export function fmtDuration(sec: number): string {
   if (s >= 3600) return `${Math.floor(s / 3600)}h${Math.floor((s % 3600) / 60)}m`;
   if (s >= 60) return `${Math.floor(s / 60)}m`;
   return `${s}s`;
+}
+
+export type EarningState = "earning" | "killed" | "cap" | "no-serve";
+
+/** Coarse state for the headline badge (Plan 1). "stalled" needs the activity
+ *  signal from Plan 3's poller, so it isn't derivable here yet. */
+export function earningState(p: Portfolio, e: Earnings | null): EarningState {
+  if (p.kill) return "killed";
+  if (e?.cap && p.todayUsd >= e.cap.capUsd) return "cap";
+  if (p.ads.length === 0) return "no-serve";
+  return "earning";
 }

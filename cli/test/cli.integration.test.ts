@@ -1,16 +1,16 @@
-// kicker/test/cli.integration.test.ts
+// cli/test/cli.integration.test.ts
 //
 // End-to-end QA: drives the real CLI (`bun run src/cli.ts <cmd>`) against a mock
 // backend on localhost and a throwaway config dir. Covers every command EXCEPT
-// `login` (interactive Google OAuth — human-in-the-loop, see README/plan Task 7
-// Step 5). Never touches the real account, real backend, or ~/.config/kicker.
+// `login` (interactive Google OAuth — human-in-the-loop, design §13.5).
+// Never touches the real account, real backend, or ~/.config/kicker.
 import { test, expect, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const kickerDir = join(import.meta.dir, "..");
+const cliDir = join(import.meta.dir, "..");
 
 const PORTFOLIO = {
   kill: false,
@@ -69,7 +69,7 @@ afterEach(() => rmSync(cfgDir, { recursive: true, force: true }));
 
 async function runCli(args: string[]) {
   const proc = Bun.spawn([process.execPath, "run", "src/cli.ts", ...args], {
-    cwd: kickerDir,
+    cwd: cliDir,
     env: { ...process.env, KICKER_CONFIG_DIR: cfgDir, KICKER_BASE: baseUrl, NO_COLOR: "1" },
     stdout: "pipe", stderr: "pipe",
   });
@@ -79,11 +79,14 @@ async function runCli(args: string[]) {
   return { stdout, stderr, exitCode };
 }
 
-test("portfolio renders balances + served ad and records a history sample", async () => {
+test("dashboard renders the unified model + served ad and records a history sample", async () => {
   const { stdout, exitCode } = await runCli(["portfolio"]);
   expect(exitCode).toBe(0);
-  expect(stdout).toContain("$12.34 lifetime");
-  expect(stdout).toContain("$0.56 today");
+  expect(stdout).toContain("Earning");      // state badge (● stripped by NO_COLOR-safe assert)
+  expect(stdout).toContain("$0.56");
+  expect(stdout).toContain("$12.34");
+  expect(stdout).toContain("Daily cap");     // earnings pulled into the default view
+  expect(stdout).toContain("resets 4h12m");
   expect(stdout).toContain("Inflowpay: Global sales, 50% less fees");
   expect(stdout).toContain("https://inflowpay.test");
 
@@ -98,7 +101,8 @@ test("portfolio renders balances + served ad and records a history sample", asyn
 test("earnings renders the daily cap and reset countdown", async () => {
   const { stdout, exitCode } = await runCli(["earnings"]);
   expect(exitCode).toBe(0);
-  expect(stdout).toContain("daily $1.00");
+  expect(stdout).toContain("Daily cap");
+  expect(stdout).toContain("$1.00");
   expect(stdout).toContain("resets 4h12m");
 });
 
@@ -120,7 +124,7 @@ test("status reports signed-in when a token file exists", async () => {
 test("logout revokes server-side then clears the local token", async () => {
   const { stdout, exitCode } = await runCli(["logout"]);
   expect(exitCode).toBe(0);
-  expect(stdout).toContain("signed out.");
+  expect(stdout).toContain("Signed out");
   expect(mock.signoutCalled).toBe(true);
   expect(existsSync(join(cfgDir, "auth.json"))).toBe(false);
 });
@@ -130,7 +134,7 @@ test("a 401 triggers a token refresh and a successful retry", async () => {
   const { stdout, exitCode } = await runCli(["portfolio"]);
   expect(exitCode).toBe(0);
   expect(mock.refreshCalled).toBe(true);
-  expect(stdout).toContain("$12.34 lifetime");
+  expect(stdout).toContain("$12.34");
   const saved = JSON.parse(readFileSync(join(cfgDir, "auth.json"), "utf8"));
   expect(saved.access_token).toBe("AT2"); // rotated token persisted
 });

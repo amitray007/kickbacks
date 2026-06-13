@@ -1,10 +1,16 @@
 // kicker/test/derive.test.ts
 import { test, expect } from "bun:test";
-import { ratePerHour, projectSecondsToCap, isStalled, fmtUsd, fmtDuration } from "../src/derive";
-import type { Sample } from "../src/types";
+import { ratePerHour, projectSecondsToCap, isStalled, fmtUsd, fmtDuration, earningState } from "../src/derive";
+import type { Sample, Portfolio, Earnings } from "../src/types";
 
 const s = (ts: number, todayUsd: number): Sample =>
   ({ ts, todayUsd, lifetimeUsd: todayUsd, adId: "a", kill: false });
+
+const pf = (over: Partial<Portfolio> = {}): Portfolio => ({
+  lifetimeUsd: 1, todayUsd: 0.5, viewThresholdSeconds: 15, kill: false,
+  ads: [{ adId: "a", campaignId: "c", text: "x", clickUrl: "", bannerEnabled: false }],
+  ...over,
+});
 
 test("ratePerHour computes $/hr over the window", () => {
   const samples = [s(0, 0), s(3_600_000, 0.5)]; // +$0.50 over 1h
@@ -41,4 +47,13 @@ test("formatters", () => {
   expect(fmtUsd(1.5)).toBe("$1.50");
   expect(fmtDuration(3661)).toBe("1h1m");
   expect(fmtDuration(45)).toBe("45s");
+});
+
+test("earningState reflects kill / cap / no-serve / earning", () => {
+  const cap: Earnings = { cap: { scope: "daily", capUsd: 0.5, resetSeconds: 100 } };
+  expect(earningState(pf(), null)).toBe("earning");
+  expect(earningState(pf({ kill: true }), null)).toBe("killed");
+  expect(earningState(pf({ ads: [] }), null)).toBe("no-serve");
+  expect(earningState(pf({ todayUsd: 0.5 }), cap)).toBe("cap");     // at cap
+  expect(earningState(pf({ todayUsd: 0.2 }), cap)).toBe("earning"); // under cap
 });
