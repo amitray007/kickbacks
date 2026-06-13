@@ -1,6 +1,7 @@
 // cli/test/tui.test.ts
 import { test, expect } from "bun:test";
-import { loadModel } from "../src/tui";
+import { loadModel, buildDashboardTree } from "../src/tui";
+import { createTestRenderer } from "@opentui/core/testing";
 import { openStore } from "../src/store";
 import type { Portfolio, Earnings } from "../src/types";
 
@@ -33,4 +34,19 @@ test("loadModel tolerates an earnings failure (cap is optional)", async () => {
   });
   expect(m.e).toBeNull();
   expect(m.p.todayUsd).toBe(0.56);
+});
+
+test("buildDashboardTree renders the unified model headless", async () => {
+  const setup = await createTestRenderer({ width: 64, height: 20 });
+  setup.renderer.root.add(buildDashboardTree(setup.renderer, {
+    p: P, e: E, rate: 0.18, state: "earning", samples: [], ts: 0,
+  }));
+  await setup.renderOnce();
+  const frame = setup.captureCharFrame();
+  setup.renderer.destroy();
+  expect(frame).toContain("kickback");
+  expect(frame).toContain("Earning");
+  expect(frame).toContain("$0.56");
+  expect(frame).toContain("$12.34");
+  expect(frame).toContain("Inflowpay");
 });
