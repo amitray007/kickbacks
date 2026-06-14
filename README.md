@@ -4,15 +4,28 @@ A reliable, open-source companion for [Kickbacks.ai](https://kickbacks.ai) — a
 
 > **Not affiliated** with Kickbacks.ai or ShiftKeys, Inc. It reads only your own account data (`/v1/portfolio`, `/v1/earnings`) and **never** sends billing/impression events.
 
-## Status — Plans 1–4 shipped
+## Status — Plans 1–5 shipped
 
-The TypeScript core + CLI (**Plan 1**), the live OpenTUI `watch` dashboard (**Plan 2**), the launchd poller + stall/cap watchdog (**Plan 3**), and the native Swift `MenuBarExtra` app (**Plan 4**) are built and tested. Next: Homebrew packaging (Plan 5) — bundle the CLI binary + a signed `.app`.
+The TypeScript core + CLI (**Plan 1**), the live OpenTUI `watch` dashboard (**Plan 2**), the launchd poller + stall/cap watchdog (**Plan 3**), the native Swift `MenuBarExtra` app (**Plan 4**), and the Homebrew tap (**Plan 5**) are built and tested. Distribution is build-from-source (no signing/notarization): the formula compiles the CLI binary and the menu-bar app on the user's machine.
 
 - **[docs/design.md](docs/design.md)** — full design: vision, the (reverse-engineered) read-only API surface, architecture, strategy, risks, and the UI/UX for both surfaces.
 - **[docs/plans/2026-06-13-kickback-core-cli.md](docs/plans/2026-06-13-kickback-core-cli.md)** — Plan 1 (core + CLI).
 - **[docs/plans/2026-06-13-kickback-opentui-watch.md](docs/plans/2026-06-13-kickback-opentui-watch.md)** — Plan 2 (OpenTUI `watch`).
 - **[docs/plans/2026-06-13-kickback-poller-watchdog.md](docs/plans/2026-06-13-kickback-poller-watchdog.md)** — Plan 3 (poller + watchdog).
 - **[docs/plans/2026-06-13-kickback-menubar-app.md](docs/plans/2026-06-13-kickback-menubar-app.md)** — Plan 4 (Swift menu-bar app).
+- **[docs/plans/2026-06-13-kickback-homebrew-tap.md](docs/plans/2026-06-13-kickback-homebrew-tap.md)** — Plan 5 (Homebrew tap).
+
+## Install (Homebrew)
+
+```bash
+brew install USER/tap/kickback     # builds the CLI + menu-bar app from source (bun + swift)
+kickback login                     # Google sign-in
+kickback                           # earnings dashboard  ·  kickback watch  for the live view
+kickback poller install            # background sampling + stall/cap alerts (launchd)
+kickback bar install               # menu-bar app at login
+```
+
+Build-from-source means no code-signing/notarization is required. Replace `USER` with the tap owner. See [packaging/](packaging/) for tap setup. Not affiliated with Kickbacks.ai / ShiftKeys, Inc.
 
 ## What it will be
 
@@ -47,7 +60,7 @@ Two tools, two languages — bridged by a shared local SQLite store, not shared 
 | 2 ✅ | OpenTUI `watch` dashboard |
 | 3 ✅ | Poller + stall watchdog (launchd) |
 | 4 ✅ | Native Swift menu-bar app |
-| 5 | Homebrew tap (formula + cask) |
+| 5 ✅ | Homebrew tap (build-from-source formula) |
 
 ## Notes
 

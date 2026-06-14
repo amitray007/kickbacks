@@ -235,13 +235,15 @@ _These phases assume the incremental path (Option 3). Choosing **Option 1 (Swift
 - **Phase 3 — Native menu-bar app.** SwiftUI `MenuBarExtra` reading the store; sparkline; ad inspector.
 - **Phase 4 — Open-source polish.** License, name, README, CONTRIBUTING, FUNDING, release, launch post.
 
+_Shipped (2026-06-13): Plans 1–5 — core + CLI, OpenTUI `watch`, launchd poller/watchdog, Swift menu-bar app, and the **Homebrew tap (build-from-source)** for distribution._
+
 ---
 
 ## 13. Open questions (decisions needed before/while building)
 
 1. ✅ **Language path** — RESOLVED: TS core + TS/OpenTUI CLI + native Swift menu (hybrid; shared SQLite).
 2. ✅ **App form** — RESOLVED: menu-bar first (lightest); optional history window later.
-3. ◑ **Name + license** — Name = **Kickback**. License still open: **Apache-2.0** (recommended) vs MIT.
+3. ✅ **Name + license** — RESOLVED: Name = **Kickback**; license = **Apache-2.0** (chosen 2026-06-13, over MIT).
 4. ◑ **Contact ShiftKeys** — YES, before any public share (draft in §14.2). Not yet sent.
 5. ✅ **Auth default** — RESOLVED (2026-06-13): CLI `login` tested working end-to-end by the user; **authed (own-session) mode confirmed as the primary path**. Passive mode stays an optional P2 fallback, not needed for MVP.
 
