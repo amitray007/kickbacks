@@ -113,7 +113,10 @@ struct MenuContent: View {
   private func footer(showData: Bool) -> some View {
     HStack {
       if showData {
-        Button("📊 History") { openWindow(id: "history") }.buttonStyle(.link)
+        Button("📊 History") {
+          NSApp.activate(ignoringOtherApps: true)  // .accessory app: bring the window forward
+          openWindow(id: "history")
+        }.buttonStyle(.link)
         Spacer()
         Button("↻ Refresh") { vm.refresh() }.buttonStyle(.link)
       } else {
