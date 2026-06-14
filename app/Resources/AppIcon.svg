@@ -1,18 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#143226"/>
-      <stop offset="1" stop-color="#0A1712"/>
+    <linearGradient id="tile" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#4ECB72"/>
+      <stop offset="1" stop-color="#2A9450"/>
     </linearGradient>
-    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#34D399"/>
-      <stop offset="1" stop-color="#059669"/>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <rect x="80" y="80" width="864" height="864" rx="200" ry="200" fill="url(#tile)"/>
-  <rect x="81.5" y="81.5" width="861" height="861" rx="198" ry="198" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="3"/>
-  <path d="M 596.0 366.5 A 168 168 0 1 1 428.0 366.5" fill="none" stroke="url(#green)" stroke-width="52" stroke-linecap="round"/>
-  <polygon points="511.1,318.5 444.9,423.7 386.9,323.3" fill="url(#green)"/>
-  <circle cx="512" cy="512" r="112" fill="url(#green)"/>
-  <circle cx="512" cy="512" r="80" fill="none" stroke="#06432F" stroke-opacity="0.55" stroke-width="9"/>
+  <rect x="80" y="80" width="864" height="864" rx="200" ry="200" fill="url(#sheen)"/>
+  <rect x="81.5" y="81.5" width="861" height="861" rx="198" ry="198" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="3"/>
+  <path d="M 596.0 366.5 A 168 168 0 1 1 428.0 366.5" fill="none" stroke="#ffffff" stroke-width="52" stroke-linecap="round"/>
+  <polygon points="511.1,318.5 444.9,423.7 386.9,323.3" fill="#ffffff"/>
+  <circle cx="512" cy="512" r="112" fill="#ffffff"/>
+  <circle cx="512" cy="512" r="80" fill="none" stroke="#2A9450" stroke-opacity="0.5" stroke-width="9"/>
 </svg>

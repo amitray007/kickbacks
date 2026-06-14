@@ -3,10 +3,10 @@
 // Run via scripts/gen-icon.sh (which provides the @resvg/resvg-js rasterizer).
 //   bun run gen-icon.ts <svgOutDir> <iconsetDir>
 //
-// Design: a dark emerald squircle with a mint-green "cashback" mark — a circular
-// arrow hugging a coin (the literal meaning of a kickback). Same colour family as
-// Kickbacks.ai, deliberately distinct from their "K$" lettermark (a companion, not
-// the brand itself).
+// Design: a bright emerald squircle (Kickbacks.ai colour family) with a white
+// "cashback" mark — a circular arrow hugging a coin (the literal meaning of a
+// kickback). Original artwork: same colour family as Kickbacks.ai, deliberately
+// NOT their "K$" lettermark — a companion, not the brand itself.
 import { Resvg } from "@resvg/resvg-js";
 import { writeFileSync, mkdirSync, rmSync } from "fs";
 
@@ -41,21 +41,22 @@ const COIN_R = 112, RIM_R = 80;
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">
   <defs>
-    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#143226"/>
-      <stop offset="1" stop-color="#0A1712"/>
+    <linearGradient id="tile" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#4ECB72"/>
+      <stop offset="1" stop-color="#2A9450"/>
     </linearGradient>
-    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#34D399"/>
-      <stop offset="1" stop-color="#059669"/>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <rect x="80" y="80" width="864" height="864" rx="200" ry="200" fill="url(#tile)"/>
-  <rect x="81.5" y="81.5" width="861" height="861" rx="198" ry="198" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="3"/>
-  <path d="${arc}" fill="none" stroke="url(#green)" stroke-width="${SW}" stroke-linecap="round"/>
-  <polygon points="${arrow}" fill="url(#green)"/>
-  <circle cx="${C}" cy="${C}" r="${COIN_R}" fill="url(#green)"/>
-  <circle cx="${C}" cy="${C}" r="${RIM_R}" fill="none" stroke="#06432F" stroke-opacity="0.55" stroke-width="9"/>
+  <rect x="80" y="80" width="864" height="864" rx="200" ry="200" fill="url(#sheen)"/>
+  <rect x="81.5" y="81.5" width="861" height="861" rx="198" ry="198" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="3"/>
+  <path d="${arc}" fill="none" stroke="#ffffff" stroke-width="${SW}" stroke-linecap="round"/>
+  <polygon points="${arrow}" fill="#ffffff"/>
+  <circle cx="${C}" cy="${C}" r="${COIN_R}" fill="#ffffff"/>
+  <circle cx="${C}" cy="${C}" r="${RIM_R}" fill="none" stroke="#2A9450" stroke-opacity="0.5" stroke-width="9"/>
 </svg>`;
 
 const svgDir = process.argv[2] || ".";
