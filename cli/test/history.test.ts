@@ -54,3 +54,20 @@ test("summarize: empty input", () => {
   expect(sum.bestDay).toBeNull();
   expect(sum.avgPerDayUsd).toBe(0);
 });
+
+import { lastEarnedAgoSeconds } from "../src/history";
+
+test("lastEarnedAgoSeconds: time since today_usd last increased", () => {
+  const now = 1_000_000;
+  const samples = [
+    s(now - 600_000, 1.0), // -10m
+    s(now - 300_000, 1.5), // -5m  earned
+    s(now - 60_000, 1.5),  // -1m  flat
+  ];
+  expect(lastEarnedAgoSeconds(samples, now)).toBe(300); // last increase was 5m ago
+});
+
+test("lastEarnedAgoSeconds: null when never increased", () => {
+  const now = 1_000_000;
+  expect(lastEarnedAgoSeconds([s(now - 60_000, 2), s(now, 2)], now)).toBeNull();
+});

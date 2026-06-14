@@ -50,3 +50,13 @@ export function summarize(daily: DayBucket[], now: number): Summary {
   const sumIn = (set: Set<string>) => daily.filter((d) => set.has(d.date)).reduce((a, d) => a + d.usd, 0);
   return { thisWeekUsd: sumIn(week), thisMonthUsd: sumIn(month), bestDay, avgPerDayUsd, daysTracked };
 }
+
+/** Seconds since today_usd last increased (an earning event), or null if never. */
+export function lastEarnedAgoSeconds(samples: Sample[], now: number): number | null {
+  const sorted = [...samples].sort((a, b) => a.ts - b.ts);
+  let lastTs: number | null = null;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i]!.todayUsd > sorted[i - 1]!.todayUsd) lastTs = sorted[i]!.ts;
+  }
+  return lastTs == null ? null : Math.max(0, Math.round((now - lastTs) / 1000));
+}
