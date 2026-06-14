@@ -80,11 +80,11 @@ struct MenuContent: View {
         }
       }
       Text(secondaryLine).font(.caption).foregroundStyle(.secondary)
-      if !m.cap.isEmpty { capSection }
+      if !m.cap.isEmpty { Divider(); capSection }
       if let ago = m.lastEarnedAgoSeconds, m.state == .stalled || m.state == .killed {
         Text("Last earned \(agoText(ago))").font(.caption).foregroundStyle(.secondary)
       }
-      if !m.ads.isEmpty { adsSection }
+      if !m.ads.isEmpty { Divider(); adsSection }
       if m.ageSeconds > 180 {
         Text("Couldn't refresh · showing data from \(agoText(m.ageSeconds))")
           .font(.caption2).foregroundStyle(.secondary)
@@ -139,11 +139,12 @@ struct MenuContent: View {
             Spacer(minLength: 4)
             Image(systemName: "arrow.up.right").font(.caption2).foregroundStyle(.secondary)
           }
-        }.buttonStyle(.plain)
-      }
-      if let t = m.viewThresholdSeconds {
-        Text("Earn after \(t)s of viewing\(m.ads.count > 1 ? " each" : "")")
-          .font(.caption2).foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .help(ad.text)                                  // hover → full text tooltip
+        .onHover { inside in                            // hover → pointing-hand cursor
+          if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
       }
     }
   }
