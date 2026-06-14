@@ -6,6 +6,7 @@ import KickbackKit
 struct MenuContent: View {
   @ObservedObject var vm: MenuVM
   @Environment(\.openWindow) private var openWindow
+  @State private var showAllAds = false
   private var m: MenuModel { vm.model }
 
   var body: some View {
@@ -22,27 +23,63 @@ struct MenuContent: View {
     .frame(width: 300)
   }
 
-  // MARK: header
+  // MARK: header (brand + status + refresh + overflow)
 
   private var header: some View {
-    HStack {
+    HStack(spacing: 8) {
       HStack(spacing: 0) {
         Text("K$ ").foregroundStyle(.green).fontWeight(.bold)
         Text("Kickback").fontWeight(.bold)
       }
       Spacer()
-      if vm.phase == .signedIn { statusPill }
+      if vm.phase == .signedIn {
+        statusPill
+        refreshControl
+      }
+      overflowMenu(showData: vm.phase == .signedIn)
     }
   }
 
   private var statusPill: some View {
     HStack(spacing: 5) {
       Circle().fill(tint).frame(width: 7, height: 7)
-      Text(m.status).font(.caption2.weight(.semibold))
+      Text(shortStatus).font(.caption2.weight(.semibold))
     }
-    .padding(.horizontal, 8).padding(.vertical, 3)
+    .padding(.horizontal, 7).padding(.vertical, 3)
     .background(tint.opacity(0.16)).clipShape(Capsule())
     .foregroundStyle(tint)
+  }
+
+  @ViewBuilder private var refreshControl: some View {
+    if vm.refreshing {
+      ProgressView().controlSize(.small)
+    } else {
+      Button { vm.refresh(showSpinner: true) } label: {
+        Image(systemName: "arrow.clockwise")
+      }
+      .buttonStyle(.plain)
+      .foregroundStyle(.secondary)
+      .help("Refresh · updated \(agoText(m.ageSeconds))")
+      .onHover(perform: pointer)
+    }
+  }
+
+  private func overflowMenu(showData: Bool) -> some View {
+    Menu {
+      if showData {
+        Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
+      }
+      Toggle("Start at login", isOn: Binding(get: { LoginItem.isEnabled() }, set: { LoginItem.setEnabled($0) }))
+      Button { showAbout() } label: { Label("About Kickback", systemImage: "info.circle") }
+      Divider()
+      Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
+    } label: {
+      Image(systemName: "ellipsis.circle")
+    }
+    .menuStyle(.borderlessButton)
+    .menuIndicator(.hidden)
+    .fixedSize()
+    .foregroundStyle(.secondary)
   }
 
   // MARK: states
@@ -54,8 +91,7 @@ struct MenuContent: View {
       Button(action: vm.signIn) {
         Text("Sign in with Google").frame(maxWidth: .infinity)
       }.buttonStyle(.borderedProminent).tint(.green)
-      footer(showData: false)
-    }.frame(maxWidth: .infinity)
+    }.frame(maxWidth: .infinity).padding(.vertical, 4)
   }
 
   private var signingIn: some View {
@@ -71,7 +107,6 @@ struct MenuContent: View {
   private var signedIn: some View {
     VStack(alignment: .leading, spacing: 11) {
       bannerView
-      // Hero: today's live value gets the emphasis.
       VStack(alignment: .leading, spacing: 1) {
         Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
         HStack(alignment: .center, spacing: 7) {
@@ -80,17 +115,17 @@ struct MenuContent: View {
         }
       }
       Text(secondaryLine).font(.caption).foregroundStyle(.secondary)
+      if m.ageSeconds > 180 {
+        Text("Couldn't refresh · showing data from \(agoText(m.ageSeconds))")
+          .font(.caption2).foregroundStyle(.secondary)
+      }
       if !m.cap.isEmpty { Divider(); capSection }
       if let ago = m.lastEarnedAgoSeconds, m.state == .stalled || m.state == .killed {
         Text("Last earned \(agoText(ago))").font(.caption).foregroundStyle(.secondary)
       }
       if !m.ads.isEmpty { Divider(); adsSection }
-      if m.ageSeconds > 180 {
-        Text("Couldn't refresh · showing data from \(agoText(m.ageSeconds))")
-          .font(.caption2).foregroundStyle(.secondary)
-      }
       Divider()
-      footer(showData: true)
+      historyRow
     }
   }
 
@@ -131,22 +166,42 @@ struct MenuContent: View {
     VStack(alignment: .leading, spacing: 6) {
       Text("NOW SHOWING\(m.ads.count > 1 ? " · \(m.ads.count)" : "")")
         .font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-      ForEach(Array(m.ads.enumerated()), id: \.offset) { _, ad in
-        Button { openURL(ad.url) } label: {
-          HStack(spacing: 8) {
-            adIcon(ad.icon)
-            Text(ad.text).lineLimit(1)
-            Spacer(minLength: 4)
-            Image(systemName: "arrow.up.right").font(.caption2).foregroundStyle(.secondary)
-          }
+      ForEach(Array(m.ads.prefix(3).enumerated()), id: \.offset) { _, ad in adRow(ad) }
+      if m.ads.count > 3 {
+        Button { showAllAds.toggle() } label: {
+          Text("+\(m.ads.count - 3) more").font(.caption).foregroundStyle(Color.accentColor)
         }
         .buttonStyle(.plain)
-        .help(ad.text)                                  // hover → full text tooltip
-        .onHover { inside in                            // hover → pointing-hand cursor
-          if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-        }
+        .onHover(perform: pointer)
+        .popover(isPresented: $showAllAds) { allAdsPopover }
       }
     }
+  }
+
+  private var allAdsPopover: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text("All ads · \(m.ads.count)").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+      ScrollView {
+        VStack(alignment: .leading, spacing: 7) {
+          ForEach(Array(m.ads.enumerated()), id: \.offset) { _, ad in adRow(ad) }
+        }
+      }.frame(maxHeight: 320)
+    }
+    .padding(12).frame(width: 280)
+  }
+
+  private func adRow(_ ad: AdItem) -> some View {
+    Button { openURL(ad.url) } label: {
+      HStack(spacing: 8) {
+        adIcon(ad.icon)
+        Text(ad.text).lineLimit(1)
+        Spacer(minLength: 4)
+        Image(systemName: "arrow.up.right").font(.caption2).foregroundStyle(.secondary)
+      }
+    }
+    .buttonStyle(.plain)
+    .help(ad.text)            // hover → full text
+    .onHover(perform: pointer)         // hover → pointing-hand cursor
   }
 
   @ViewBuilder private func adIcon(_ icon: String) -> some View {
@@ -161,48 +216,19 @@ struct MenuContent: View {
     }
   }
 
-  // MARK: footer
-
-  private func footer(showData: Bool) -> some View {
-    HStack {
-      if showData {
-        Button {
-          NSApp.activate(ignoringOtherApps: true)  // .accessory app: bring the window forward
-          openWindow(id: "history")
-        } label: { Label("History", systemImage: "clock.arrow.circlepath") }
-          .buttonStyle(.plain)
+  private var historyRow: some View {
+    Button { openHistory() } label: {
+      HStack(spacing: 6) {
+        Image(systemName: "clock.arrow.circlepath")
+        Text("View history")
         Spacer()
-        if vm.refreshing {
-          HStack(spacing: 5) { ProgressView().controlSize(.small); Text("Refreshing…") }
-        } else {
-          Button { vm.refresh(showSpinner: true) } label: { Label("Refresh", systemImage: "arrow.clockwise") }
-            .buttonStyle(.plain)
-        }
-        Spacer()
-      } else {
-        Spacer()
-      }
-      overflowMenu(showData: showData)
+        Image(systemName: "chevron.right").font(.caption2)
+      }.font(.caption)
     }
-    .font(.caption)
+    .buttonStyle(.plain)
     .foregroundStyle(.secondary)
-  }
-
-  private func overflowMenu(showData: Bool) -> some View {
-    Menu {
-      if showData {
-        Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
-      }
-      Toggle("Start at login", isOn: Binding(get: { LoginItem.isEnabled() }, set: { LoginItem.setEnabled($0) }))
-      Button { showAbout() } label: { Label("About Kickback", systemImage: "info.circle") }
-      Divider()
-      Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
-    } label: {
-      Image(systemName: "ellipsis.circle")
-    }
-    .menuStyle(.borderlessButton)
-    .menuIndicator(.hidden)
-    .fixedSize()
+    .help("Daily earnings & totals")
+    .onHover(perform: pointer)
   }
 
   // MARK: helpers
@@ -211,7 +237,7 @@ struct MenuContent: View {
     switch m.trend {
     case "up":   Image(systemName: "chart.line.uptrend.xyaxis").font(.system(size: 16, weight: .bold)).foregroundStyle(.green)
     case "down": Image(systemName: "chart.line.downtrend.xyaxis").font(.system(size: 16, weight: .bold)).foregroundStyle(.red)
-    default:     EmptyView()   // flat/neutral: show nothing
+    default:     EmptyView()
     }
   }
 
@@ -219,6 +245,17 @@ struct MenuContent: View {
     var s = "Lifetime \(m.lifetime)"
     if !m.rate.isEmpty { s += "  ·  \(m.rate)" }
     return s
+  }
+
+  private var shortStatus: String {
+    switch m.state {
+    case .earning: return "Earning"
+    case .stalled: return "Stalled"
+    case .cap:     return "Capped"
+    case .killed:  return "Stopped"
+    case .noServe: return "Idle"
+    case .signedOut: return "—"
+    }
   }
 
   private var tint: Color {
@@ -235,8 +272,17 @@ struct MenuContent: View {
     sec >= 3600 ? "\(sec / 3600)h ago" : sec >= 60 ? "\(sec / 60)m ago" : "\(sec)s ago"
   }
 
+  private func pointer(_ inside: Bool) {
+    if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+  }
+
   private func openURL(_ s: String) {
     if !s.isEmpty, let u = URL(string: s) { NSWorkspace.shared.open(u) }
+  }
+
+  private func openHistory() {
+    NSApp.activate(ignoringOtherApps: true)
+    openWindow(id: "history")
   }
 
   private func showAbout() {
