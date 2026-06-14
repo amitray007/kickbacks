@@ -20,6 +20,7 @@ struct MenuContent: View {
     }
     .padding(12)
     .frame(width: 300)
+    .onAppear { vm.refresh() }   // re-fetch each time the panel opens, not just every 60s
   }
 
   // MARK: header (brand + status + refresh + overflow)
