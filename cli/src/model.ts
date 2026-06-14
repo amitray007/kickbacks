@@ -2,6 +2,7 @@ import type { Portfolio, Earnings } from "./types";
 import type { Store } from "./store";
 import { ratePerHour, projectSecondsToCap, earningState, isStalled, fmtUsd, fmtDuration } from "./derive";
 import { sparkline } from "./ui";
+import { lastEarnedAgoSeconds } from "./history";
 
 export type MenuState = "signed-out" | "killed" | "cap" | "stalled" | "no-serve" | "earning";
 
@@ -22,6 +23,11 @@ export interface MenuModel {
   adUrl: string;
   status: string;
   ageSeconds: number;
+  menuValue: string;
+  viewThresholdSeconds: number | null;
+  ads: { text: string; url: string }[];
+  lastEarnedAgoSeconds: number | null;
+  collecting: boolean;
 }
 
 export interface MenuInput {
@@ -46,6 +52,7 @@ export function buildMenuModel(i: MenuInput): MenuModel {
       signedIn: false, state: "signed-out", title: "kickback",
       today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capPct: 0,
       resets: "", projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0,
+      menuValue: "—", viewThresholdSeconds: null, ads: [], lastEarnedAgoSeconds: null, collecting: false,
     };
   }
   const p = i.p, e = i.e;
@@ -80,5 +87,10 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     ad: ad?.text ?? "", adUrl: ad?.clickUrl ?? "",
     status: STATUS[state],
     ageSeconds: latest ? Math.max(0, Math.round((i.now - latest.ts) / 1000)) : 0,
+    menuValue: p.todayUsd.toFixed(2),
+    viewThresholdSeconds: p.viewThresholdSeconds,
+    ads: p.ads.map((a) => ({ text: a.text, url: a.clickUrl })),
+    lastEarnedAgoSeconds: lastEarnedAgoSeconds(samples, i.now),
+    collecting: samples.length < 2,
   };
 }

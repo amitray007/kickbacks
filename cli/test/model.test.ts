@@ -44,3 +44,22 @@ test("buildMenuModel reflects killed / no-serve states", () => {
   expect(buildMenuModel({ p: { ...P, kill: true }, e: null, store, now: 1, signedIn: true }).state).toBe("killed");
   expect(buildMenuModel({ p: { ...P, ads: [] }, e: null, store, now: 1, signedIn: true }).state).toBe("no-serve");
 });
+
+test("buildMenuModel adds menuValue, ads, threshold, collecting", () => {
+  const store = openStore(":memory:");
+  // one sample only → collecting (need >=2 for a trend)
+  store.insertSample({ ts: 1, lifetimeUsd: 12.0, todayUsd: 0.5, adId: "x", kill: false });
+  const m = buildMenuModel({ p: P, e: E, store, now: 3_600_001, signedIn: true });
+  expect(m.menuValue).toBe("0.56");                 // today without the "$"
+  expect(m.viewThresholdSeconds).toBe(15);
+  expect(m.ads).toEqual([{ text: "Inflowpay", url: "https://x.test" }]);
+  expect(m.collecting).toBe(true);                  // <2 samples
+});
+
+test("buildMenuModel signed-out menuValue is the dash", () => {
+  const store = openStore(":memory:");
+  const m = buildMenuModel({ p: null, e: null, store, now: 1, signedIn: false });
+  expect(m.menuValue).toBe("—");
+  expect(m.ads).toEqual([]);
+  expect(m.collecting).toBe(false);
+});
