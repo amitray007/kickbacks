@@ -13,6 +13,7 @@ public enum MenuState: String, Codable, Sendable {
 public struct AdItem: Codable, Equatable, Sendable {
   public var text: String
   public var url: String
+  public var icon: String
 }
 
 /// Display-ready menu model, decoded from `kickback model --json`. The CLI does all

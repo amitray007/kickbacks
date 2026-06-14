@@ -80,7 +80,17 @@ struct MenuContent: View {
       if !m.ad.isEmpty {
         Divider()
         Text("Now showing").font(.caption).foregroundStyle(.secondary)
-        Button(action: openAd) { Text(m.ad).lineLimit(1) }.buttonStyle(.link)
+        Button(action: openAd) {
+          HStack(spacing: 6) {
+            if let icon = m.ads.first?.icon, !icon.isEmpty, let u = URL(string: icon) {
+              AsyncImage(url: u) { phase in
+                if let img = phase.image { img.resizable().frame(width: 16, height: 16).clipShape(RoundedRectangle(cornerRadius: 3)) }
+                else { Color.clear.frame(width: 16, height: 16) }
+              }
+            }
+            Text(m.ad).lineLimit(1)
+          }
+        }.buttonStyle(.link)
         if let t = m.viewThresholdSeconds {
           Text("Earn after \(t)s of viewing" + (m.ads.count > 1 ? " · \(m.ads.count) ads in rotation" : ""))
             .font(.caption2).foregroundStyle(.secondary)
