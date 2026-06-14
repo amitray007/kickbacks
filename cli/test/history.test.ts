@@ -71,3 +71,27 @@ test("lastEarnedAgoSeconds: null when never increased", () => {
   const now = 1_000_000;
   expect(lastEarnedAgoSeconds([s(now - 60_000, 2), s(now, 2)], now)).toBeNull();
 });
+
+import { buildHistory } from "../src/history";
+import { openStore } from "../src/store";
+
+test("buildHistory assembles JSON from the store", () => {
+  const store = openStore(":memory:");
+  store.insertSample({ ts: day(2026, 6, 9, 9), lifetimeUsd: 100, todayUsd: 2, adId: "x", kill: false });
+  store.insertSample({ ts: day(2026, 6, 9, 18), lifetimeUsd: 103, todayUsd: 5, adId: "y", kill: false });
+  const h = buildHistory(store, day(2026, 6, 9, 20));
+  expect(h.daysTracked).toBe(1);
+  expect(h.lifetimeUsd).toBe(103);
+  expect(h.sinceInstallUsd).toBe(3);            // 103 - 100
+  expect(h.daily[0]!.usd).toBe(5);
+  expect(h.campaignsSeen).toBe(2);              // ad ids x,y
+  expect(h.bestDay).toEqual({ date: "2026-06-09", usd: 5 });
+});
+
+test("buildHistory on an empty store is the day-one shape", () => {
+  const h = buildHistory(openStore(":memory:"), day(2026, 6, 9, 20));
+  expect(h.daysTracked).toBe(0);
+  expect(h.daily).toEqual([]);
+  expect(h.lifetimeUsd).toBe(0);
+  expect(h.bestDay).toBeNull();
+});

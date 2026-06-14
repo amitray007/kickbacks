@@ -60,3 +60,42 @@ export function lastEarnedAgoSeconds(samples: Sample[], now: number): number | n
   }
   return lastTs == null ? null : Math.max(0, Math.round((now - lastTs) / 1000));
 }
+
+import type { Store } from "./store";
+
+export interface HistoryJson extends Summary {
+  lifetimeUsd: number;
+  sinceInstallUsd: number;
+  firstSampleTs: number | null;
+  daily: DayBucket[];
+  capHitsLast7: number;
+  campaignsSeen: number;
+  activeHours: number;
+}
+
+export function buildHistory(store: Store, now: number): HistoryJson {
+  const samples = [...store.recentSince(0)].sort((a, b) => a.ts - b.ts);
+  const daily = dailyBuckets(samples);
+  const sum = summarize(daily, now);
+  const first = samples[0] ?? null;
+  const last = samples[samples.length - 1] ?? null;
+  const lifetimeUsd = last?.lifetimeUsd ?? 0;
+  const sinceInstallUsd = first && last ? Math.max(0, last.lifetimeUsd - first.lifetimeUsd) : 0;
+
+  const week = new Set<string>();
+  for (let i = 0; i < 7; i++) week.add(localDayKey(now - i * 86_400_000));
+  const capHitsLast7 = daily.filter((d) => d.hitCap && week.has(d.date)).length;
+  const campaignsSeen = new Set(samples.map((s) => s.adId).filter((a) => a !== "")).size;
+
+  // active hours: sum gaps that follow an active sample, ignoring gaps > 30m (app/poller was off)
+  let activeMs = 0;
+  for (let i = 1; i < samples.length; i++) {
+    if (samples[i - 1]!.active === true) {
+      const gap = samples[i]!.ts - samples[i - 1]!.ts;
+      if (gap > 0 && gap < 30 * 60_000) activeMs += gap;
+    }
+  }
+  const activeHours = Math.round((activeMs / 3_600_000) * 10) / 10;
+
+  return { ...sum, lifetimeUsd, sinceInstallUsd, firstSampleTs: first?.ts ?? null, daily, capHitsLast7, campaignsSeen, activeHours };
+}

@@ -12,6 +12,7 @@ import { isActive } from "./activity";
 import { notify } from "./notify";
 import { installAgent, uninstallAgent, agentInstalled, installBarAgent } from "./launchd";
 import { buildMenuModel } from "./model";
+import { buildHistory } from "./history";
 import { spawn } from "node:child_process";
 import { dirname } from "node:path";
 import { existsSync } from "node:fs";
@@ -123,6 +124,14 @@ async function cmdPoller() {
   }
 }
 
+// Emit the local earnings history as JSON for the menu-bar app's History window.
+// Read-only; works signed-in or out (it only reads the local SQLite history).
+function cmdHistory() {
+  const store = openStore(DB_FILE);
+  try { console.log(JSON.stringify(buildHistory(store, Date.now()))); }
+  finally { store.close(); }
+}
+
 // Emit the menu model as JSON for the Swift menu-bar app (live fetch → last-known on
 // failure). Read-only; records a sample when the fetch succeeds.
 async function cmdModel() {
@@ -207,10 +216,10 @@ async function cmdLogout() {
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
 const table: Record<string, () => unknown> = {
   login: cmdLogin, portfolio: cmdPortfolio, watch: cmdWatch, earnings: cmdEarnings,
-  raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll, poller: cmdPoller, model: cmdModel, bar: cmdBar,
+  raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll, poller: cmdPoller, model: cmdModel, bar: cmdBar, history: cmdHistory,
 };
 const fn = table[cmd];
-if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout | poll | poller <…> | model | bar <install|uninstall|status>"); process.exit(2); }
+if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout | poll | poller <…> | model | bar <install|uninstall|status> | history"); process.exit(2); }
 try {
   await fn();
 } catch (e) {
