@@ -4,6 +4,9 @@ dist/
 .build/
 DerivedData/
 
+# brainstorming visual-companion scratch
+.superpowers/
+
 # local data / secrets
 *.db
 .env
