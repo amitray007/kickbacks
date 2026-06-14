@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import KickbackKit
 
 @main
 struct KickbackBarApp: App {
@@ -10,7 +11,8 @@ struct KickbackBarApp: App {
     MenuBarExtra {
       MenuContent(vm: vm)
     } label: {
-      Text(vm.model.title)
+      Text(MenuPresentation.menuBarLabel(phase: vm.phase, menuValue: vm.model.menuValue))
+        .foregroundStyle(labelColor(vm))
     }
     .menuBarExtraStyle(.window)
   }
@@ -20,5 +22,14 @@ struct KickbackBarApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.accessory)
+  }
+}
+
+@MainActor private func labelColor(_ vm: MenuVM) -> Color {
+  switch MenuPresentation.tint(state: vm.model.state, phase: vm.phase) {
+  case .amber: return .orange
+  case .green: return .green
+  case .red: return .red
+  case .primary, .muted: return .primary
   }
 }
