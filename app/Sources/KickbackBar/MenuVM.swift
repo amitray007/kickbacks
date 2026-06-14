@@ -10,22 +10,41 @@ import KickbackKit
   @Published private(set) var phase: AuthPhase = .signedOut
   @Published private(set) var refreshing = false   // true only during a user-initiated refresh
   @Published private(set) var history: HistoryModel?   // local stats, shown inline
+  @Published private(set) var pollSeconds: Int = 60    // auto-refresh cadence (persisted)
 
   private var pollTask: Task<Void, Never>?
   private var loginProc: Process?
   private var loginWatch: Task<Void, Never>?
 
-  init(intervalSeconds: UInt64 = 60) {
+  private static let intervalKey = "refreshIntervalSeconds"
+
+  init() {
+    let stored = UserDefaults.standard.integer(forKey: Self.intervalKey)
+    pollSeconds = stored > 0 ? max(15, stored) : 60
     refresh()
+    startPolling()
+  }
+
+  deinit { pollTask?.cancel(); loginWatch?.cancel() }
+
+  private func startPolling() {
+    pollTask?.cancel()
+    let secs = pollSeconds
     pollTask = Task { [weak self] in
       while !Task.isCancelled {
-        try? await Task.sleep(nanoseconds: intervalSeconds * 1_000_000_000)
+        try? await Task.sleep(nanoseconds: UInt64(secs) * 1_000_000_000)
         self?.refresh()
       }
     }
   }
 
-  deinit { pollTask?.cancel(); loginWatch?.cancel() }
+  /// Change the auto-refresh cadence (persisted), restart the timer, and refresh now.
+  func setPollSeconds(_ s: Int) {
+    pollSeconds = max(15, s)
+    UserDefaults.standard.set(pollSeconds, forKey: Self.intervalKey)
+    startPolling()
+    refresh()
+  }
 
   /// `showSpinner` is set only by the Refresh button so the 60s background poll doesn't
   /// flicker the spinner. The model is kept on a transient (nil) fetch.

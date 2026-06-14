@@ -69,6 +69,12 @@ struct MenuContent: View {
         Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
       }
       Toggle("Start at login", isOn: Binding(get: { LoginItem.isEnabled() }, set: { LoginItem.setEnabled($0) }))
+      Picker("Refresh every", selection: Binding(get: { vm.pollSeconds }, set: { vm.setPollSeconds($0) })) {
+        Text("1 min").tag(60)
+        Text("5 min").tag(300)
+        Text("10 min").tag(600)
+        Text("30 min").tag(1800)
+      }
       Button { showAbout() } label: { Label("About Kickback", systemImage: "info.circle") }
       Divider()
       Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
