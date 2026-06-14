@@ -11,8 +11,9 @@ import { runPoll } from "./poll";
 import { isActive } from "./activity";
 import { notify } from "./notify";
 import { installAgent, uninstallAgent, agentInstalled } from "./launchd";
+import { buildMenuModel } from "./model";
 import { spawn } from "node:child_process";
-import type { Portfolio } from "./types";
+import type { Portfolio, Earnings } from "./types";
 
 const deps = (token: string) => ({ fetch, token, base: BASE, ccVersion: CC_VERSION });
 const runAuthed = makeAuthedRunner({ fetch, base: BASE });
@@ -120,6 +121,26 @@ async function cmdPoller() {
   }
 }
 
+// Emit the menu model as JSON for the Swift menu-bar app (live fetch → last-known on
+// failure). Read-only; records a sample when the fetch succeeds.
+async function cmdModel() {
+  const signedIn = !!loadTokens();
+  const store = openStore(DB_FILE);
+  const now = Date.now();
+  try {
+    let p: Portfolio | null = null;
+    let e: Earnings | null = null;
+    if (signedIn) {
+      try {
+        p = await runAuthed((tk) => fetchPortfolio(deps(tk)));
+        e = await runAuthed((tk) => fetchEarnings(deps(tk))).catch(() => null);
+        recordSample(store, p);
+      } catch { /* network/API down → fall back to last-known from the store */ }
+    }
+    console.log(JSON.stringify(buildMenuModel({ p, e, store, now, signedIn })));
+  } finally { store.close(); }
+}
+
 // Live framed dashboard. Non-TTY (piped) → one static render so it stays scriptable.
 // Interval via KICKBACK_WATCH_SECONDS (default 30, min 5).
 async function cmdWatch() {
@@ -164,10 +185,10 @@ async function cmdLogout() {
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
 const table: Record<string, () => unknown> = {
   login: cmdLogin, portfolio: cmdPortfolio, watch: cmdWatch, earnings: cmdEarnings,
-  raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll, poller: cmdPoller,
+  raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll, poller: cmdPoller, model: cmdModel,
 };
 const fn = table[cmd];
-if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout | poll | poller <install|uninstall|status>"); process.exit(2); }
+if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout | poll | poller <install|uninstall|status> | model"); process.exit(2); }
 try {
   await fn();
 } catch (e) {
