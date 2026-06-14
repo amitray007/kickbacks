@@ -73,8 +73,8 @@ public enum ModelClient {
     let proc = Process()
     proc.executableURL = URL(fileURLWithPath: bin)
     proc.arguments = ["logout"]
-    proc.standardOutput = Pipe()
-    proc.standardError = Pipe()
+    proc.standardOutput = FileHandle.nullDevice
+    proc.standardError = FileHandle.nullDevice
     try? proc.run()
     proc.waitUntilExit()
   }
