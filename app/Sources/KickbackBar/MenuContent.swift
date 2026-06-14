@@ -9,7 +9,7 @@ struct MenuContent: View {
   private var m: MenuModel { vm.model }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: 10) {
       header
       Divider()
       switch vm.phase {
@@ -22,6 +22,8 @@ struct MenuContent: View {
     .frame(width: 300)
   }
 
+  // MARK: header
+
   private var header: some View {
     HStack {
       HStack(spacing: 0) {
@@ -29,14 +31,21 @@ struct MenuContent: View {
         Text("Kickback").fontWeight(.bold)
       }
       Spacer()
-      if vm.phase == .signedIn {
-        HStack(spacing: 5) {
-          Circle().fill(dotColor).frame(width: 8, height: 8)
-          Text(m.status).foregroundStyle(.secondary).font(.caption)
-        }
-      }
+      if vm.phase == .signedIn { statusPill }
     }
   }
+
+  private var statusPill: some View {
+    HStack(spacing: 5) {
+      Circle().fill(tint).frame(width: 7, height: 7)
+      Text(m.status).font(.caption2.weight(.semibold))
+    }
+    .padding(.horizontal, 8).padding(.vertical, 3)
+    .background(tint.opacity(0.16)).clipShape(Capsule())
+    .foregroundStyle(tint)
+  }
+
+  // MARK: states
 
   private var signedOut: some View {
     VStack(spacing: 10) {
@@ -60,49 +69,32 @@ struct MenuContent: View {
   }
 
   private var signedIn: some View {
-    VStack(alignment: .leading, spacing: 6) {
+    VStack(alignment: .leading, spacing: 11) {
       bannerView
-      row("Today", m.today, big: true)
-      if m.collecting {
-        Text("Collecting your trend… charts appear within the hour")
-          .font(.caption).foregroundStyle(.secondary)
-          .padding(8).frame(maxWidth: .infinity)
-          .overlay(RoundedRectangle(cornerRadius: 6).stroke(.secondary.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [4])))
-      } else if !m.spark.isEmpty {
-        HStack { Text(m.spark).foregroundStyle(.green); Spacer(); Text("last 24h").font(.caption).foregroundStyle(.secondary) }
-      }
-      row("Lifetime", m.lifetime)
-      if !m.rate.isEmpty { row("Rate", "\(m.rate) \(arrow)") }
-      if !m.cap.isEmpty { row("Daily cap", "\(m.cap) · \(m.capPct)%") }
-      if let ago = m.lastEarnedAgoSeconds, m.state == .stalled || m.state == .killed {
-        row("Last earned", agoText(ago))
-      }
-      if !m.ad.isEmpty {
-        Divider()
-        Text("Now showing").font(.caption).foregroundStyle(.secondary)
-        Button(action: openAd) {
-          HStack(spacing: 6) {
-            if let icon = m.ads.first?.icon, !icon.isEmpty, let u = URL(string: icon) {
-              AsyncImage(url: u) { phase in
-                if let img = phase.image { img.resizable().frame(width: 16, height: 16).clipShape(RoundedRectangle(cornerRadius: 3)) }
-                else { Color.clear.frame(width: 16, height: 16) }
-              }
-            }
-            Text(m.ad).lineLimit(1)
-          }
-        }.buttonStyle(.link)
-        if let t = m.viewThresholdSeconds {
-          Text("Earn after \(t)s of viewing" + (m.ads.count > 1 ? " · \(m.ads.count) ads in rotation" : ""))
-            .font(.caption2).foregroundStyle(.secondary)
+      // Hero: today's live value gets the emphasis.
+      VStack(alignment: .leading, spacing: 1) {
+        Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+          Text(m.today).font(.system(size: 34, weight: .heavy)).monospacedDigit()
+          Text(arrow).font(.title3.weight(.bold)).foregroundStyle(m.trend == "up" ? .green : .secondary)
         }
       }
-      if m.ageSeconds > 180 {
-        Text("⚠ Couldn't refresh · showing data from \(agoText(m.ageSeconds))")
-          .font(.caption).foregroundStyle(.secondary)
+      Text(secondaryLine).font(.caption).foregroundStyle(.secondary)
+      if !m.cap.isEmpty { capSection }
+      if let ago = m.lastEarnedAgoSeconds, m.state == .stalled || m.state == .killed {
+        Text("Last earned \(agoText(ago))").font(.caption).foregroundStyle(.secondary)
       }
+      if !m.ads.isEmpty { adsSection }
+      if m.ageSeconds > 180 {
+        Text("Couldn't refresh · showing data from \(agoText(m.ageSeconds))")
+          .font(.caption2).foregroundStyle(.secondary)
+      }
+      Divider()
       footer(showData: true)
     }
   }
+
+  // MARK: sections
 
   @ViewBuilder private var bannerView: some View {
     switch m.state {
@@ -120,36 +112,109 @@ struct MenuContent: View {
       .background(color.opacity(0.12)).clipShape(RoundedRectangle(cornerRadius: 6))
   }
 
+  private var capSection: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      HStack {
+        Text("Daily cap").foregroundStyle(.secondary)
+        Spacer()
+        Text("\(m.cap) · \(m.capPct)%")
+      }.font(.caption)
+      ProgressView(value: Double(min(max(m.capPct, 0), 100)), total: 100).tint(.green)
+      if !m.resets.isEmpty {
+        Text("resets in \(m.resets)").font(.caption2).foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity, alignment: .trailing)
+      }
+    }
+  }
+
+  private var adsSection: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text("NOW SHOWING\(m.ads.count > 1 ? " · \(m.ads.count)" : "")")
+        .font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+      ForEach(Array(m.ads.enumerated()), id: \.offset) { _, ad in
+        Button { openURL(ad.url) } label: {
+          HStack(spacing: 8) {
+            adIcon(ad.icon)
+            Text(ad.text).lineLimit(1)
+            Spacer(minLength: 4)
+            Image(systemName: "arrow.up.right").font(.caption2).foregroundStyle(.secondary)
+          }
+        }.buttonStyle(.plain)
+      }
+      if let t = m.viewThresholdSeconds {
+        Text("Earn after \(t)s of viewing\(m.ads.count > 1 ? " each" : "")")
+          .font(.caption2).foregroundStyle(.secondary)
+      }
+    }
+  }
+
+  @ViewBuilder private func adIcon(_ icon: String) -> some View {
+    if !icon.isEmpty, let u = URL(string: icon) {
+      AsyncImage(url: u) { phase in
+        if let img = phase.image { img.resizable().aspectRatio(contentMode: .fill) }
+        else { Color.secondary.opacity(0.18) }
+      }
+      .frame(width: 18, height: 18).clipShape(RoundedRectangle(cornerRadius: 4))
+    } else {
+      RoundedRectangle(cornerRadius: 4).fill(Color.secondary.opacity(0.18)).frame(width: 18, height: 18)
+    }
+  }
+
+  // MARK: footer
+
   private func footer(showData: Bool) -> some View {
     HStack {
       if showData {
-        Button("📊 History") {
+        Button {
           NSApp.activate(ignoringOtherApps: true)  // .accessory app: bring the window forward
           openWindow(id: "history")
-        }.buttonStyle(.link)
+        } label: { Label("History", systemImage: "clock.arrow.circlepath") }
+          .buttonStyle(.plain)
         Spacer()
-        Button("↻ Refresh") { vm.refresh() }.buttonStyle(.link)
+        if vm.refreshing {
+          HStack(spacing: 5) { ProgressView().controlSize(.small); Text("Refreshing…") }
+        } else {
+          Button { vm.refresh(showSpinner: true) } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+            .buttonStyle(.plain)
+        }
+        Spacer()
       } else {
         Spacer()
       }
-      Menu("⋯") {
-        if showData { Button("Sign out", action: vm.signOut) }
-        Toggle("Start at login", isOn: Binding(get: { LoginItem.isEnabled() }, set: { LoginItem.setEnabled($0) }))
-        Button("Quit") { NSApplication.shared.terminate(nil) }
-      }.menuStyle(.borderlessButton).fixedSize()
+      overflowMenu(showData: showData)
     }
+    .font(.caption)
+    .foregroundStyle(.secondary)
   }
 
-  private func row(_ key: String, _ value: String, big: Bool = false) -> some View {
-    HStack {
-      Text(key).foregroundStyle(.secondary)
-      Spacer()
-      Text(value).font(big ? .title2.bold() : .body)
+  private func overflowMenu(showData: Bool) -> some View {
+    Menu {
+      if showData {
+        Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
+      }
+      Toggle("Start at login", isOn: Binding(get: { LoginItem.isEnabled() }, set: { LoginItem.setEnabled($0) }))
+      Button { showAbout() } label: { Label("About Kickback", systemImage: "info.circle") }
+      Divider()
+      Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
+    } label: {
+      Image(systemName: "ellipsis.circle")
     }
+    .menuStyle(.borderlessButton)
+    .menuIndicator(.hidden)
+    .fixedSize()
   }
+
+  // MARK: helpers
 
   private var arrow: String { m.trend == "up" ? "▴" : m.trend == "down" ? "▾" : "—" }
-  private var dotColor: Color {
+
+  private var secondaryLine: String {
+    var s = "Lifetime \(m.lifetime)"
+    if !m.rate.isEmpty { s += "  ·  \(m.rate)" }
+    return s
+  }
+
+  private var tint: Color {
     switch MenuPresentation.tint(state: m.state, phase: vm.phase) {
     case .amber: return .orange
     case .green: return .green
@@ -158,8 +223,17 @@ struct MenuContent: View {
     case .muted: return .secondary
     }
   }
+
   private func agoText(_ sec: Int) -> String {
     sec >= 3600 ? "\(sec / 3600)h ago" : sec >= 60 ? "\(sec / 60)m ago" : "\(sec)s ago"
   }
-  private func openAd() { if let u = URL(string: m.adUrl), !m.adUrl.isEmpty { NSWorkspace.shared.open(u) } }
+
+  private func openURL(_ s: String) {
+    if !s.isEmpty, let u = URL(string: s) { NSWorkspace.shared.open(u) }
+  }
+
+  private func showAbout() {
+    NSApp.activate(ignoringOtherApps: true)
+    NSApplication.shared.orderFrontStandardAboutPanel(nil)
+  }
 }

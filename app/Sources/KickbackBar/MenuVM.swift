@@ -8,6 +8,7 @@ import KickbackKit
 @MainActor final class MenuVM: ObservableObject {
   @Published private(set) var model: MenuModel = .signedOut
   @Published private(set) var phase: AuthPhase = .signedOut
+  @Published private(set) var refreshing = false   // true only during a user-initiated refresh
 
   private var pollTask: Task<Void, Never>?
   private var loginProc: Process?
@@ -25,10 +26,16 @@ import KickbackKit
 
   deinit { pollTask?.cancel(); loginWatch?.cancel() }
 
-  func refresh() {
+  /// `showSpinner` is set only by the Refresh button so the 60s background poll doesn't
+  /// flicker the spinner. The model is kept on a transient (nil) fetch.
+  func refresh(showSpinner: Bool = false) {
+    if showSpinner { refreshing = true }
     Task.detached(priority: .utility) {
-      guard let m = ModelClient.fetch() else { return } // nil = transient → keep last
-      await MainActor.run { self.apply(m) }
+      let m = ModelClient.fetch()
+      await MainActor.run {
+        if let m { self.apply(m) }
+        if showSpinner { self.refreshing = false }
+      }
     }
   }
 
