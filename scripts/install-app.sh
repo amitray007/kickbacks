@@ -33,8 +33,17 @@ cat > "$STAGE/Contents/Info.plist" <<'PLIST'
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
 </dict></plist>
 PLIST
+
+mkdir -p "$STAGE/Contents/Resources"
+if [ -f "$ROOT/app/Resources/AppIcon.icns" ]; then
+  cp "$ROOT/app/Resources/AppIcon.icns" "$STAGE/Contents/Resources/AppIcon.icns"
+  echo "-> bundled app/Resources/AppIcon.icns"
+else
+  echo "-> no app/Resources/AppIcon.icns yet (using the default icon; drop one there to brand it)"
+fi
 
 echo "-> installing to $DEST/$APP ..."
 mkdir -p "$DEST"
@@ -42,4 +51,4 @@ rm -rf "${DEST:?}/$APP"
 cp -R "$STAGE" "$DEST/$APP"
 echo "OK: installed $DEST/$APP"
 echo "    Launch from Launchpad/Finder, or:  open -a Kickback"
-echo "    (App icon: add AppIcon.icns to Contents/Resources + CFBundleIconFile later.)"
+echo "    (Branding: drop an AppIcon.icns into app/Resources/ and re-run to embed it.)"

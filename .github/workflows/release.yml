@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build + publish macOS artifacts
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build CLI + menu-bar app + .app bundle
+        run: |
+          bash scripts/install-app.sh "$RUNNER_TEMP/apps"   # builds dist/kickback + dist/Kickback.app
+          cp app/.build/release/KickbackBar dist/kickback-bar
+
+      - name: Package artifacts
+        run: |
+          cd dist
+          zip -j kickback-cli-macos.zip kickback kickback-bar
+          ditto -c -k --keepParent Kickback.app Kickback.app.zip
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/kickback-cli-macos.zip
+            dist/Kickback.app.zip
+          generate_release_notes: true
