@@ -9,6 +9,12 @@ public enum ModelClient {
   /// Resolve the kickback binary: $KICKBACK_BIN, then the common Homebrew paths.
   public static func binaryPath() -> String? {
     if let b = ProcessInfo.processInfo.environment["KICKBACK_BIN"], !b.isEmpty { return b }
+    // Bundled next to the app's own executable (Kickback.app/Contents/MacOS/kickback) →
+    // makes the .app self-contained, no brew required.
+    if let exe = Bundle.main.executableURL {
+      let sibling = exe.deletingLastPathComponent().appendingPathComponent("kickback").path
+      if FileManager.default.isExecutableFile(atPath: sibling) { return sibling }
+    }
     for p in ["/opt/homebrew/bin/kickback", "/usr/local/bin/kickback"]
     where FileManager.default.isExecutableFile(atPath: p) { return p }
     return nil
