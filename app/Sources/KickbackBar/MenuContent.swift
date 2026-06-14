@@ -5,7 +5,6 @@ import KickbackKit
 
 struct MenuContent: View {
   @ObservedObject var vm: MenuVM
-  @Environment(\.openWindow) private var openWindow
   @State private var showAllAds = false
   private var m: MenuModel { vm.model }
 
@@ -125,7 +124,7 @@ struct MenuContent: View {
       }
       if !m.ads.isEmpty { Divider(); adsSection }
       Divider()
-      historyRow
+      statsSection
     }
   }
 
@@ -147,19 +146,19 @@ struct MenuContent: View {
       .background(color.opacity(0.12)).clipShape(RoundedRectangle(cornerRadius: 6))
   }
 
+  // Cap as text only (no bar / graph).
   private var capSection: some View {
-    VStack(alignment: .leading, spacing: 4) {
+    VStack(alignment: .leading, spacing: 2) {
       HStack {
         Text("Daily cap").foregroundStyle(.secondary)
         Spacer()
-        Text("\(m.cap) · \(m.capPct)%")
-      }.font(.caption)
-      ProgressView(value: Double(min(max(m.capPct, 0), 100)), total: 100).tint(.green)
+        Text("\(m.cap) · \(m.capPct)%").monospacedDigit()
+      }
       if !m.resets.isEmpty {
-        Text("resets in \(m.resets)").font(.caption2).foregroundStyle(.secondary)
+        Text("resets in \(m.resets)").foregroundStyle(.secondary)
           .frame(maxWidth: .infinity, alignment: .trailing)
       }
-    }
+    }.font(.caption)
   }
 
   private var adsSection: some View {
@@ -201,7 +200,7 @@ struct MenuContent: View {
     }
     .buttonStyle(.plain)
     .help(ad.text)            // hover → full text
-    .onHover(perform: pointer)         // hover → pointing-hand cursor
+    .onHover(perform: pointer) // hover → pointing-hand cursor
   }
 
   @ViewBuilder private func adIcon(_ icon: String) -> some View {
@@ -216,19 +215,33 @@ struct MenuContent: View {
     }
   }
 
-  private var historyRow: some View {
-    Button { openHistory() } label: {
-      HStack(spacing: 6) {
-        Image(systemName: "clock.arrow.circlepath")
-        Text("View history")
-        Spacer()
-        Image(systemName: "chevron.right").font(.caption2)
-      }.font(.caption)
+  // History — inline, stats only (no graphs).
+  private var statsSection: some View {
+    VStack(alignment: .leading, spacing: 7) {
+      Text("HISTORY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+      if let h = vm.history, !h.isEmpty {
+        HStack(spacing: 10) {
+          statCell("This week", usd(h.thisWeekUsd))
+          statCell("This month", usd(h.thisMonthUsd))
+        }
+        HStack(spacing: 10) {
+          statCell("Best day", h.bestDay.map { usd($0.usd) } ?? "—")
+          statCell("Avg / day", usd(h.avgPerDayUsd))
+        }
+        Text("Since install \(usd(h.sinceInstallUsd)) · \(h.daysTracked) day\(h.daysTracked == 1 ? "" : "s")")
+          .font(.caption2).foregroundStyle(.secondary)
+      } else {
+        Text("No history yet — fills in as you keep earning.")
+          .font(.caption).foregroundStyle(.secondary)
+      }
     }
-    .buttonStyle(.plain)
-    .foregroundStyle(.secondary)
-    .help("Daily earnings & totals")
-    .onHover(perform: pointer)
+  }
+
+  private func statCell(_ label: String, _ value: String) -> some View {
+    VStack(alignment: .leading, spacing: 1) {
+      Text(label).font(.caption2).foregroundStyle(.secondary)
+      Text(value).font(.callout.weight(.semibold)).monospacedDigit()
+    }.frame(maxWidth: .infinity, alignment: .leading)
   }
 
   // MARK: helpers
@@ -272,17 +285,14 @@ struct MenuContent: View {
     sec >= 3600 ? "\(sec / 3600)h ago" : sec >= 60 ? "\(sec / 60)m ago" : "\(sec)s ago"
   }
 
+  private func usd(_ n: Double) -> String { "$" + String(format: "%.2f", n) }
+
   private func pointer(_ inside: Bool) {
     if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
   }
 
   private func openURL(_ s: String) {
     if !s.isEmpty, let u = URL(string: s) { NSWorkspace.shared.open(u) }
-  }
-
-  private func openHistory() {
-    NSApp.activate(ignoringOtherApps: true)
-    openWindow(id: "history")
   }
 
   private func showAbout() {

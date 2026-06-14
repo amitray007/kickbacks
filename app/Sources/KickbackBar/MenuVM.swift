@@ -9,6 +9,7 @@ import KickbackKit
   @Published private(set) var model: MenuModel = .signedOut
   @Published private(set) var phase: AuthPhase = .signedOut
   @Published private(set) var refreshing = false   // true only during a user-initiated refresh
+  @Published private(set) var history: HistoryModel?   // local stats, shown inline
 
   private var pollTask: Task<Void, Never>?
   private var loginProc: Process?
@@ -32,8 +33,10 @@ import KickbackKit
     if showSpinner { refreshing = true }
     Task.detached(priority: .utility) {
       let m = ModelClient.fetch()
+      let h = ModelClient.history()
       await MainActor.run {
         if let m { self.apply(m) }
+        if let h { self.history = h }
         if showSpinner { self.refreshing = false }
       }
     }

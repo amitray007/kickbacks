@@ -15,10 +15,6 @@ struct KickbackBarApp: App {
         .foregroundStyle(labelColor(vm))
     }
     .menuBarExtraStyle(.window)
-    Window("Kickback — History", id: "history") {
-      HistoryWindow()
-    }
-    .windowResizability(.contentSize)
   }
 }
 
