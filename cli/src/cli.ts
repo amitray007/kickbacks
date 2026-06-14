@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS, POLL_SECONDS, LAUNCHD_LABEL } from "./config";
+import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS, POLL_SECONDS, LAUNCHD_LABEL, BAR_LAUNCHD_LABEL } from "./config";
 import { startLogin, pollOnce, signout, loadTokens, saveTokens, clearTokens, makeAuthedRunner, AuthError } from "./auth";
 import { fetchPortfolio, fetchEarnings, fetchRaw } from "./api";
 import { openStore, type Store } from "./store";
@@ -10,9 +10,11 @@ import { loadModel } from "./tui";
 import { runPoll } from "./poll";
 import { isActive } from "./activity";
 import { notify } from "./notify";
-import { installAgent, uninstallAgent, agentInstalled } from "./launchd";
+import { installAgent, uninstallAgent, agentInstalled, installBarAgent } from "./launchd";
 import { buildMenuModel } from "./model";
 import { spawn } from "node:child_process";
+import { dirname } from "node:path";
+import { existsSync } from "node:fs";
 import type { Portfolio, Earnings } from "./types";
 
 const deps = (token: string) => ({ fetch, token, base: BASE, ccVersion: CC_VERSION });
@@ -143,6 +145,24 @@ async function cmdModel() {
   store.close();
 }
 
+// Manage the menu-bar app's login agent (the `kickback-bar` binary installed alongside).
+// Run from the installed binary (brew), not `bun run`.
+async function cmdBar() {
+  const sub = (process.argv[3] || "status").toLowerCase();
+  if (sub === "install") {
+    if (process.argv[1]?.endsWith(".ts")) { console.error("`bar install` needs the installed binaries (brew), not `bun run`."); process.exit(1); }
+    const barBin = `${dirname(process.execPath)}/kickback-bar`;
+    if (!existsSync(barBin)) { console.error(`kickback-bar not found at ${barBin} — install via brew.`); process.exit(1); }
+    const path = installBarAgent(BAR_LAUNCHD_LABEL, barBin);
+    console.log(`Installed menu-bar agent → ${path}\nThe menu bar now starts at login. Uninstall: kickback bar uninstall`);
+  } else if (sub === "uninstall") {
+    uninstallAgent(BAR_LAUNCHD_LABEL);
+    console.log("Menu-bar agent uninstalled.");
+  } else {
+    console.log(`Menu-bar agent ${agentInstalled(BAR_LAUNCHD_LABEL) ? "installed" : "not installed"}  (${BAR_LAUNCHD_LABEL})`);
+  }
+}
+
 // Live framed dashboard. Non-TTY (piped) → one static render so it stays scriptable.
 // Interval via KICKBACK_WATCH_SECONDS (default 30, min 5).
 async function cmdWatch() {
@@ -187,10 +207,10 @@ async function cmdLogout() {
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
 const table: Record<string, () => unknown> = {
   login: cmdLogin, portfolio: cmdPortfolio, watch: cmdWatch, earnings: cmdEarnings,
-  raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll, poller: cmdPoller, model: cmdModel,
+  raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll, poller: cmdPoller, model: cmdModel, bar: cmdBar,
 };
 const fn = table[cmd];
-if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout | poll | poller <install|uninstall|status> | model"); process.exit(2); }
+if (!fn) { console.error("commands: login | portfolio | watch | earnings | raw | status | logout | poll | poller <…> | model | bar <install|uninstall|status>"); process.exit(2); }
 try {
   await fn();
 } catch (e) {

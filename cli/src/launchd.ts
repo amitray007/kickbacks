@@ -44,3 +44,29 @@ export function uninstallAgent(label: string): void {
 export function agentInstalled(label: string): boolean {
   return existsSync(plistPath(label));
 }
+
+/** A launchd plist that launches a GUI menu-bar app at login (Aqua session, kept alive).
+ *  No StartInterval — it's a long-running app, not a periodic job. */
+export function guiPlistContent(label: string, binPath: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>${xmlEscape(label)}</string>
+  <key>ProgramArguments</key><array><string>${xmlEscape(binPath)}</string></array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>LimitLoadToSessionType</key><string>Aqua</string>
+</dict></plist>
+`;
+}
+
+/** Write + (re)load the GUI menu-bar agent. Side-effecting — system change. */
+export function installBarAgent(label: string, binPath: string): string {
+  const path = plistPath(label);
+  mkdirSync(join(homedir(), "Library/LaunchAgents"), { recursive: true });
+  writeFileSync(path, guiPlistContent(label, binPath));
+  spawnSync("launchctl", ["unload", path], { stdio: "ignore" });
+  const r = spawnSync("launchctl", ["load", path], { stdio: "pipe", encoding: "utf8" });
+  if (r.status !== 0) throw new Error(`launchctl load failed: ${(r.stderr || "").trim() || "unknown error"}`);
+  return path;
+}

@@ -18,3 +18,4 @@ export const ACTIVITY_DIRS = (process.env.KICKBACK_ACTIVITY_DIRS || join(homedir
 export const ACTIVITY_WINDOW_MS = 5 * 60_000;  // "active" = a transcript touched in the last 5 min
 export const STALL_WINDOW_MS = 10 * 60_000;    // flat earnings over 10 min while active = stall
 export const LAUNCHD_LABEL = "ai.kickback.poller";
+export const BAR_LAUNCHD_LABEL = "ai.kickback.bar";
