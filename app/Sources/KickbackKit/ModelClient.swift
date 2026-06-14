@@ -34,4 +34,46 @@ public enum ModelClient {
     if proc.terminationStatus != 0 { return nil }           // transient (CLI exit 1) → keep last
     return MenuModel.decode(data)                           // parse failure → nil → keep last
   }
+
+  /// Runs `kickback history` and decodes it. nil on any transient failure.
+  public static func history() -> HistoryModel? {
+    guard let bin = binaryPath() else { return nil }
+    let proc = Process()
+    proc.executableURL = URL(fileURLWithPath: bin)
+    proc.arguments = ["history"]
+    let out = Pipe()
+    proc.standardOutput = out
+    proc.standardError = Pipe()
+    do { try proc.run() } catch { return nil }
+    let data = out.fileHandleForReading.readDataToEndOfFile()
+    proc.waitUntilExit()
+    if proc.terminationStatus != 0 { return nil }
+    return HistoryModel.decode(data)
+  }
+
+  /// Spawns `kickback login` in the background (opens the browser + runs the local
+  /// callback server). Returns the running process so the caller can cancel it; nil if
+  /// no CLI is available. Caller polls `fetch()` for `signedIn` to know it finished.
+  public static func startLogin() -> Process? {
+    guard let bin = binaryPath() else { return nil }
+    let proc = Process()
+    proc.executableURL = URL(fileURLWithPath: bin)
+    proc.arguments = ["login"]
+    proc.standardOutput = Pipe()
+    proc.standardError = Pipe()
+    do { try proc.run() } catch { return nil }
+    return proc
+  }
+
+  /// Runs `kickback logout` and waits for it (revokes the server session + clears tokens).
+  public static func logout() {
+    guard let bin = binaryPath() else { return }
+    let proc = Process()
+    proc.executableURL = URL(fileURLWithPath: bin)
+    proc.arguments = ["logout"]
+    proc.standardOutput = Pipe()
+    proc.standardError = Pipe()
+    try? proc.run()
+    proc.waitUntilExit()
+  }
 }
