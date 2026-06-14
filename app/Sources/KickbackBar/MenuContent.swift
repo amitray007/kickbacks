@@ -74,9 +74,9 @@ struct MenuContent: View {
       // Hero: today's live value gets the emphasis.
       VStack(alignment: .leading, spacing: 1) {
         Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-        HStack(alignment: .firstTextBaseline, spacing: 4) {
+        HStack(alignment: .center, spacing: 7) {
           Text(m.today).font(.system(size: 34, weight: .heavy)).monospacedDigit()
-          Text(arrow).font(.title3.weight(.bold)).foregroundStyle(m.trend == "up" ? .green : .secondary)
+          trendBadge
         }
       }
       Text(secondaryLine).font(.caption).foregroundStyle(.secondary)
@@ -206,7 +206,13 @@ struct MenuContent: View {
 
   // MARK: helpers
 
-  private var arrow: String { m.trend == "up" ? "▴" : m.trend == "down" ? "▾" : "—" }
+  @ViewBuilder private var trendBadge: some View {
+    switch m.trend {
+    case "up":   Image(systemName: "chart.line.uptrend.xyaxis").font(.system(size: 16, weight: .bold)).foregroundStyle(.green)
+    case "down": Image(systemName: "chart.line.downtrend.xyaxis").font(.system(size: 16, weight: .bold)).foregroundStyle(.red)
+    default:     EmptyView()   // flat/neutral: show nothing
+    }
+  }
 
   private var secondaryLine: String {
     var s = "Lifetime \(m.lifetime)"
