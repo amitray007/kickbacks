@@ -7,7 +7,7 @@ import type { Portfolio, Earnings } from "../src/types";
 
 const P: Portfolio = {
   lifetimeUsd: 12.34, todayUsd: 0.56, viewThresholdSeconds: 15, kill: false,
-  ads: [{ adId: "552e20ec", campaignId: "23f8444b", text: "Inflowpay", clickUrl: "https://x.test", bannerEnabled: true }],
+  ads: [{ adId: "552e20ec", campaignId: "23f8444b", text: "Inflowpay", clickUrl: "https://x.test", bannerEnabled: true, iconUrl: "" }],
 };
 const E: Earnings = { cap: { scope: "daily", capUsd: 1, resetSeconds: 15120 } };
 

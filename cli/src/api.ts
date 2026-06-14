@@ -22,6 +22,7 @@ export function parsePortfolio(j: any): Portfolio {
     text: String(a?.title_text ?? a?.adText ?? ""),
     clickUrl: typeof (a?.click_url ?? a?.clickUrl) === "string" ? (a.click_url ?? a.clickUrl) : "",
     bannerEnabled: (a?.banner_enabled ?? a?.bannerEnabled) === true,
+    iconUrl: typeof (a?.icon_url ?? a?.iconUrl) === "string" ? (a.icon_url ?? a.iconUrl) : "",
   })) : [];
   return {
     lifetimeUsd: num(b.lifetime_usd),

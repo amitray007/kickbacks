@@ -6,7 +6,7 @@ import type { Portfolio, Earnings } from "../src/types";
 
 const P: Portfolio = {
   lifetimeUsd: 12.34, todayUsd: 0.56, viewThresholdSeconds: 15, kill: false,
-  ads: [{ adId: "552e20ec", campaignId: "23f8444b", text: "Inflowpay", clickUrl: "https://x.test", bannerEnabled: true }],
+  ads: [{ adId: "552e20ec", campaignId: "23f8444b", text: "Inflowpay", clickUrl: "https://x.test", bannerEnabled: true, iconUrl: "https://x.test/icon.png" }],
 };
 const E: Earnings = { cap: { scope: "daily", capUsd: 1, resetSeconds: 15120 } };
 
@@ -52,7 +52,7 @@ test("buildMenuModel adds menuValue, ads, threshold, collecting", () => {
   const m = buildMenuModel({ p: P, e: E, store, now: 3_600_001, signedIn: true });
   expect(m.menuValue).toBe("0.56");                 // today without the "$"
   expect(m.viewThresholdSeconds).toBe(15);
-  expect(m.ads).toEqual([{ text: "Inflowpay", url: "https://x.test" }]);
+  expect(m.ads).toEqual([{ text: "Inflowpay", url: "https://x.test", icon: "https://x.test/icon.png" }]);
   expect(m.collecting).toBe(true);                  // <2 samples
 });
 

@@ -8,14 +8,19 @@ test("parsePortfolio normalizes server fields", () => {
     balances: { lifetime_usd: "1.50", today_usd: "0.25" },
     view_threshold_seconds: 15,
     ads: [{ ad_id: "a1", campaign_id: "c1", title_text: "Buy X",
-            click_url: "https://x.test", banner_enabled: true }],
+            click_url: "https://x.test", banner_enabled: true, icon_url: "https://cdn.test/a1.png" }],
   });
   expect(p.lifetimeUsd).toBe(1.5);
   expect(p.todayUsd).toBe(0.25);
   expect(p.kill).toBe(false);
   expect(p.viewThresholdSeconds).toBe(15);
   expect(p.ads[0]).toEqual({ adId: "a1", campaignId: "c1", text: "Buy X",
-    clickUrl: "https://x.test", bannerEnabled: true });
+    clickUrl: "https://x.test", bannerEnabled: true, iconUrl: "https://cdn.test/a1.png" });
+});
+
+test("parsePortfolio maps icon_url to iconUrl", () => {
+  const p = parsePortfolio({ ads: [{ ad_id: "a", icon_url: "https://cdn.test/i.png", title_text: "X", click_url: "" }], balances: {} });
+  expect(p.ads[0]!.iconUrl).toBe("https://cdn.test/i.png");
 });
 
 test("parsePortfolio tolerates missing fields", () => {
@@ -28,9 +33,9 @@ test("parsePortfolio tolerates missing fields", () => {
 
 test("parsePortfolio accepts camelCase ad fields", () => {
   const p = parsePortfolio({ ads: [{ adId: "a2", campaignId: "c2", adText: "Buy Y",
-    clickUrl: "https://y.test", bannerEnabled: true }] });
+    clickUrl: "https://y.test", bannerEnabled: true, iconUrl: "https://cdn.test/a2.png" }] });
   expect(p.ads[0]).toEqual({ adId: "a2", campaignId: "c2", text: "Buy Y",
-    clickUrl: "https://y.test", bannerEnabled: true });
+    clickUrl: "https://y.test", bannerEnabled: true, iconUrl: "https://cdn.test/a2.png" });
 });
 
 test("parseEarnings reads the cap", () => {

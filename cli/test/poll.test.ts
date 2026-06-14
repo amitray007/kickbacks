@@ -6,7 +6,7 @@ import type { Portfolio, Earnings } from "../src/types";
 
 const P: Portfolio = {
   lifetimeUsd: 1, todayUsd: 0.4, viewThresholdSeconds: 15, kill: false,
-  ads: [{ adId: "a", campaignId: "c", text: "x", clickUrl: "", bannerEnabled: false }],
+  ads: [{ adId: "a", campaignId: "c", text: "x", clickUrl: "", bannerEnabled: false, iconUrl: "" }],
 };
 const E: Earnings = { cap: null };
 

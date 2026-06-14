@@ -25,7 +25,7 @@ export interface MenuModel {
   ageSeconds: number;
   menuValue: string;
   viewThresholdSeconds: number | null;
-  ads: { text: string; url: string }[];
+  ads: { text: string; url: string; icon: string }[];
   lastEarnedAgoSeconds: number | null;
   collecting: boolean;
 }
@@ -89,7 +89,7 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     ageSeconds: latest ? Math.max(0, Math.round((i.now - latest.ts) / 1000)) : 0,
     menuValue: p.todayUsd.toFixed(2),
     viewThresholdSeconds: p.viewThresholdSeconds,
-    ads: p.ads.map((a) => ({ text: a.text, url: a.clickUrl })),
+    ads: p.ads.map((a) => ({ text: a.text, url: a.clickUrl, icon: a.iconUrl })),
     lastEarnedAgoSeconds: lastEarnedAgoSeconds(samples, i.now),
     collecting: samples.length < 2,
   };

@@ -8,7 +8,7 @@ const s = (ts: number, todayUsd: number): Sample =>
 
 const pf = (over: Partial<Portfolio> = {}): Portfolio => ({
   lifetimeUsd: 1, todayUsd: 0.5, viewThresholdSeconds: 15, kill: false,
-  ads: [{ adId: "a", campaignId: "c", text: "x", clickUrl: "", bannerEnabled: false }],
+  ads: [{ adId: "a", campaignId: "c", text: "x", clickUrl: "", bannerEnabled: false, iconUrl: "" }],
   ...over,
 });
 

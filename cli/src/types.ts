@@ -4,6 +4,7 @@ export interface Ad {
   text: string;
   clickUrl: string;
   bannerEnabled: boolean;
+  iconUrl: string;
 }
 export interface Portfolio {
   lifetimeUsd: number;
