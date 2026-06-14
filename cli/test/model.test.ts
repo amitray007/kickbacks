@@ -34,6 +34,11 @@ test("buildMenuModel signed-out shows the brand title", () => {
   expect(m.title).toBe("kickback");
 });
 
+test("buildMenuModel treats signed-in-but-no-portfolio as signed-out (transient handled upstream)", () => {
+  const store = openStore(":memory:");
+  expect(buildMenuModel({ p: null, e: null, store, now: 1, signedIn: true }).state).toBe("signed-out");
+});
+
 test("buildMenuModel reflects killed / no-serve states", () => {
   const store = openStore(":memory:");
   expect(buildMenuModel({ p: { ...P, kill: true }, e: null, store, now: 1, signedIn: true }).state).toBe("killed");

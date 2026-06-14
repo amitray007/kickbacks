@@ -49,13 +49,15 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     };
   }
   const p = i.p, e = i.e;
-  const samples = i.store.recentSince(i.now - 24 * 3_600_000);
-  const rate = ratePerHour(samples.filter((s) => s.ts >= i.now - 6 * 3_600_000));
+  const samples = i.store.recentSince(i.now - 24 * 3_600_000); // 24h window for the sparkline
   const latest = samples[samples.length - 1];
-  const prev = samples[samples.length - 2];
-  const trend: "up" | "down" | "flat" = !latest || !prev
+  const r6 = samples.filter((s) => s.ts >= i.now - 6 * 3_600_000); // 6h window for rate + trend (aligned)
+  const rate = ratePerHour(r6);
+  const a = r6[r6.length - 1], b = r6[r6.length - 2];
+  const trend: "up" | "down" | "flat" = !a || !b
     ? (rate > 0 ? "up" : "flat")
-    : latest.todayUsd > prev.todayUsd ? "up" : latest.todayUsd < prev.todayUsd ? "down" : "flat";
+    : a.todayUsd > b.todayUsd ? "up" : a.todayUsd < b.todayUsd ? "down" : "flat";
+  // `active` is from the latest stored sample (poll cadence; null on pre-Plan-3 samples → inactive).
   const active = latest?.active === true;
   const stalled = isStalled({ samples, now: i.now, windowMs: 10 * 60_000, active });
   const base = earningState(p, e); // killed | cap | no-serve | earning

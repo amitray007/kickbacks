@@ -22,7 +22,7 @@ import KickbackKit
 
   func refresh() {
     Task.detached(priority: .utility) {
-      let m = ModelClient.fetch()
+      guard let m = ModelClient.fetch() else { return } // nil = transient failure → keep last model
       await MainActor.run { self.model = m }
     }
   }

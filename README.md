@@ -4,14 +4,15 @@ A reliable, open-source companion for [Kickbacks.ai](https://kickbacks.ai) — a
 
 > **Not affiliated** with Kickbacks.ai or ShiftKeys, Inc. It reads only your own account data (`/v1/portfolio`, `/v1/earnings`) and **never** sends billing/impression events.
 
-## Status — Plans 1–3 shipped
+## Status — Plans 1–4 shipped
 
-The TypeScript core + CLI (**Plan 1**), the live OpenTUI `watch` dashboard (**Plan 2**), and the launchd poller + stall/cap watchdog (**Plan 3**) are built and tested in [`cli/`](cli/). Next: the Swift menu-bar app (Plan 4) and Homebrew packaging (Plan 5).
+The TypeScript core + CLI (**Plan 1**), the live OpenTUI `watch` dashboard (**Plan 2**), the launchd poller + stall/cap watchdog (**Plan 3**), and the native Swift `MenuBarExtra` app (**Plan 4**) are built and tested. Next: Homebrew packaging (Plan 5) — bundle the CLI binary + a signed `.app`.
 
 - **[docs/design.md](docs/design.md)** — full design: vision, the (reverse-engineered) read-only API surface, architecture, strategy, risks, and the UI/UX for both surfaces.
 - **[docs/plans/2026-06-13-kickback-core-cli.md](docs/plans/2026-06-13-kickback-core-cli.md)** — Plan 1 (core + CLI).
 - **[docs/plans/2026-06-13-kickback-opentui-watch.md](docs/plans/2026-06-13-kickback-opentui-watch.md)** — Plan 2 (OpenTUI `watch`).
 - **[docs/plans/2026-06-13-kickback-poller-watchdog.md](docs/plans/2026-06-13-kickback-poller-watchdog.md)** — Plan 3 (poller + watchdog).
+- **[docs/plans/2026-06-13-kickback-menubar-app.md](docs/plans/2026-06-13-kickback-menubar-app.md)** — Plan 4 (Swift menu-bar app).
 
 ## What it will be
 
@@ -32,7 +33,7 @@ The TypeScript core + CLI (**Plan 1**), the live OpenTUI `watch` dashboard (**Pl
 kickbacks/    ← this repo (umbrella)
   docs/       ← design + plans
   cli/        ← the `kickback` CLI (TypeScript/Bun) — also hosts the shared core + poller
-  app/        ← the menu-bar app (Swift)              · Plan 4
+  app/        ← the menu-bar app (Swift `MenuBarExtra`) — renders `kickback model`
   packaging/  ← Homebrew tap (formula + cask)          · Plan 5
 ```
 
@@ -45,7 +46,7 @@ Two tools, two languages — bridged by a shared local SQLite store, not shared 
 | 1 ✅ | Core + CLI MVP — auth, API client, SQLite history, text commands |
 | 2 ✅ | OpenTUI `watch` dashboard |
 | 3 ✅ | Poller + stall watchdog (launchd) |
-| 4 | Native Swift menu-bar app |
+| 4 ✅ | Native Swift menu-bar app |
 | 5 | Homebrew tap (formula + cask) |
 
 ## Notes

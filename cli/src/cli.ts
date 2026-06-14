@@ -124,21 +124,23 @@ async function cmdPoller() {
 // Emit the menu model as JSON for the Swift menu-bar app (live fetch → last-known on
 // failure). Read-only; records a sample when the fetch succeeds.
 async function cmdModel() {
-  const signedIn = !!loadTokens();
+  let signedIn = !!loadTokens();
   const store = openStore(DB_FILE);
   const now = Date.now();
-  try {
-    let p: Portfolio | null = null;
-    let e: Earnings | null = null;
-    if (signedIn) {
-      try {
-        p = await runAuthed((tk) => fetchPortfolio(deps(tk)));
-        e = await runAuthed((tk) => fetchEarnings(deps(tk))).catch(() => null);
-        recordSample(store, p);
-      } catch { /* network/API down → fall back to last-known from the store */ }
+  let p: Portfolio | null = null;
+  let e: Earnings | null = null;
+  if (signedIn) {
+    try {
+      p = await runAuthed((tk) => fetchPortfolio(deps(tk)));
+      e = await runAuthed((tk) => fetchEarnings(deps(tk))).catch(() => null);
+      recordSample(store, p);
+    } catch (err) {
+      if (err instanceof AuthError) signedIn = false; // refresh failed → re-login → signed-out model
+      else { store.close(); process.exit(1); }        // transient network/API → no output; the app keeps its last model
     }
-    console.log(JSON.stringify(buildMenuModel({ p, e, store, now, signedIn })));
-  } finally { store.close(); }
+  }
+  console.log(JSON.stringify(buildMenuModel({ p, e, store, now, signedIn })));
+  store.close();
 }
 
 // Live framed dashboard. Non-TTY (piped) → one static render so it stays scriptable.
