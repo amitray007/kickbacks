@@ -62,4 +62,14 @@ test("buildMenuModel signed-out menuValue is the dash", () => {
   expect(m.menuValue).toBe("—");
   expect(m.ads).toEqual([]);
   expect(m.collecting).toBe(false);
+  expect(m.recentAds).toEqual([]);
+});
+
+test("buildMenuModel surfaces recentAds from input (text/url/icon only)", () => {
+  const store = openStore(":memory:");
+  const m = buildMenuModel({
+    p: P, e: E, store, now: 1, signedIn: true,
+    recentAds: [{ adId: "a", text: "Acme", url: "u", icon: "i" }],
+  });
+  expect(m.recentAds).toEqual([{ text: "Acme", url: "u", icon: "i" }]);
 });

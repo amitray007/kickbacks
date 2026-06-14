@@ -13,6 +13,7 @@ import { notify } from "./notify";
 import { installAgent, uninstallAgent, agentInstalled, installBarAgent } from "./launchd";
 import { buildMenuModel } from "./model";
 import { buildHistory } from "./history";
+import { mergeRecentAds, loadRecentAds, saveRecentAds, type RecentAd } from "./ads";
 import { spawn } from "node:child_process";
 import { dirname } from "node:path";
 import { existsSync } from "node:fs";
@@ -140,17 +141,21 @@ async function cmdModel() {
   const now = Date.now();
   let p: Portfolio | null = null;
   let e: Earnings | null = null;
+  let recentAds: RecentAd[] = [];
   if (signedIn) {
     try {
       p = await runAuthed((tk) => fetchPortfolio(deps(tk)));
       e = await runAuthed((tk) => fetchEarnings(deps(tk))).catch(() => null);
       recordSample(store, p);
+      const current: RecentAd[] = p.ads.map((a) => ({ adId: a.adId, text: a.text, url: a.clickUrl, icon: a.iconUrl }));
+      recentAds = mergeRecentAds(loadRecentAds(store), current);
+      saveRecentAds(store, recentAds);
     } catch (err) {
       if (err instanceof AuthError) signedIn = false; // refresh failed → re-login → signed-out model
       else { store.close(); process.exit(1); }        // transient network/API → no output; the app keeps its last model
     }
   }
-  console.log(JSON.stringify(buildMenuModel({ p, e, store, now, signedIn })));
+  console.log(JSON.stringify(buildMenuModel({ p, e, store, now, signedIn, recentAds })));
   store.close();
 }
 

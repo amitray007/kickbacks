@@ -3,6 +3,7 @@ import type { Store } from "./store";
 import { ratePerHour, projectSecondsToCap, earningState, isStalled, fmtUsd, fmtDuration } from "./derive";
 import { sparkline } from "./ui";
 import { lastEarnedAgoSeconds } from "./history";
+import type { RecentAd } from "./ads";
 
 export type MenuState = "signed-out" | "killed" | "cap" | "stalled" | "no-serve" | "earning";
 
@@ -28,6 +29,7 @@ export interface MenuModel {
   ads: { text: string; url: string; icon: string }[];
   lastEarnedAgoSeconds: number | null;
   collecting: boolean;
+  recentAds: { text: string; url: string; icon: string }[];
 }
 
 export interface MenuInput {
@@ -36,6 +38,7 @@ export interface MenuInput {
   store: Store;
   now: number;
   signedIn: boolean;
+  recentAds?: RecentAd[];
 }
 
 const STATUS: Record<MenuState, string> = {
@@ -53,6 +56,7 @@ export function buildMenuModel(i: MenuInput): MenuModel {
       today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capPct: 0,
       resets: "", projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0,
       menuValue: "—", viewThresholdSeconds: null, ads: [], lastEarnedAgoSeconds: null, collecting: false,
+      recentAds: [],
     };
   }
   const p = i.p, e = i.e;
@@ -92,5 +96,6 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     ads: p.ads.map((a) => ({ text: a.text, url: a.clickUrl, icon: a.iconUrl })),
     lastEarnedAgoSeconds: lastEarnedAgoSeconds(samples, i.now),
     collecting: samples.length < 2,
+    recentAds: (i.recentAds ?? []).map((a) => ({ text: a.text, url: a.url, icon: a.icon })),
   };
 }

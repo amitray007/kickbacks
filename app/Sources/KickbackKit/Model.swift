@@ -40,13 +40,14 @@ public struct MenuModel: Codable, Equatable, Sendable {
   public var ads: [AdItem]
   public var lastEarnedAgoSeconds: Int?
   public var collecting: Bool
+  public var recentAds: [AdItem]
 
   /// Fallback shown on any failure (no binary, spawn/parse error, signed out).
   public static let signedOut = MenuModel(
     signedIn: false, state: .signedOut, title: "kickback",
     today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capPct: 0,
     resets: "", projection: "", spark: "", ad: "", adUrl: "", status: "Signed out", ageSeconds: 0,
-    menuValue: "—", viewThresholdSeconds: nil, ads: [], lastEarnedAgoSeconds: nil, collecting: false)
+    menuValue: "—", viewThresholdSeconds: nil, ads: [], lastEarnedAgoSeconds: nil, collecting: false, recentAds: [])
 
   public static func decode(_ data: Data) -> MenuModel? {
     try? JSONDecoder().decode(MenuModel.self, from: data)

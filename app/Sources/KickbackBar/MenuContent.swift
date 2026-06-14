@@ -5,7 +5,6 @@ import KickbackKit
 
 struct MenuContent: View {
   @ObservedObject var vm: MenuVM
-  @State private var showAllAds = false
   private var m: MenuModel { vm.model }
 
   var body: some View {
@@ -123,7 +122,7 @@ struct MenuContent: View {
       if let ago = m.lastEarnedAgoSeconds, m.state == .stalled || m.state == .killed {
         Text("Last earned \(agoText(ago))").font(.caption).foregroundStyle(.secondary)
       }
-      if !m.ads.isEmpty { Divider(); adsSection }
+      if !m.recentAds.isEmpty { Divider(); recentAdsSection }
       Divider()
       statsSection
     }
@@ -162,32 +161,14 @@ struct MenuContent: View {
     }.font(.caption)
   }
 
-  private var adsSection: some View {
+  // Recent ads: current first (full opacity), the prior couple dimmed. Capped to 3 by the CLI.
+  private var recentAdsSection: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("NOW SHOWING\(m.ads.count > 1 ? " · \(m.ads.count)" : "")")
-        .font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-      ForEach(Array(m.ads.prefix(3).enumerated()), id: \.offset) { _, ad in adRow(ad) }
-      if m.ads.count > 3 {
-        Button { showAllAds.toggle() } label: {
-          Text("+\(m.ads.count - 3) more").font(.caption).foregroundStyle(Color.accentColor)
-        }
-        .buttonStyle(.plain)
-        .onHover(perform: pointer)
-        .popover(isPresented: $showAllAds) { allAdsPopover }
+      Text("RECENT ADS").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+      ForEach(Array(m.recentAds.enumerated()), id: \.offset) { idx, ad in
+        adRow(ad).opacity(idx == 0 ? 1 : 0.5)
       }
     }
-  }
-
-  private var allAdsPopover: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Text("All ads · \(m.ads.count)").font(.caption.weight(.bold)).foregroundStyle(.secondary)
-      ScrollView {
-        VStack(alignment: .leading, spacing: 7) {
-          ForEach(Array(m.ads.enumerated()), id: \.offset) { _, ad in adRow(ad) }
-        }
-      }.frame(maxHeight: 320)
-    }
-    .padding(12).frame(width: 280)
   }
 
   private func adRow(_ ad: AdItem) -> some View {
