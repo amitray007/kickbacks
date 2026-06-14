@@ -27,6 +27,8 @@ kickback bar install               # menu-bar app at login
 
 Build-from-source means no code-signing/notarization is required. Replace `USER` with the tap owner. See [packaging/](packaging/) for tap setup. Not affiliated with Kickbacks.ai / ShiftKeys, Inc.
 
+**Prefer a Mac app (no brew)?** Run `scripts/install-app.sh` — it builds a self-contained `Kickback.app` (the `kickback` CLI is bundled inside) and installs it to `/Applications`; launch it from Launchpad. `scripts/build-release.sh` just builds the raw `dist/` binaries.
+
 ## What it will be
 
 - **CLI** (`kickback`) — TypeScript + OpenTUI framed dashboard; `kickback watch` for a live view.
