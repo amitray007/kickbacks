@@ -59,8 +59,10 @@ public enum ModelClient {
     let proc = Process()
     proc.executableURL = URL(fileURLWithPath: bin)
     proc.arguments = ["login"]
-    proc.standardOutput = Pipe()
-    proc.standardError = Pipe()
+    // Long-running + unwaited: discard output to /dev/null so the child can't block on a
+    // full pipe buffer (an unread Pipe would deadlock it after ~64KB).
+    proc.standardOutput = FileHandle.nullDevice
+    proc.standardError = FileHandle.nullDevice
     do { try proc.run() } catch { return nil }
     return proc
   }
