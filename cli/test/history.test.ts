@@ -30,3 +30,27 @@ test("dailyBuckets: hitCap when a sample reached its cap that day", () => {
   ];
   expect(dailyBuckets(samples)[0]!.hitCap).toBe(true);
 });
+
+import { summarize } from "../src/history";
+
+test("summarize: best day, average, and rolling week/month windows", () => {
+  const now = day(2026, 6, 30, 12);
+  const buckets = [
+    { date: "2026-06-01", usd: 4, hitCap: false },   // >7 and <=30 days ago
+    { date: "2026-06-28", usd: 10, hitCap: false },  // within 7
+    { date: "2026-06-30", usd: 6, hitCap: false },   // today, within 7
+  ];
+  const sum = summarize(buckets, now);
+  expect(sum.daysTracked).toBe(3);
+  expect(sum.bestDay).toEqual({ date: "2026-06-28", usd: 10 });
+  expect(sum.avgPerDayUsd).toBeCloseTo((4 + 10 + 6) / 3, 5);
+  expect(sum.thisWeekUsd).toBe(16);    // 10 + 6
+  expect(sum.thisMonthUsd).toBe(20);   // 4 + 10 + 6
+});
+
+test("summarize: empty input", () => {
+  const sum = summarize([], day(2026, 6, 30));
+  expect(sum.daysTracked).toBe(0);
+  expect(sum.bestDay).toBeNull();
+  expect(sum.avgPerDayUsd).toBe(0);
+});

@@ -28,3 +28,25 @@ export function dailyBuckets(samples: Sample[]): DayBucket[] {
     .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
     .map(([date, v]) => ({ date, usd: v.usd, hitCap: v.hitCap }));
 }
+
+export interface Summary {
+  thisWeekUsd: number; thisMonthUsd: number; bestDay: BestDay | null;
+  avgPerDayUsd: number; daysTracked: number;
+}
+
+/** Rolling windows: thisWeek = last 7 local days incl. today, thisMonth = last 30. */
+export function summarize(daily: DayBucket[], now: number): Summary {
+  const daysTracked = daily.length;
+  const bestDay = daily.reduce<BestDay | null>(
+    (b, d) => (!b || d.usd > b.usd ? { date: d.date, usd: d.usd } : b), null);
+  const total = daily.reduce((a, d) => a + d.usd, 0);
+  const avgPerDayUsd = daysTracked > 0 ? total / daysTracked : 0;
+  const lastNDays = (n: number): Set<string> => {
+    const set = new Set<string>();
+    for (let i = 0; i < n; i++) set.add(localDayKey(now - i * 86_400_000));
+    return set;
+  };
+  const week = lastNDays(7), month = lastNDays(30);
+  const sumIn = (set: Set<string>) => daily.filter((d) => set.has(d.date)).reduce((a, d) => a + d.usd, 0);
+  return { thisWeekUsd: sumIn(week), thisMonthUsd: sumIn(month), bestDay, avgPerDayUsd, daysTracked };
+}
