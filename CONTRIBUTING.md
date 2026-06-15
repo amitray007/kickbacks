@@ -10,7 +10,7 @@ Thanks for your interest! Kickbacks is a small, **read-only** companion for Kick
 ## Project layout
 
 - `cli/` — TypeScript (Bun): API client, OAuth, SQLite history, earnings logic, poller. The single source of truth.
-- `app/` — Swift `MenuBarExtra` app; renders `kickbacks model --json` / `kickbacks history`. No business logic.
+- `app/` — Swift `MenuBarExtra` app; renders `kickbacks model` / `kickbacks history`. No business logic.
 - `Formula/` — Homebrew formula · `scripts/` — build/install · `docs/` — design + plans.
 
 ## Dev setup

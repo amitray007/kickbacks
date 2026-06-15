@@ -248,7 +248,9 @@ struct MenuContent: View {
   }
 
   @ViewBuilder private func adIcon(_ icon: String) -> some View {
-    if !icon.isEmpty, let u = URL(string: icon) {
+    // Icon URL is server-supplied (often a data: PNG) — allow only web/data image schemes.
+    if let u = URL(string: icon), let scheme = u.scheme?.lowercased(),
+       scheme == "https" || scheme == "http" || scheme == "data" {
       AsyncImage(url: u) { phase in
         if let img = phase.image { img.resizable().aspectRatio(contentMode: .fill) }
         else { Color.secondary.opacity(0.18) }
@@ -378,7 +380,10 @@ struct MenuContent: View {
   }
 
   private func openURL(_ s: String) {
-    if !s.isEmpty, let u = URL(string: s) { NSWorkspace.shared.open(u) }
+    // Server-supplied ad URL — only open web schemes (never file:/custom-scheme handlers).
+    guard let u = URL(string: s), let scheme = u.scheme?.lowercased(),
+          scheme == "https" || scheme == "http" else { return }
+    NSWorkspace.shared.open(u)
   }
 
   private func showAbout() {

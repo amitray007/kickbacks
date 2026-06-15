@@ -52,7 +52,7 @@ Upgrade later with `brew update && brew upgrade kickbacks`. The [formula](Formul
 Two tools, two languages, one shared local store:
 
 - **`cli/`** — TypeScript on [Bun](https://bun.sh): the API client, its own Google-OAuth session, a `bun:sqlite` history store, all the earnings logic, and the poller/watchdog.
-- **`app/`** — a Swift `MenuBarExtra` app. It holds no business logic; it shells out to `kickbacks model --json` / `kickbacks history` and renders the result — keeping a single source of truth in TypeScript.
+- **`app/`** — a Swift `MenuBarExtra` app. It holds no business logic; it shells out to `kickbacks model` / `kickbacks history` and renders the result — keeping a single source of truth in TypeScript.
 
 The two are bridged by the local SQLite store, not by shared code. Full design notes live in [docs/](docs/).
 
