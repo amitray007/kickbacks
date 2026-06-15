@@ -5,7 +5,7 @@ class Kickbacks < Formula
   desc "Read-only CLI + menu-bar app for your own Kickbacks.ai earnings (unofficial)"
   homepage "https://github.com/amitray007/kickbacks"
   url "https://github.com/amitray007/kickbacks/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "replace_on_release"
+  sha256 "1352dc840c01ee1ed9e77bee7dca55c31ac963287c2a5b93625a467cb21a47a0"
   license "Apache-2.0"
   head "https://github.com/amitray007/kickbacks.git", branch: "main"
 
