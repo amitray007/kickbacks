@@ -97,6 +97,7 @@ struct MenuContent: View {
       Divider()
       Toggle("Privacy mode", isOn: Binding(get: { vm.hideAmounts }, set: { vm.setHideAmounts($0) }))
       Toggle("Demo mode", isOn: Binding(get: { vm.demoMode }, set: { vm.setDemoMode($0) }))
+      Toggle("Floating window", isOn: Binding(get: { vm.pinned }, set: { vm.setPinned($0) }))
       Divider()
       if showData {
         Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
