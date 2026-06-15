@@ -29,7 +29,7 @@ export async function runPoll(d: PollDeps): Promise<void> {
     samples, earnings: e, now: d.now, stallWindowMs: d.stallWindowMs,
     state: { stallActive: d.store.getState("stallActive") ?? "", capFired: d.store.getState("capFired") ?? undefined },
   });
-  if (a.stall) d.notify("Kickback — not earning", "You're coding but today's earnings are flat. The ad injection may have broken — run “Kickbacks: Restore”.");
+  // Stall alerting removed — the active+flat heuristic was unreliable. Cap alerts remain.
   if (a.cap) d.notify("Kickback — cap reached", `Your ${a.cap.scope} cap is hit; no more earning until it resets.`);
   d.store.setState("stallActive", a.state.stallActive);
   if (a.state.capFired !== null) d.store.setState("capFired", a.state.capFired);

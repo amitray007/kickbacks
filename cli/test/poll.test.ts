@@ -10,7 +10,7 @@ const P: Portfolio = {
 };
 const E: Earnings = { cap: null };
 
-test("runPoll records an active sample and fires stall when active + flat across cycles", async () => {
+test("runPoll records an active sample (stall alerting removed)", async () => {
   const store = openStore(":memory:");
   const now0 = 1_000_000;
   const fired: string[] = [];
@@ -25,7 +25,7 @@ test("runPoll records an active sample and fires stall when active + flat across
   await runPoll({ ...base, now: now0 - 240_000 }); // first flat sample (only 1 → not stalled yet)
   await runPoll({ ...base, now: now0 });           // second flat sample → stall
   expect(store.latest()!.active).toBe(true);
-  expect(fired.some((t) => /Kickback/.test(t))).toBe(true);
+  expect(fired.length).toBe(0);   // stall alerting removed; no cap in this scenario
 });
 
 test("runPoll does not fire stall when inactive", async () => {
