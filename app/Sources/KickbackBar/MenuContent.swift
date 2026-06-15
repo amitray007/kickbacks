@@ -95,13 +95,16 @@ struct MenuContent: View {
   // MARK: states
 
   private var signedOut: some View {
-    VStack(spacing: 10) {
-      Text("See your Kickbacks earnings").font(.headline)
-      Text("Read-only · your own account only").font(.caption).foregroundStyle(.secondary)
+    VStack(spacing: 9) {
+      Text("See your earnings").font(.headline)
+      Text("Today, lifetime, recent ads, and stall alerts — live in your menu bar.")
+        .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
       Button(action: vm.signIn) {
         Text("Sign in with Google").frame(maxWidth: .infinity)
       }.buttonStyle(.borderedProminent).tint(.green)
-    }.frame(maxWidth: .infinity).padding(.vertical, 4)
+      Text("Read-only · only your account · never posts")
+        .font(.caption2).foregroundStyle(.secondary).multilineTextAlignment(.center)
+    }.frame(maxWidth: .infinity).padding(.vertical, 8)
   }
 
   private var signingIn: some View {
