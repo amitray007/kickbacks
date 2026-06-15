@@ -50,5 +50,15 @@ mkdir -p "$DEST"
 rm -rf "${DEST:?}/$APP"
 cp -R "$STAGE" "$DEST/$APP"
 echo "OK: installed $DEST/$APP"
-echo "    Launch from Launchpad/Finder, or:  open -a Kickback"
+
+# For a real /Applications install, kill the running menu-bar app and relaunch the
+# fresh build (skipped for CI / temp-dir installs, which pass a custom DEST).
+if [ "$DEST" = "/Applications" ]; then
+  echo "-> relaunching Kickback ..."
+  if pkill -x KickbackBar 2>/dev/null; then sleep 0.6; fi
+  open "$DEST/$APP"
+  echo "OK: Kickback relaunched"
+else
+  echo "    Launch from Launchpad/Finder, or:  open -a Kickback"
+fi
 echo "    (Branding: drop an AppIcon.icns into app/Resources/ and re-run to embed it.)"
