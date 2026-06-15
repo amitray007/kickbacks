@@ -3,28 +3,41 @@ import SwiftUI
 import AppKit
 import KickbackKit
 
+private struct ContentHeightKey: PreferenceKey {
+  static var defaultValue: CGFloat { 0 }
+  static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
 struct MenuContent: View {
   @ObservedObject var vm: MenuVM
+  @State private var contentHeight: CGFloat = 0
   private var m: MenuModel { vm.model }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      header
-      Divider()
-      if vm.loading {
-        loadingView
-      } else {
-        switch vm.phase {
-        case .signedOut: signedOut
-        case .signingIn: signingIn
-        case .signedIn:  signedIn
+    ScrollView {
+      VStack(alignment: .leading, spacing: 10) {
+        header
+        Divider()
+        if vm.loading {
+          loadingView
+        } else {
+          switch vm.phase {
+          case .signedOut: signedOut
+          case .signingIn: signingIn
+          case .signedIn:  signedIn
+          }
         }
       }
+      .padding(12)
+      .background(GeometryReader { g in Color.clear.preference(key: ContentHeightKey.self, value: g.size.height) })
     }
-    .padding(12)
-    .frame(width: 300)
+    // Size to content, but cap below the screen so a tall panel scrolls instead of clipping.
+    .frame(width: 300, height: contentHeight > 0 ? min(contentHeight, maxPanelHeight) : nil)
+    .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
     .onAppear { vm.refresh() }   // re-fetch each time the panel opens, not just every 60s
   }
+
+  private var maxPanelHeight: CGFloat { (NSScreen.main?.visibleFrame.height ?? 760) - 80 }
 
   // MARK: header (brand + status + refresh + overflow)
 
