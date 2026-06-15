@@ -18,14 +18,17 @@ The TypeScript core + CLI (**Plan 1**), the live OpenTUI `watch` dashboard (**Pl
 ## Install (Homebrew)
 
 ```bash
-brew install amitray007/kickbacks/kickbacks   # builds the CLI + menu-bar app from source (bun + swift)
+brew tap amitray007/kickbacks https://github.com/amitray007/kickbacks
+brew install kickbacks              # builds the CLI + menu-bar app from source (bun + swift)
 kickbacks login                     # Google sign-in
 kickbacks                           # earnings dashboard  ·  kickbacks watch  for the live view
 kickbacks poller install            # background sampling + stall/cap alerts (launchd)
 kickbacks bar install               # menu-bar app at login
+
+brew update && brew upgrade kickbacks   # later: pull the newest release
 ```
 
-Build-from-source means no code-signing/notarization is required (it compiles on your machine). See [packaging/](packaging/) for the tap formula. Not affiliated with Kickbacks.ai / ShiftKeys, Inc.
+Build-from-source means no code-signing/notarization is required (it compiles on your machine). The [formula](Formula/kickbacks.rb) auto-tracks each `v*` tag (see `.github/workflows/release.yml`), so `brew upgrade` always gets the latest. Not affiliated with Kickbacks.ai / ShiftKeys, Inc.
 
 **Prefer a Mac app (no brew)?** Run `scripts/install-app.sh` — it builds a self-contained `Kickbacks.app` (the `kickbacks` CLI is bundled inside) and installs it to `/Applications`; launch it from Launchpad. `scripts/build-release.sh` just builds the raw `dist/` binaries.
 
