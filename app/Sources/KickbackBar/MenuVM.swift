@@ -16,6 +16,7 @@ import KickbackKit
   private var pollTask: Task<Void, Never>?
   private var loginProc: Process?
   private var loginWatch: Task<Void, Never>?
+  private var lastNotifiedState: MenuState?   // edge-trigger for alert notifications
 
   private static let intervalKey = "refreshIntervalSeconds"
 
@@ -69,6 +70,17 @@ import KickbackKit
     } else {
       phase = m.signedIn ? .signedIn : .signedOut
     }
+    handleAlerts(m)
+  }
+
+  /// Fire a native notification on signed-in state transitions (edge-triggered; the
+  /// first signed-in model just seeds the baseline without notifying).
+  private func handleAlerts(_ m: MenuModel) {
+    guard m.signedIn else { lastNotifiedState = nil; return }
+    if let prev = lastNotifiedState, let note = StateAlert.note(for: m.state, previous: prev) {
+      Notifier.fire(note)
+    }
+    lastNotifiedState = m.state
   }
 
   func signIn() {

@@ -78,4 +78,22 @@ public enum ModelClient {
     try? proc.run()
     proc.waitUntilExit()
   }
+
+  /// Whether the launchd poller agent is installed (file check — no spawn).
+  public static func pollerInstalled() -> Bool {
+    let path = (NSHomeDirectory() as NSString).appendingPathComponent("Library/LaunchAgents/ai.kickback.poller.plist")
+    return FileManager.default.fileExists(atPath: path)
+  }
+
+  /// Install or remove the background poller LaunchAgent via the CLI.
+  public static func setPoller(_ on: Bool) {
+    guard let bin = binaryPath() else { return }
+    let proc = Process()
+    proc.executableURL = URL(fileURLWithPath: bin)
+    proc.arguments = ["poller", on ? "install" : "uninstall"]
+    proc.standardOutput = FileHandle.nullDevice
+    proc.standardError = FileHandle.nullDevice
+    try? proc.run()
+    proc.waitUntilExit()
+  }
 }

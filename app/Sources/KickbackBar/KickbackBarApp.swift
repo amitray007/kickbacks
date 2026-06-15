@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import KickbackKit
+import UserNotifications
 
 @main
 struct KickbackBarApp: App {
@@ -19,9 +20,18 @@ struct KickbackBarApp: App {
 }
 
 /// Menu-bar-only app: no Dock icon, no main window.
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.accessory)
+    let center = UNUserNotificationCenter.current()
+    center.delegate = self
+    center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+  }
+
+  // Present alerts even though the (accessory) app is always running.
+  func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                              withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    completionHandler([.banner, .sound])
   }
 }
 

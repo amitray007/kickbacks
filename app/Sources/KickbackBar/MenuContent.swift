@@ -80,6 +80,7 @@ struct MenuContent: View {
         Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
       }
       Toggle("Start at login", isOn: Binding(get: { LoginItem.isEnabled() }, set: { LoginItem.setEnabled($0) }))
+      Toggle("Background monitoring", isOn: Binding(get: { ModelClient.pollerInstalled() }, set: { ModelClient.setPoller($0) }))
       Button { showAbout() } label: { Label("About Kickbacks", systemImage: "info.circle") }
       Divider()
       Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
