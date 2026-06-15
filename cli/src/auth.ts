@@ -45,12 +45,12 @@ export class AuthError extends Error {
 export function makeAuthedRunner(d: AuthDeps) {
   return async function run<T>(call: (token: string) => Promise<T>): Promise<T> {
     const t = loadTokens();
-    if (!t) throw new AuthError("Not signed in. Run: kickback login");
+    if (!t) throw new AuthError("Not signed in. Run: kickbacks login");
     try { return await call(t.access_token); }
     catch (e) {
       if (!(e instanceof HttpError) || e.status !== 401 || !t.refresh_token) throw e;
       const nt = await refresh(d, t.refresh_token);
-      if (!nt) throw new AuthError("Session expired. Run: kickback login");
+      if (!nt) throw new AuthError("Session expired. Run: kickbacks login");
       saveTokens({ ...t, ...nt });
       return call(nt.access_token);
     }

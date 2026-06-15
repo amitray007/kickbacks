@@ -1,12 +1,12 @@
-# Kickback — Plan 2: OpenTUI `watch` dashboard
+# Kickbacks — Plan 2: OpenTUI `watch` dashboard
 
 > **For agentic workers:** implement task-by-task with TDD. Steps use `- [ ]`. Live in `cli/`. Commit per task on `main` (project convention).
 
-**Goal:** Add `kickback watch` — a live, framed OpenTUI dashboard that auto-refreshes earnings, renders the §15.2 model (state badge · today/lifetime · rate · cap bar · projection · sparkline · served ad), records a history sample each refresh, and quits on `q`/Ctrl-C. Default `kickback` and the other commands are unchanged.
+**Goal:** Add `kickbacks watch` — a live, framed OpenTUI dashboard that auto-refreshes earnings, renders the §15.2 model (state badge · today/lifetime · rate · cap bar · projection · sparkline · served ad), records a history sample each refresh, and quits on `q`/Ctrl-C. Default `kickbacks` and the other commands are unchanged.
 
 **Decisions (locked 2026-06-13):**
 - **OpenTUI core (imperative) API** — first runtime dep (`@opentui/core`); no React/Solid. Verified: loads under `bun build --compile` (Task 0 spike).
-- **`watch` is the only live TUI**; default `kickback` keeps the static colored renderer (also the non-TTY/piped fallback). Non-TTY `watch` falls back to one static render.
+- **`watch` is the only live TUI**; default `kickbacks` keeps the static colored renderer (also the non-TTY/piped fallback). Non-TTY `watch` falls back to one static render.
 
 **Architecture:** A pure data layer (`loadModel`) and a pure-ish view builder (`buildDashboardTree`) — both testable headless via `@opentui/core/testing` + the existing mock-backend pattern — under a thin imperative controller (`runWatch`) that owns the renderer, the refresh timer, and key input. The 401→refresh→retry logic is extracted from `cli.ts` into a reusable `makeAuthedRunner` (throws `AuthError`) so both the one-shot CLI (catches → exit) and the TUI (catches → show + destroy) share it.
 
@@ -95,12 +95,12 @@ export class AuthError extends Error {
 export function makeAuthedRunner(d: AuthDeps) {
   return async function run<T>(call: (token: string) => Promise<T>): Promise<T> {
     const t = loadTokens();
-    if (!t) throw new AuthError("Not signed in. Run: kickback login");
+    if (!t) throw new AuthError("Not signed in. Run: kickbacks login");
     try { return await call(t.access_token); }
     catch (e) {
       if (!(e instanceof HttpError) || e.status !== 401 || !t.refresh_token) throw e;
       const nt = await refresh(d, t.refresh_token);
-      if (!nt) throw new AuthError("Session expired. Run: kickback login");
+      if (!nt) throw new AuthError("Session expired. Run: kickbacks login");
       saveTokens({ ...t, ...nt });
       return call(nt.access_token);
     }
@@ -216,7 +216,7 @@ test("buildDashboardTree renders the unified model", async () => {
   await setup.renderOnce();
   const frame = setup.captureCharFrame();
   setup.renderer.destroy();
-  expect(frame).toContain("kickback");
+  expect(frame).toContain("kickbacks");
   expect(frame).toContain("Earning");
   expect(frame).toContain("$0.56");
   expect(frame).toContain("$12.34");
@@ -247,7 +247,7 @@ export function buildDashboardTree(renderer: CliRenderer, m: WatchModel): BoxRen
   const box = new BoxRenderable(renderer, {
     id: "dash", border: true, borderStyle: "rounded", borderColor: b.color,
     padding: 1, flexDirection: "column", width: 62,
-    title: ` kickback   ${b.glyph} ${b.label} `, titleAlignment: "left",
+    title: ` kickbacks   ${b.glyph} ${b.label} `, titleAlignment: "left",
   });
   const line = (id: string, content: any) => box.add(new TextRenderable(renderer, { id, content, fg: COL.fg }));
 
@@ -333,13 +333,13 @@ export async function runWatch(d: WatchDeps): Promise<void> {
 
 **Files:** Modify `cli/src/cli.ts`, `cli/README.md`.
 
-- [ ] **Step 1:** in `cli.ts`, add the command. `watch` interval via `KICKBACK_WATCH_SECONDS` (default 30):
+- [ ] **Step 1:** in `cli.ts`, add the command. `watch` interval via `KICKBACKS_WATCH_SECONDS` (default 30):
 ```ts
 import { runWatch } from "./watch";
 
 async function cmdWatch() {
   if (!process.stdout.isTTY) { await cmdPortfolio(); return; } // piped/non-TTY → one static render
-  const seconds = Math.max(5, Number(process.env.KICKBACK_WATCH_SECONDS) || 30);
+  const seconds = Math.max(5, Number(process.env.KICKBACKS_WATCH_SECONDS) || 30);
   const store = openStore(DB_FILE);
   await runWatch({
     now: () => Date.now(),
@@ -355,8 +355,8 @@ async function cmdWatch() {
 ```
 Add `loadModel` to the `./tui` import; `runAuthed` is the Task-2 runner. Register `watch: cmdWatch` in the dispatch table and add `watch` to the usage string.
 - [ ] **Step 2:** `bunx --bun tsc --noEmit` → clean; `bun test` → all green (no regressions).
-- [ ] **Step 3:** non-TTY smoke: `KICKBACK_CONFIG_DIR=/tmp/kb-smoke bun run src/cli.ts watch | cat` → should error "Not signed in" (no token) and **not** hang (non-TTY fell back to one-shot). Expected exit non-zero, no alt-screen.
-- [ ] **Step 4:** update `README.md` (root + `cli/`) — add `kickback watch` and `KICKBACK_WATCH_SECONDS`.
+- [ ] **Step 3:** non-TTY smoke: `KICKBACKS_CONFIG_DIR=/tmp/kb-smoke bun run src/cli.ts watch | cat` → should error "Not signed in" (no token) and **not** hang (non-TTY fell back to one-shot). Expected exit non-zero, no alt-screen.
+- [ ] **Step 4:** update `README.md` (root + `cli/`) — add `kickbacks watch` and `KICKBACKS_WATCH_SECONDS`.
 - [ ] **Step 5:** commit `feat(cli): add 'watch' live dashboard command (+ non-TTY fallback)`.
 
 ---

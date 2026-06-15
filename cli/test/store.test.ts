@@ -1,4 +1,4 @@
-// kickback/test/store.test.ts
+// kickbacks/test/store.test.ts
 import { test, expect } from "bun:test";
 import { openStore } from "../src/store";
 import { Database } from "bun:sqlite";

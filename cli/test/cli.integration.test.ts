@@ -3,7 +3,7 @@
 // End-to-end QA: drives the real CLI (`bun run src/cli.ts <cmd>`) against a mock
 // backend on localhost and a throwaway config dir. Covers every command EXCEPT
 // `login` (interactive Google OAuth — human-in-the-loop, design §13.5).
-// Never touches the real account, real backend, or ~/.config/kickback.
+// Never touches the real account, real backend, or ~/.config/kickbacks.
 import { test, expect, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs";
@@ -62,7 +62,7 @@ beforeEach(() => {
   mock.portfolio401ForToken = null;
   mock.refreshCalled = false;
   mock.signoutCalled = false;
-  cfgDir = mkdtempSync(join(tmpdir(), "kickback-qa-"));
+  cfgDir = mkdtempSync(join(tmpdir(), "kickbacks-qa-"));
   writeFileSync(join(cfgDir, "auth.json"), JSON.stringify({ access_token: "AT", refresh_token: "RT" }));
 });
 afterEach(() => rmSync(cfgDir, { recursive: true, force: true }));
@@ -70,7 +70,7 @@ afterEach(() => rmSync(cfgDir, { recursive: true, force: true }));
 async function runCli(args: string[]) {
   const proc = Bun.spawn([process.execPath, "run", "src/cli.ts", ...args], {
     cwd: cliDir,
-    env: { ...process.env, KICKBACK_CONFIG_DIR: cfgDir, KICKBACK_BASE: baseUrl, NO_COLOR: "1" },
+    env: { ...process.env, KICKBACKS_CONFIG_DIR: cfgDir, KICKBACKS_BASE: baseUrl, NO_COLOR: "1" },
     stdout: "pipe", stderr: "pipe",
   });
   const stdout = await new Response(proc.stdout).text();

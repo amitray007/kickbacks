@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Redesign the `KickbackBar` menu-bar app into a real signed-out → login → data experience with a `K$ <value>` menu-bar label, a full set of states, and a History window — fed by new CLI JSON.
+**Goal:** Redesign the `KickbacksBar` menu-bar app into a real signed-out → login → data experience with a `K$ <value>` menu-bar label, a full set of states, and a History window — fed by new CLI JSON.
 
-**Architecture:** The CLI (`kickback`, TypeScript/Bun) stays the single source of truth: it gains a `history` JSON command and extra `model` fields, with all logic in pure, unit-tested functions. The Swift app (`KickbackKit` + `KickbackBar`) renders that JSON and owns only view/auth state — a login flow that spawns `kickback login` in the background and polls until signed in, plus a History window.
+**Architecture:** The CLI (`kickbacks`, TypeScript/Bun) stays the single source of truth: it gains a `history` JSON command and extra `model` fields, with all logic in pure, unit-tested functions. The Swift app (`KickbacksKit` + `KickbacksBar`) renders that JSON and owns only view/auth state — a login flow that spawns `kickbacks login` in the background and polls until signed in, plus a History window.
 
 **Tech Stack:** Bun + TypeScript (`bun test`), `bun:sqlite`; Swift 6 / SwiftUI `MenuBarExtra` + a `Window` scene (`swift build`/`swift test`, XCTest).
 
@@ -253,7 +253,7 @@ cd cli && git add src/history.ts test/history.test.ts
 git commit -m "feat(history): lastEarnedAgoSeconds"
 ```
 
-### Task 4: `buildHistory` + `kickback history` command
+### Task 4: `buildHistory` + `kickbacks history` command
 
 **Files:**
 - Modify: `cli/src/history.ts`
@@ -382,7 +382,7 @@ Expected: a single line of JSON, e.g. `{"thisWeekUsd":0,...,"daysTracked":0,"dai
 
 ```bash
 cd cli && git add src/history.ts src/cli.ts test/history.test.ts
-git commit -m "feat(history): buildHistory + 'kickback history' JSON command"
+git commit -m "feat(history): buildHistory + 'kickbacks history' JSON command"
 ```
 
 ### Task 5: Extend `buildMenuModel` (menuValue, ads, threshold, lastEarned, collecting)
@@ -478,13 +478,13 @@ git commit -m "feat(model): menuValue, ads, viewThreshold, lastEarned, collectin
 
 ---
 
-## Phase 2 — KickbackKit DTOs (Swift, TDD)
+## Phase 2 — KickbacksKit DTOs (Swift, TDD)
 
 ### Task 6: MenuModel additions + AdItem
 
 **Files:**
-- Modify: `app/Sources/KickbackKit/Model.swift`
-- Test: `app/Tests/KickbackKitTests/ModelTests.swift`
+- Modify: `app/Sources/KickbacksKit/Model.swift`
+- Test: `app/Tests/KickbacksKitTests/ModelTests.swift`
 
 - [ ] **Step 1: Update the existing decode tests to the new JSON shape (they will fail to compile/decode)**
 
@@ -501,7 +501,7 @@ Replace the two JSON literals in `ModelTests.swift` so they include the new fiel
   }
 
   func testDecodesSignedOut() throws {
-    let json = #"{"signedIn":false,"state":"signed-out","title":"kickback","today":"$0.00","lifetime":"$0.00","rate":"","trend":"flat","cap":"","capPct":0,"resets":"","projection":"","spark":"","ad":"","adUrl":"","status":"Signed out","ageSeconds":0,"menuValue":"—","viewThresholdSeconds":null,"ads":[],"lastEarnedAgoSeconds":null,"collecting":false}"#
+    let json = #"{"signedIn":false,"state":"signed-out","title":"kickbacks","today":"$0.00","lifetime":"$0.00","rate":"","trend":"flat","cap":"","capPct":0,"resets":"","projection":"","spark":"","ad":"","adUrl":"","status":"Signed out","ageSeconds":0,"menuValue":"—","viewThresholdSeconds":null,"ads":[],"lastEarnedAgoSeconds":null,"collecting":false}"#
     let m = try XCTUnwrap(MenuModel.decode(Data(json.utf8)))
     XCTAssertEqual(m.state, .signedOut)
     XCTAssertEqual(m.menuValue, "—")
@@ -511,12 +511,12 @@ Replace the two JSON literals in `ModelTests.swift` so they include the new fiel
 
 - [ ] **Step 2: Run it, verify it fails**
 
-Run: `cd app && swift test --filter KickbackKitTests.ModelTests`
+Run: `cd app && swift test --filter KickbacksKitTests.ModelTests`
 Expected: FAIL — `value of type 'MenuModel' has no member 'menuValue'` (compile error).
 
 - [ ] **Step 3: Add `AdItem` + fields to `MenuModel`**
 
-In `app/Sources/KickbackKit/Model.swift`, add the struct above `MenuModel`:
+In `app/Sources/KickbacksKit/Model.swift`, add the struct above `MenuModel`:
 
 ```swift
 public struct AdItem: Codable, Equatable, Sendable {
@@ -545,28 +545,28 @@ Update the `signedOut` static so it still compiles (add to its initializer args,
 
 - [ ] **Step 4: Run it, verify it passes**
 
-Run: `cd app && swift test --filter KickbackKitTests.ModelTests`
+Run: `cd app && swift test --filter KickbacksKitTests.ModelTests`
 Expected: PASS (3 tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd app && git add Sources/KickbackKit/Model.swift Tests/KickbackKitTests/ModelTests.swift
+cd app && git add Sources/KickbacksKit/Model.swift Tests/KickbacksKitTests/ModelTests.swift
 git commit -m "feat(app): MenuModel gains menuValue/ads/threshold/lastEarned/collecting"
 ```
 
 ### Task 7: HistoryModel DTO
 
 **Files:**
-- Create: `app/Sources/KickbackKit/HistoryModel.swift`
-- Test: `app/Tests/KickbackKitTests/HistoryModelTests.swift`
+- Create: `app/Sources/KickbacksKit/HistoryModel.swift`
+- Test: `app/Tests/KickbacksKitTests/HistoryModelTests.swift`
 
 - [ ] **Step 1: Write the failing test**
 
 ```swift
-// app/Tests/KickbackKitTests/HistoryModelTests.swift
+// app/Tests/KickbacksKitTests/HistoryModelTests.swift
 import XCTest
-@testable import KickbackKit
+@testable import KickbacksKit
 
 final class HistoryModelTests: XCTestCase {
   func testDecodesFull() throws {
@@ -591,13 +591,13 @@ final class HistoryModelTests: XCTestCase {
 
 - [ ] **Step 2: Run it, verify it fails**
 
-Run: `cd app && swift test --filter KickbackKitTests.HistoryModelTests`
+Run: `cd app && swift test --filter KickbacksKitTests.HistoryModelTests`
 Expected: FAIL — `cannot find 'HistoryModel' in scope`.
 
 - [ ] **Step 3: Implement the DTO**
 
 ```swift
-// app/Sources/KickbackKit/HistoryModel.swift
+// app/Sources/KickbacksKit/HistoryModel.swift
 import Foundation
 
 public struct DayBucket: Codable, Equatable, Sendable {
@@ -611,7 +611,7 @@ public struct BestDay: Codable, Equatable, Sendable {
   public var usd: Double
 }
 
-/// Decoded from `kickback history`. Mirrors HistoryJson in cli/src/history.ts.
+/// Decoded from `kickbacks history`. Mirrors HistoryJson in cli/src/history.ts.
 public struct HistoryModel: Codable, Equatable, Sendable {
   public var thisWeekUsd: Double
   public var thisMonthUsd: Double
@@ -637,28 +637,28 @@ public struct HistoryModel: Codable, Equatable, Sendable {
 
 - [ ] **Step 4: Run it, verify it passes**
 
-Run: `cd app && swift test --filter KickbackKitTests.HistoryModelTests`
+Run: `cd app && swift test --filter KickbacksKitTests.HistoryModelTests`
 Expected: PASS (2 tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd app && git add Sources/KickbackKit/HistoryModel.swift Tests/KickbackKitTests/HistoryModelTests.swift
-git commit -m "feat(app): HistoryModel DTO mirroring 'kickback history'"
+cd app && git add Sources/KickbacksKit/HistoryModel.swift Tests/KickbacksKitTests/HistoryModelTests.swift
+git commit -m "feat(app): HistoryModel DTO mirroring 'kickbacks history'"
 ```
 
 ### Task 8: MenuPresentation (label + tint, pure & tested)
 
 **Files:**
-- Create: `app/Sources/KickbackKit/MenuPresentation.swift`
-- Test: `app/Tests/KickbackKitTests/MenuPresentationTests.swift`
+- Create: `app/Sources/KickbacksKit/MenuPresentation.swift`
+- Test: `app/Tests/KickbacksKitTests/MenuPresentationTests.swift`
 
 - [ ] **Step 1: Write the failing test**
 
 ```swift
-// app/Tests/KickbackKitTests/MenuPresentationTests.swift
+// app/Tests/KickbacksKitTests/MenuPresentationTests.swift
 import XCTest
-@testable import KickbackKit
+@testable import KickbacksKit
 
 final class MenuPresentationTests: XCTestCase {
   func testLabel() {
@@ -679,13 +679,13 @@ final class MenuPresentationTests: XCTestCase {
 
 - [ ] **Step 2: Run it, verify it fails**
 
-Run: `cd app && swift test --filter KickbackKitTests.MenuPresentationTests`
+Run: `cd app && swift test --filter KickbacksKitTests.MenuPresentationTests`
 Expected: FAIL — `cannot find 'MenuPresentation' in scope`.
 
 - [ ] **Step 3: Implement**
 
 ```swift
-// app/Sources/KickbackKit/MenuPresentation.swift
+// app/Sources/KickbacksKit/MenuPresentation.swift
 import Foundation
 
 public enum AuthPhase: Equatable, Sendable { case signedOut, signingIn, signedIn }
@@ -716,27 +716,27 @@ public enum MenuPresentation {
 
 - [ ] **Step 4: Run it, verify it passes**
 
-Run: `cd app && swift test --filter KickbackKitTests.MenuPresentationTests`
+Run: `cd app && swift test --filter KickbacksKitTests.MenuPresentationTests`
 Expected: PASS (2 tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd app && git add Sources/KickbackKit/MenuPresentation.swift Tests/KickbackKitTests/MenuPresentationTests.swift
+cd app && git add Sources/KickbacksKit/MenuPresentation.swift Tests/KickbacksKitTests/MenuPresentationTests.swift
 git commit -m "feat(app): MenuPresentation label + tint mapping"
 ```
 
 ### Task 9: ModelClient — history(), startLogin(), logout()
 
 **Files:**
-- Modify: `app/Sources/KickbackKit/ModelClient.swift`
+- Modify: `app/Sources/KickbacksKit/ModelClient.swift`
 
 - [ ] **Step 1: Add the three calls (mirrors the existing `fetch()` spawn pattern)**
 
 Append inside the `ModelClient` enum, after `fetch()`:
 
 ```swift
-  /// Runs `kickback history` and decodes it. nil on any transient failure.
+  /// Runs `kickbacks history` and decodes it. nil on any transient failure.
   public static func history() -> HistoryModel? {
     guard let bin = binaryPath() else { return nil }
     let proc = Process()
@@ -752,7 +752,7 @@ Append inside the `ModelClient` enum, after `fetch()`:
     return HistoryModel.decode(data)
   }
 
-  /// Spawns `kickback login` in the background (opens the browser + runs the local
+  /// Spawns `kickbacks login` in the background (opens the browser + runs the local
   /// callback server). Returns the running process so the caller can cancel it; nil if
   /// no CLI is available. Caller polls `fetch()` for `signedIn` to know it finished.
   public static func startLogin() -> Process? {
@@ -766,7 +766,7 @@ Append inside the `ModelClient` enum, after `fetch()`:
     return proc
   }
 
-  /// Runs `kickback logout` and waits for it (revokes the server session + clears tokens).
+  /// Runs `kickbacks logout` and waits for it (revokes the server session + clears tokens).
   public static func logout() {
     guard let bin = binaryPath() else { return }
     let proc = Process()
@@ -787,7 +787,7 @@ Expected: `Build complete!`
 - [ ] **Step 3: Commit**
 
 ```bash
-cd app && git add Sources/KickbackKit/ModelClient.swift
+cd app && git add Sources/KickbacksKit/ModelClient.swift
 git commit -m "feat(app): ModelClient.history/startLogin/logout"
 ```
 
@@ -798,18 +798,18 @@ git commit -m "feat(app): ModelClient.history/startLogin/logout"
 ### Task 10: MenuVM — auth phase + sign-in/out
 
 **Files:**
-- Modify: `app/Sources/KickbackBar/MenuVM.swift`
+- Modify: `app/Sources/KickbacksBar/MenuVM.swift`
 
 - [ ] **Step 1: Replace MenuVM with the auth-aware version**
 
 ```swift
-// app/Sources/KickbackBar/MenuVM.swift
+// app/Sources/KickbacksBar/MenuVM.swift
 import SwiftUI
-import KickbackKit
+import KickbacksKit
 
 /// Holds the polled model + a small auth phase machine. Normal polling sets the phase
 /// from `model.signedIn`; `signIn()` overrides it with `.signingIn` while the spawned
-/// `kickback login` runs, polling until the model reports signed-in (or it times out).
+/// `kickbacks login` runs, polling until the model reports signed-in (or it times out).
 @MainActor final class MenuVM: ObservableObject {
   @Published private(set) var model: MenuModel = .signedOut
   @Published private(set) var phase: AuthPhase = .signedOut
@@ -892,23 +892,23 @@ Expected: `Build complete!` (MenuContent still references old API — if it fail
 - [ ] **Step 3: Commit**
 
 ```bash
-cd app && git add Sources/KickbackBar/MenuVM.swift
+cd app && git add Sources/KickbacksBar/MenuVM.swift
 git commit -m "feat(app): MenuVM auth phase + background-spawn sign-in/out"
 ```
 
 ### Task 11: MenuContent — all states + menu-bar label
 
 **Files:**
-- Modify: `app/Sources/KickbackBar/MenuContent.swift`
-- Modify: `app/Sources/KickbackBar/KickbackBarApp.swift`
+- Modify: `app/Sources/KickbacksBar/MenuContent.swift`
+- Modify: `app/Sources/KickbacksBar/KickbacksBarApp.swift`
 
 - [ ] **Step 1: Rewrite MenuContent to render every state**
 
 ```swift
-// app/Sources/KickbackBar/MenuContent.swift
+// app/Sources/KickbacksBar/MenuContent.swift
 import SwiftUI
 import AppKit
-import KickbackKit
+import KickbacksKit
 
 struct MenuContent: View {
   @ObservedObject var vm: MenuVM
@@ -931,7 +931,7 @@ struct MenuContent: View {
 
   private var header: some View {
     HStack {
-      (Text("K$ ").foregroundStyle(.green).bold() + Text("Kickback").bold())
+      (Text("K$ ").foregroundStyle(.green).bold() + Text("Kickbacks").bold())
       Spacer()
       if vm.phase == .signedIn {
         HStack(spacing: 5) {
@@ -1059,7 +1059,7 @@ struct MenuContent: View {
 
 - [ ] **Step 2: Add the `LoginItem` helper (native login-item toggle via ServiceManagement)**
 
-Create `app/Sources/KickbackBar/LoginItem.swift`:
+Create `app/Sources/KickbacksBar/LoginItem.swift`:
 
 ```swift
 import ServiceManagement
@@ -1076,7 +1076,7 @@ enum LoginItem {
 
 - [ ] **Step 3: Update the menu-bar label to use MenuPresentation**
 
-In `app/Sources/KickbackBar/KickbackBarApp.swift`, replace the `label:` closure:
+In `app/Sources/KickbacksBar/KickbacksBarApp.swift`, replace the `label:` closure:
 
 ```swift
     } label: {
@@ -1098,7 +1098,7 @@ private func labelColor(_ vm: MenuVM) -> Color {
 }
 ```
 
-(Add `import KickbackKit` to `KickbackBarApp.swift` if not already present.)
+(Add `import KickbacksKit` to `KickbacksBarApp.swift` if not already present.)
 
 - [ ] **Step 4: Build the whole app**
 
@@ -1108,7 +1108,7 @@ Expected: `Build complete!` (resolves the Task-10 cross-reference too).
 - [ ] **Step 5: Commit**
 
 ```bash
-cd app && git add Sources/KickbackBar/MenuContent.swift Sources/KickbackBar/KickbackBarApp.swift Sources/KickbackBar/LoginItem.swift
+cd app && git add Sources/KickbacksBar/MenuContent.swift Sources/KickbacksBar/KickbacksBarApp.swift Sources/KickbacksBar/LoginItem.swift
 git commit -m "feat(app): all panel states + K\$ menu-bar label + login-item toggle"
 ```
 
@@ -1119,14 +1119,14 @@ git commit -m "feat(app): all panel states + K\$ menu-bar label + login-item tog
 ### Task 12: HistoryVM
 
 **Files:**
-- Create: `app/Sources/KickbackBar/HistoryVM.swift`
+- Create: `app/Sources/KickbacksBar/HistoryVM.swift`
 
 - [ ] **Step 1: Implement**
 
 ```swift
-// app/Sources/KickbackBar/HistoryVM.swift
+// app/Sources/KickbacksBar/HistoryVM.swift
 import SwiftUI
-import KickbackKit
+import KickbacksKit
 
 @MainActor final class HistoryVM: ObservableObject {
   @Published private(set) var model: HistoryModel?
@@ -1150,22 +1150,22 @@ Expected: `Build complete!`
 - [ ] **Step 3: Commit**
 
 ```bash
-cd app && git add Sources/KickbackBar/HistoryVM.swift
+cd app && git add Sources/KickbacksBar/HistoryVM.swift
 git commit -m "feat(app): HistoryVM"
 ```
 
 ### Task 13: History window view + Window scene
 
 **Files:**
-- Create: `app/Sources/KickbackBar/HistoryWindow.swift`
-- Modify: `app/Sources/KickbackBar/KickbackBarApp.swift` (add the `Window` scene)
+- Create: `app/Sources/KickbacksBar/HistoryWindow.swift`
+- Modify: `app/Sources/KickbacksBar/KickbacksBarApp.swift` (add the `Window` scene)
 
 - [ ] **Step 1: Implement the view (full / not-enough / empty)**
 
 ```swift
-// app/Sources/KickbackBar/HistoryWindow.swift
+// app/Sources/KickbacksBar/HistoryWindow.swift
 import SwiftUI
-import KickbackKit
+import KickbacksKit
 
 struct HistoryWindow: View {
   @StateObject private var vm = HistoryVM()
@@ -1234,7 +1234,7 @@ struct HistoryWindow: View {
   private var emptyState: some View {
     VStack(spacing: 6) {
       Text("📈 No history yet").font(.headline)
-      Text("Your first full day appears tomorrow. Kickback charts your earnings as you use it.")
+      Text("Your first full day appears tomorrow. Kickbacks charts your earnings as you use it.")
         .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
       Text("Tip: keep the background poller on so days aren’t missed.").font(.caption2).foregroundStyle(.secondary)
     }
@@ -1264,10 +1264,10 @@ struct HistoryWindow: View {
 
 - [ ] **Step 2: Add the Window scene**
 
-In `app/Sources/KickbackBar/KickbackBarApp.swift`, inside `var body: some Scene`, add after the `MenuBarExtra { … }` block:
+In `app/Sources/KickbacksBar/KickbacksBarApp.swift`, inside `var body: some Scene`, add after the `MenuBarExtra { … }` block:
 
 ```swift
-    Window("Kickback — History", id: "history") {
+    Window("Kickbacks — History", id: "history") {
       HistoryWindow()
     }
     .windowResizability(.contentSize)
@@ -1286,7 +1286,7 @@ Expected: PASS (ModelTests, HistoryModelTests, MenuPresentationTests).
 - [ ] **Step 5: Commit**
 
 ```bash
-cd app && git add Sources/KickbackBar/HistoryWindow.swift Sources/KickbackBar/KickbackBarApp.swift
+cd app && git add Sources/KickbacksBar/HistoryWindow.swift Sources/KickbacksBar/KickbacksBarApp.swift
 git commit -m "feat(app): History window (chart/tiles/empty) + Window scene"
 ```
 
@@ -1311,17 +1311,17 @@ Expected: `Build complete!` and all tests pass.
 - [ ] **Step 3: Build + install the app**
 
 Run: `bash scripts/install-app.sh`
-Expected: `OK: installed /Applications/Kickback.app` with `-> bundled app/Resources/AppIcon.icns`.
+Expected: `OK: installed /Applications/Kickbacks.app` with `-> bundled app/Resources/AppIcon.icns`.
 
-- [ ] **Step 4: Verify `kickback history` from the bundled CLI**
+- [ ] **Step 4: Verify `kickbacks history` from the bundled CLI**
 
-Run: `/Applications/Kickback.app/Contents/MacOS/kickback history`
+Run: `/Applications/Kickbacks.app/Contents/MacOS/kickbacks history`
 Expected: one line of JSON (day-one/empty shape is fine on a fresh history).
 
 - [ ] **Step 5: Manual QA checklist (needs the GUI; record results in the PR/commit message)**
 
-- [ ] Launch: `open -a Kickback` → menu bar shows `K$ —` (signed out).
-- [ ] Click → **Sign in with Google** → panel shows spinner; browser opens; after Google consent the panel flips to data and the menu bar shows `K$ <value>`. (This verifies the open item from the spec: `kickback login` completes when spawned headlessly. If the browser never opens or it hangs, fall back to opening Terminal for login — see spec — and note it.)
+- [ ] Launch: `open -a Kickbacks` → menu bar shows `K$ —` (signed out).
+- [ ] Click → **Sign in with Google** → panel shows spinner; browser opens; after Google consent the panel flips to data and the menu bar shows `K$ <value>`. (This verifies the open item from the spec: `kickbacks login` completes when spawned headlessly. If the browser never opens or it hangs, fall back to opening Terminal for login — see spec — and note it.)
 - [ ] First run shows the "Collecting your trend…" placeholder (until ≥2 samples), then the sparkline.
 - [ ] `📊 History` opens the window; with little data it shows "not enough" / empty messaging; tiles dim appropriately.
 - [ ] Overflow `⋯` → Sign out returns to the signed-out panel; "Start at login" toggles (check System Settings → General → Login Items).
@@ -1337,6 +1337,6 @@ git add -A && git commit -m "chore(app): menu-bar redesign QA pass"
 
 ## Notes / known follow-ups
 
-- **Headless login:** the plan assumes `kickback login` opens the browser + runs its callback server when spawned without a TTY (its `openBrowser` uses `open` and it polls in-process). Verified in Task 14 Step 5. If a TTY is required, add a `login --json`/non-interactive mode to the CLI and have `startLogin` use it — the app already detects success via `model`’s `signedIn`, so no Swift change is needed.
+- **Headless login:** the plan assumes `kickbacks login` opens the browser + runs its callback server when spawned without a TTY (its `openBrowser` uses `open` and it polls in-process). Verified in Task 14 Step 5. If a TTY is required, add a `login --json`/non-interactive mode to the CLI and have `startLogin` use it — the app already detects success via `model`’s `signedIn`, so no Swift change is needed.
 - **Tiles labels:** "This week/This month" are rolling 7/30-day sums (see `summarize`). Rename in `HistoryWindow` if calendar-period semantics are preferred later.
 - **activeHours/campaignsSeen** are richest when the background poller is running (it records `active` and distinct ads); plain app refreshes still contribute samples.

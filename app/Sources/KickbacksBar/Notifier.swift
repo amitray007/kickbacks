@@ -1,11 +1,11 @@
 import UserNotifications
-import KickbackKit
+import KickbacksKit
 
 /// Fires native notifications for earning-state changes. Foreground presentation is
 /// enabled by the AppDelegate's UNUserNotificationCenterDelegate. A fixed identifier
 /// means a newer alert replaces the previous one rather than stacking.
 enum Notifier {
-  static func fire(title: String, body: String, id: String = "ai.kickback.alert") {
+  static func fire(title: String, body: String, id: String = "ai.kickbacks.alert") {
     let content = UNMutableNotificationContent()
     content.title = title
     content.body = body

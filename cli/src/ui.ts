@@ -39,11 +39,11 @@ export function badge(state: EarningState, c: Palette = palette(false)): string 
 const trend = (rate: number): "▴" | "—" => (rate > 0 ? "▴" : "—");
 export const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** The default `kickback` view — the unified earnings model (design §15.2) as static
+/** The default `kickbacks` view — the unified earnings model (design §15.2) as static
  *  colored text. The live framed/animated TUI is Plan 2 (OpenTUI). */
 export function renderDashboard(p: Portfolio, e: Earnings | null, rate: number, color: boolean): string {
   const c = palette(color);
-  const L: string[] = ["", `  ${c.bold("kickback")}   ${badge(earningState(p, e), c)}`, `  ${c.dim("─".repeat(52))}`];
+  const L: string[] = ["", `  ${c.bold("kickbacks")}   ${badge(earningState(p, e), c)}`, `  ${c.dim("─".repeat(52))}`];
   L.push(`  ${c.dim("Today    ")}${c.green(fmtUsd(p.todayUsd))}     ${c.dim("Lifetime  ")}${c.green(fmtUsd(p.lifetimeUsd))}`);
   if (rate > 0) L.push(`  ${c.dim("Rate     ")}${c.green(`${fmtUsd(rate)}/hr`)} ${c.green(trend(rate))}${c.dim("  (last 6h)")}`);
   if (e?.cap) {
@@ -69,7 +69,7 @@ export function renderDashboard(p: Portfolio, e: Earnings | null, rate: number, 
   return L.join("\n");
 }
 
-/** Focused `kickback earnings` view (balances + cap + projection). */
+/** Focused `kickbacks earnings` view (balances + cap + projection). */
 export function renderEarnings(p: Portfolio, e: Earnings | null, rate: number, color: boolean): string {
   const c = palette(color);
   const L: string[] = ["", `  ${c.bold("Earnings")}`, `  ${c.dim("─".repeat(30))}`];
@@ -92,7 +92,7 @@ export function renderStatus(o: { signedIn: boolean; base: string; configDir: st
   const c = palette(o.color);
   return [
     "",
-    `  ${c.bold("kickback status")}`,
+    `  ${c.bold("kickbacks status")}`,
     `  ${c.dim("─".repeat(30))}`,
     `  ${c.dim("signed in  ")}${o.signedIn ? c.green("yes") : c.yellow("no")}`,
     `  ${c.dim("backend    ")}${o.base}`,

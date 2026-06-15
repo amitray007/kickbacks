@@ -44,7 +44,7 @@ test("buildDashboardTree renders the unified model headless", async () => {
   await setup.renderOnce();
   const frame = setup.captureCharFrame();
   setup.renderer.destroy();
-  expect(frame).toContain("kickback");
+  expect(frame).toContain("kickbacks");
   expect(frame).toContain("Earning");
   expect(frame).toContain("$0.56");
   expect(frame).toContain("$12.34");

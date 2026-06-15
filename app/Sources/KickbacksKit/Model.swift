@@ -1,6 +1,6 @@
 import Foundation
 
-/// Mirrors the `state` enum emitted by `kickback model --json`.
+/// Mirrors the `state` enum emitted by `kickbacks model --json`.
 public enum MenuState: String, Codable, Sendable {
   case signedOut = "signed-out"
   case killed
@@ -16,7 +16,7 @@ public struct AdItem: Codable, Equatable, Sendable {
   public var icon: String
 }
 
-/// Display-ready menu model, decoded from `kickback model --json`. The CLI does all
+/// Display-ready menu model, decoded from `kickbacks model --json`. The CLI does all
 /// the earnings logic; this is the single coupling point between TS and Swift.
 public struct MenuModel: Codable, Equatable, Sendable {
   public var signedIn: Bool
@@ -48,7 +48,7 @@ public struct MenuModel: Codable, Equatable, Sendable {
 
   /// Fallback shown on any failure (no binary, spawn/parse error, signed out).
   public static let signedOut = MenuModel(
-    signedIn: false, state: .signedOut, title: "kickback",
+    signedIn: false, state: .signedOut, title: "kickbacks",
     today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capScope: nil, capPct: 0,
     resets: "", projection: "", spark: "", ad: "", adUrl: "", status: "Signed out", ageSeconds: 0,
     menuValue: "—", viewThresholdSeconds: nil, ads: [], lastEarnedAgoSeconds: nil, collecting: false, recentAds: [],

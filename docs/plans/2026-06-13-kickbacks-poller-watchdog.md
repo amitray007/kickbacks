@@ -1,13 +1,13 @@
-# Kickback — Plan 3: launchd poller + stall watchdog
+# Kickbacks — Plan 3: launchd poller + stall watchdog
 
 > **For agentic workers:** implement task-by-task with TDD. Steps use `- [ ]`. Live in `cli/`. Commit per task on `main`.
 
-**Goal:** A background poller (`kickback poll`, one cycle) that launchd runs every few minutes — it samples portfolio+earnings into local history (even with VS Code closed), and fires macOS notifications for the two events that matter: **stall** ("you're coding but `today_usd` is flat — the ad injection may have broken") and **cap hit**. Plus `kickback poller install|uninstall|status` to manage the launchd agent. This turns the amnesiac backend into trend/rate history (design §3–§5) and delivers the watchdog USP (§4 P1, §7).
+**Goal:** A background poller (`kickbacks poll`, one cycle) that launchd runs every few minutes — it samples portfolio+earnings into local history (even with VS Code closed), and fires macOS notifications for the two events that matter: **stall** ("you're coding but `today_usd` is flat — the ad injection may have broken") and **cap hit**. Plus `kickbacks poller install|uninstall|status` to manage the launchd agent. This turns the amnesiac backend into trend/rate history (design §3–§5) and delivers the watchdog USP (§4 P1, §7).
 
 ## Decisions (made autonomously 2026-06-13 — review & redirect welcome)
 
-- **D1 · Execution model:** launchd **`StartInterval`** runs `kickback poll` (one cycle, then exits) every `KICKBACK_POLL_SECONDS` (default 180). No long-running daemon — crash-resilient, no leak; state persists in SQLite. (launchd restarts it each interval; that *is* the "watchdog keep-alive".)
-- **D2 · Activity signal (for stall):** a file is "active" if any file under the configured transcript dirs was modified within the window. Default dir: `~/.claude/projects` (override `KICKBACK_ACTIVITY_DIRS`, colon-separated). **Heuristic — confirm the real CC/Codex transcript locations on your machine.** Fail-safe: if it never reads "active", stall simply never fires (no false alarms).
+- **D1 · Execution model:** launchd **`StartInterval`** runs `kickbacks poll` (one cycle, then exits) every `KICKBACKS_POLL_SECONDS` (default 180). No long-running daemon — crash-resilient, no leak; state persists in SQLite. (launchd restarts it each interval; that *is* the "watchdog keep-alive".)
+- **D2 · Activity signal (for stall):** a file is "active" if any file under the configured transcript dirs was modified within the window. Default dir: `~/.claude/projects` (override `KICKBACKS_ACTIVITY_DIRS`, colon-separated). **Heuristic — confirm the real CC/Codex transcript locations on your machine.** Fail-safe: if it never reads "active", stall simply never fires (no false alarms).
 - **D3 · Notifications:** macOS `osascript -e 'display notification …'` (built-in, no dep). No-op on non-darwin. Injected for tests.
 - **D4 · De-dup:** a `kv` table in the store records last-fired markers. Stall fires **once per stall episode** (re-arms when earning resumes); cap fires **once per cap period** (re-arms when `reset_seconds` rolls over / scope changes).
 - **D5 · Schema migration:** store `user_version` 1 → 2; `ALTER TABLE samples` adds `cap_scope TEXT, cap_usd REAL, cap_reset_s INTEGER, active INTEGER` (design §5 sketch). Old rows get NULL. `Sample` gains optional fields; Plan 1/2 callers omit them (stored NULL) and keep working.
@@ -261,7 +261,7 @@ export type Notifier = (title: string, body: string) => void;
 
 ---
 
-## Task 5 — Poll cycle + `kickback poll` (poll.ts, cli.ts)
+## Task 5 — Poll cycle + `kickbacks poll` (poll.ts, cli.ts)
 
 **Files:** `cli/src/poll.ts`, `cli/src/cli.ts`, `cli/test/poll.test.ts`.
 
@@ -286,7 +286,7 @@ test("runPoll records an active sample; fires stall when active + flat", async (
   await runPoll({ ...deps, now: now0 - 240_000 });             // first flat sample
   await runPoll({ ...deps, now: now0 });                       // second flat sample → stall
   expect(store.latest()!.active).toBe(true);
-  expect(fired.some((t) => /Kickback/.test(t))).toBe(true);
+  expect(fired.some((t) => /Kickbacks/.test(t))).toBe(true);
 });
 ```
 
@@ -321,8 +321,8 @@ export async function runPoll(d: PollDeps): Promise<void> {
   const samples = d.store.recentSince(d.now - 24 * 3_600_000);
   const a = decideAlerts({ samples, earnings: e, now: d.now, stallWindowMs: d.stallWindowMs,
     state: { stallActive: d.store.getState("stallActive") ?? "", capFired: d.store.getState("capFired") ?? undefined } });
-  if (a.stall) d.notify("Kickback — not earning", "You're coding but today's earnings are flat. The ad injection may have broken — run “Kickbacks: Restore”.");
-  if (a.cap) d.notify("Kickback — cap reached", `Your ${a.cap.scope} cap is hit; no more earning until it resets.`);
+  if (a.stall) d.notify("Kickbacks — not earning", "You're coding but today's earnings are flat. The ad injection may have broken — run “Kickbacks: Restore”.");
+  if (a.cap) d.notify("Kickbacks — cap reached", `Your ${a.cap.scope} cap is hit; no more earning until it resets.`);
   d.store.setState("stallActive", a.state.stallActive);
   if (a.state.capFired !== null) d.store.setState("capFired", a.state.capFired);
   if (earningState(p, e) === "earning") d.store.setState("capFired", ""); // re-arm cap when earning again
@@ -337,7 +337,7 @@ import { notify } from "./notify";
 import { ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS } from "./config";
 
 async function cmdPoll() {
-  if (!loadTokens()) { console.error("Not signed in. Run: kickback login"); process.exit(1); }
+  if (!loadTokens()) { console.error("Not signed in. Run: kickbacks login"); process.exit(1); }
   const store = openStore(DB_FILE);
   try {
     await runPoll({
@@ -349,7 +349,7 @@ async function cmdPoll() {
   } finally { store.close(); }
 }
 ```
-Add `config.ts`: `ACTIVITY_DIRS` (from `KICKBACK_ACTIVITY_DIRS` or `[~/.claude/projects]`), `ACTIVITY_WINDOW_MS` (default 300_000), `STALL_WINDOW_MS` (default 600_000), `POLL_SECONDS`, `LAUNCHD_LABEL = "ai.kickback.poller"`. Register `poll` in the table + usage. (`poll` is for launchd; harmless if run by hand.)
+Add `config.ts`: `ACTIVITY_DIRS` (from `KICKBACKS_ACTIVITY_DIRS` or `[~/.claude/projects]`), `ACTIVITY_WINDOW_MS` (default 300_000), `STALL_WINDOW_MS` (default 600_000), `POLL_SECONDS`, `LAUNCHD_LABEL = "ai.kickbacks.poller"`. Register `poll` in the table + usage. (`poll` is for launchd; harmless if run by hand.)
 
 - [ ] **Step 4:** `bun test test/poll.test.ts` + full suite + `tsc` → green.
 - [ ] **Step 5:** commit `feat(poll): one-cycle poller (sample + stall/cap alerts)`.
@@ -364,9 +364,9 @@ Add `config.ts`: `ACTIVITY_DIRS` (from `KICKBACK_ACTIVITY_DIRS` or `[~/.claude/p
 ```ts
 import { plistContent } from "../src/launchd";
 test("plistContent embeds label, program args, interval", () => {
-  const xml = plistContent("ai.kickback.poller", "/usr/local/bin/kickback", 180);
-  expect(xml).toContain("<string>ai.kickback.poller</string>");
-  expect(xml).toContain("<string>/usr/local/bin/kickback</string>");
+  const xml = plistContent("ai.kickbacks.poller", "/usr/local/bin/kickbacks", 180);
+  expect(xml).toContain("<string>ai.kickbacks.poller</string>");
+  expect(xml).toContain("<string>/usr/local/bin/kickbacks</string>");
   expect(xml).toContain("<string>poll</string>");
   expect(xml).toContain("<integer>180</integer>");
 });
@@ -409,13 +409,13 @@ export function uninstallAgent(label: string): void {
 export function agentInstalled(label: string): boolean { return existsSync(plistPath(label)); }
 ```
 
-- [ ] **Step 3:** `cli.ts` — `poller` subcommand. Resolve `binPath` = `process.execPath` if compiled, else instruct to `bun build`. For the common (compiled brew) case `process.execPath` is the `kickback` binary:
+- [ ] **Step 3:** `cli.ts` — `poller` subcommand. Resolve `binPath` = `process.execPath` if compiled, else instruct to `bun build`. For the common (compiled brew) case `process.execPath` is the `kickbacks` binary:
 ```ts
 async function cmdPoller() {
   const sub = (process.argv[3] || "status").toLowerCase();
   if (sub === "install") {
     const path = installAgent(LAUNCHD_LABEL, process.execPath, POLL_SECONDS);
-    console.log(`installed launchd agent → ${path}\npolling every ${POLL_SECONDS}s. Uninstall: kickback poller uninstall`);
+    console.log(`installed launchd agent → ${path}\npolling every ${POLL_SECONDS}s. Uninstall: kickbacks poller uninstall`);
   } else if (sub === "uninstall") { uninstallAgent(LAUNCHD_LABEL); console.log("uninstalled."); }
   else { console.log(`poller ${agentInstalled(LAUNCHD_LABEL) ? "installed" : "not installed"} (${LAUNCHD_LABEL})`); }
 }
@@ -430,8 +430,8 @@ Register `poller` in the table + usage.
 
 - [ ] Full `bun test` + `tsc` green; `bun build --compile` smoke (binary still builds/runs).
 - [ ] compound-engineering review (TS + simplicity) over `store`/`activity`/`alerts`/`poll`/`launchd` diff; triage + apply.
-- [ ] README (root + cli): document `poll` / `poller install` + the `KICKBACK_*` poller envs. design.md: note Plan 3 shipped; §13.x activity-dir heuristic.
-- [ ] **Manual QA (user, real macOS):** confirm CC/Codex transcript dir(s) for D2 (set `KICKBACK_ACTIVITY_DIRS` if needed); `kickback poller install`; verify a sample lands every interval (`kickback status`/`watch` shows rate building) and that a forced stall/cap produces a notification; `kickback poller uninstall` to stop.
+- [ ] README (root + cli): document `poll` / `poller install` + the `KICKBACKS_*` poller envs. design.md: note Plan 3 shipped; §13.x activity-dir heuristic.
+- [ ] **Manual QA (user, real macOS):** confirm CC/Codex transcript dir(s) for D2 (set `KICKBACKS_ACTIVITY_DIRS` if needed); `kickbacks poller install`; verify a sample lands every interval (`kickbacks status`/`watch` shows rate building) and that a forced stall/cap produces a notification; `kickbacks poller uninstall` to stop.
 
 ---
 

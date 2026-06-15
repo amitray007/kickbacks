@@ -20,18 +20,18 @@ jobs:
 
       - name: Build CLI + menu-bar app + .app bundle
         run: |
-          bash scripts/install-app.sh "$RUNNER_TEMP/apps"   # builds dist/kickback + dist/Kickback.app
-          cp app/.build/release/KickbackBar dist/kickback-bar
+          bash scripts/install-app.sh "$RUNNER_TEMP/apps"   # builds dist/kickbacks + dist/Kickbacks.app
+          cp app/.build/release/KickbacksBar dist/kickbacks-bar
 
       - name: Package artifacts
         run: |
           cd dist
-          zip -j kickback-cli-macos.zip kickback kickback-bar
-          ditto -c -k --keepParent Kickback.app Kickback.app.zip
+          zip -j kickbacks-cli-macos.zip kickbacks kickbacks-bar
+          ditto -c -k --keepParent Kickbacks.app Kickbacks.app.zip
 
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/kickback-cli-macos.zip
-            dist/Kickback.app.zip
+            dist/kickbacks-cli-macos.zip
+            dist/Kickbacks.app.zip
           generate_release_notes: true

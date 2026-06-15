@@ -1,10 +1,10 @@
-// app/Sources/KickbackBar/MenuVM.swift
+// app/Sources/KickbacksBar/MenuVM.swift
 import SwiftUI
-import KickbackKit
+import KickbacksKit
 
 /// Holds the polled model + a small auth phase machine. Normal polling sets the phase
 /// from `model.signedIn`; `signIn()` overrides it with `.signingIn` while the spawned
-/// `kickback login` runs, polling until the model reports signed-in (or it times out).
+/// `kickbacks login` runs, polling until the model reports signed-in (or it times out).
 @MainActor final class MenuVM: ObservableObject {
   @Published private(set) var model: MenuModel = .signedOut
   @Published private(set) var phase: AuthPhase = .signedOut
@@ -150,7 +150,7 @@ import KickbackKit
     guard m.signedIn else { return }
     let level = MilestoneAlert.highestCrossed(m.lifetimeUsd)
     if let last = milestoneSeen, level > last {
-      Notifier.fire(title: "🎉 Kickbacks milestone", body: "You've earned $\(Int(level)) all-time!", id: "ai.kickback.milestone")
+      Notifier.fire(title: "🎉 Kickbacks milestone", body: "You've earned $\(Int(level)) all-time!", id: "ai.kickbacks.milestone")
     }
     if milestoneSeen == nil || level > (milestoneSeen ?? 0) {
       milestoneSeen = level

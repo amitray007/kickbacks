@@ -2,11 +2,11 @@
 
 **Date:** 2026-06-14
 **Status:** Approved design (mockups validated via the brainstorming visual companion)
-**Surface:** the Swift `KickbackBar` menu-bar app + supporting CLI (`kickback`) JSON commands
+**Surface:** the Swift `KickbacksBar` menu-bar app + supporting CLI (`kickbacks`) JSON commands
 
 ## Problem
 
-The menu-bar app is a thin first cut. It renders the literal word `kickback` in the menu bar, and the dropdown shows the same rows in every state — there is no designed signed-out → login → data journey (a signed-out user just sees `$0.00` with no way to sign in). There is also no view onto the **local earnings history**, which is the one thing the official Kickbacks extension can't show.
+The menu-bar app is a thin first cut. It renders the literal word `kickbacks` in the menu bar, and the dropdown shows the same rows in every state — there is no designed signed-out → login → data journey (a signed-out user just sees `$0.00` with no way to sign in). There is also no view onto the **local earnings history**, which is the one thing the official Kickbacks extension can't show.
 
 ## Goals
 
@@ -18,7 +18,7 @@ The menu-bar app is a thin first cut. It renders the literal word `kickback` in 
 
 ## Non-goals
 
-- No native Swift OAuth (we reuse `kickback login`; no duplicate auth path).
+- No native Swift OAuth (we reuse `kickbacks login`; no duplicate auth path).
 - No new network calls or write endpoints — still read-only (`/v1/portfolio`, `/v1/earnings` only).
 - Not copying Kickbacks' logo artwork (see Branding).
 
@@ -50,7 +50,7 @@ The panel is one view that switches on `(authState, model.state)`. A colored **b
 | # | State | Trigger | Content |
 |---|---|---|---|
 | a | Signed out | no tokens | "See your Kickbacks earnings" + **Sign in with Google** button |
-| b | Signing in | app-managed, while `kickback login` runs | spinner, "Opening your browser…", Cancel |
+| b | Signing in | app-managed, while `kickbacks login` runs | spinner, "Opening your browser…", Cancel |
 | c | Earning | signed in, ads serving, not stalled | Today (large), 24h sparkline, Lifetime, Rate+trend, cap bar, "Now showing" ad |
 | d | First run / collecting | signed in, < 2 samples | Today + live values; sparkline/rate replaced with "Collecting your trend…" |
 | e | Stalled | active + today flat over stall window | amber banner, "flat 27m while active", last-earned |
@@ -66,14 +66,14 @@ The panel is one view that switches on `(authState, model.state)`. A colored **b
 
 1. Signed-out panel → **Sign in with Google**.
 2. App sets `authState = .signingIn` and spawns the CLI login in the background (no Terminal window). The CLI opens the browser for Google consent and runs its local callback server.
-3. App polls `kickback model --json` (~every 2s); when `signedIn` flips true, it resumes normal polling and shows the data panel.
+3. App polls `kickbacks model --json` (~every 2s); when `signedIn` flips true, it resumes normal polling and shows the data panel.
 4. Cancel / timeout (~2 min) / process exit without sign-in → back to signed-out with a brief error note.
 
-**Open item to verify during build:** confirm `kickback login` completes when spawned without a TTY (it already opens a browser + runs a callback server, so it should). The CLI's current `cmdLogin` writes progress to stdout and auto-opens the browser; if any step needs a TTY, add a non-interactive/`--json` login mode. The app reads success via `model --json` (`signedIn`), so no CLI change may be required.
+**Open item to verify during build:** confirm `kickbacks login` completes when spawned without a TTY (it already opens a browser + runs a callback server, so it should). The CLI's current `cmdLogin` writes progress to stdout and auto-opens the browser; if any step needs a TTY, add a non-interactive/`--json` login mode. The app reads success via `model --json` (`signedIn`), so no CLI change may be required.
 
 ## History window
 
-Opened from `📊 History` in the dropdown footer. A standalone window (SwiftUI `Window` scene; app stays `.accessory`). Fed by a **new `kickback history --json`** command so the app stays a pure renderer.
+Opened from `📊 History` in the dropdown footer. A standalone window (SwiftUI `Window` scene; app stays `.accessory`). Fed by a **new `kickbacks history --json`** command so the app stays a pure renderer.
 
 **Shows:** lifetime + since-install + days-tracked; a **daily $ bar chart** (7d / 14d / 30d / All toggle; amber bar = hit cap, bright = best day, outlined = today); tiles for **this week / this month / best day / avg per day**; a stats line for **days-hit-cap (last 7), campaigns seen, active hours**.
 
@@ -86,9 +86,9 @@ Opened from `📊 History` in the dropdown footer. A standalone window (SwiftUI 
 
 **Live (already fetched):** today, lifetime, ads[] (text, clickUrl, campaignId), `viewThresholdSeconds`, `kill` (portfolio); cap {scope, capUsd, resetSeconds} (earnings). `viewThresholdSeconds`, the full ads list, and cap *scope* are newly surfaced.
 
-**History (local SQLite `samples`):** every `kickback model`/`poll`/`portfolio` run records a sample (ts, lifetime, today, ad_id, kill; +active/cap on poller runs). The API exposes only today+lifetime, so all past views are derived locally and **accrue over time** — richest with the background poller running.
+**History (local SQLite `samples`):** every `kickbacks model`/`poll`/`portfolio` run records a sample (ts, lifetime, today, ad_id, kill; +active/cap on poller runs). The API exposes only today+lifetime, so all past views are derived locally and **accrue over time** — richest with the background poller running.
 
-**New CLI command `kickback history --json`** emits:
+**New CLI command `kickbacks history --json`** emits:
 - `lifetimeUsd`, `sinceInstallUsd`, `firstSampleTs`, `daysTracked`
 - `daily`: `[{ date (local), usd, hitCap }]`
 - `thisWeekUsd`, `thisMonthUsd`, `bestDay {date, usd}`, `avgPerDayUsd`
@@ -101,8 +101,8 @@ Opened from `📊 History` in the dropdown footer. A standalone window (SwiftUI 
 ## Architecture
 
 - **CLI (TypeScript)** — owns all logic. Existing `model --json`; add `history --json`. New derivations in `derive.ts` (or a new `history.ts`). Read-only invariant preserved.
-- **Swift app** — `KickbackKit` gains a `HistoryModel` DTO + a `history()` client call (mirrors `ModelClient.fetch()`). `KickbackBar`:
-  - `MenuVM` adds an `authState` machine (`signedOut | signingIn | signedIn`) overlaid on the polled `MenuModel`; `signIn()` spawns login + polls; `signOut()` runs `kickback logout`.
+- **Swift app** — `KickbacksKit` gains a `HistoryModel` DTO + a `history()` client call (mirrors `ModelClient.fetch()`). `KickbacksBar`:
+  - `MenuVM` adds an `authState` machine (`signedOut | signingIn | signedIn`) overlaid on the polled `MenuModel`; `signIn()` spawns login + polls; `signOut()` runs `kickbacks logout`.
   - `MenuContent` renders all panel states (a `Banner` view keyed by state; rows reused).
   - `HistoryWindow` + `HistoryVM` (fetches `history --json`, renders chart/tiles/empty states).
   - Menu-bar label = `model.menuLabel`, tint from `state`.
@@ -111,7 +111,7 @@ Opened from `📊 History` in the dropdown footer. A standalone window (SwiftUI 
 
 - Transient fetch failure → keep last model, show **Stale/offline** with age (current behavior keeps last model; add the age/affordance).
 - Auth/refresh failure → **signed-out** (existing).
-- CLI binary missing/spawn error → a clear "Can't reach the kickback CLI" panel (the bundled `.app` makes this rare).
+- CLI binary missing/spawn error → a clear "Can't reach the kickbacks CLI" panel (the bundled `.app` makes this rare).
 - History command failure → History window shows the stale/empty state rather than crashing.
 
 ## Testing

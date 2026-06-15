@@ -1,16 +1,16 @@
 {
-  "name": "kickback",
+  "name": "kickbacks",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
   "private": true,
   "bin": {
-    "kickback": "./src/cli.ts"
+    "kickbacks": "./src/cli.ts"
   },
   "scripts": {
     "test": "bun test",
     "start": "bun run ./src/cli.ts",
-    "build": "bun build ./src/cli.ts --compile --outfile dist/kickback"
+    "build": "bun build ./src/cli.ts --compile --outfile dist/kickbacks"
   },
   "engines": {
     "bun": ">=1.1.0"

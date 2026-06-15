@@ -1,5 +1,5 @@
 import XCTest
-@testable import KickbackKit
+@testable import KickbacksKit
 
 final class HistoryModelTests: XCTestCase {
   func testDecodesFull() throws {

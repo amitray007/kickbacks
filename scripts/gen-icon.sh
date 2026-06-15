@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerate the Kickback app icon: app/Resources/AppIcon.svg + AppIcon.icns
+# Regenerate the Kickbacks app icon: app/Resources/AppIcon.svg + AppIcon.icns
 # from the parametric source in scripts/gen-icon.ts.
 # Needs: bun (pulls @resvg/resvg-js into a temp dir) + iconutil (macOS built-in).
 # Usage: scripts/gen-icon.sh
@@ -18,4 +18,4 @@ echo "-> assembling AppIcon.icns (iconutil) ..."
 iconutil -c icns "$TMP/AppIcon.iconset" -o "$RES/AppIcon.icns"
 
 echo "OK: $RES/AppIcon.svg + $RES/AppIcon.icns"
-echo "    Embed it:  scripts/install-app.sh   (copies AppIcon.icns into Kickback.app)"
+echo "    Embed it:  scripts/install-app.sh   (copies AppIcon.icns into Kickbacks.app)"

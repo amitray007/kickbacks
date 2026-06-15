@@ -30,7 +30,7 @@ export async function runPoll(d: PollDeps): Promise<void> {
     state: { stallActive: d.store.getState("stallActive") ?? "", capFired: d.store.getState("capFired") ?? undefined },
   });
   // Stall alerting removed — the active+flat heuristic was unreliable. Cap alerts remain.
-  if (a.cap) d.notify("Kickback — cap reached", `Your ${a.cap.scope} cap is hit; no more earning until it resets.`);
+  if (a.cap) d.notify("Kickbacks — cap reached", `Your ${a.cap.scope} cap is hit; no more earning until it resets.`);
   d.store.setState("stallActive", a.state.stallActive);
   if (a.state.capFired !== null) d.store.setState("capFired", a.state.capFired);
   // No explicit cap re-arm: the period-bucket key in decideAlerts changes each reset

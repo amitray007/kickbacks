@@ -1,4 +1,4 @@
-# Kickback
+# Kickbacks
 
 A reliable, open-source companion for [Kickbacks.ai](https://kickbacks.ai) — a **read-only** CLI + native macOS menu-bar app that shows your *own* earnings outside VS Code, keeps the local history the API doesn't, and warns you when the ad injection silently stops earning.
 
@@ -9,29 +9,29 @@ A reliable, open-source companion for [Kickbacks.ai](https://kickbacks.ai) — a
 The TypeScript core + CLI (**Plan 1**), the live OpenTUI `watch` dashboard (**Plan 2**), the launchd poller + stall/cap watchdog (**Plan 3**), the native Swift `MenuBarExtra` app (**Plan 4**), and the Homebrew tap (**Plan 5**) are built and tested. Distribution is build-from-source (no signing/notarization): the formula compiles the CLI binary and the menu-bar app on the user's machine.
 
 - **[docs/design.md](docs/design.md)** — full design: vision, the (reverse-engineered) read-only API surface, architecture, strategy, risks, and the UI/UX for both surfaces.
-- **[docs/plans/2026-06-13-kickback-core-cli.md](docs/plans/2026-06-13-kickback-core-cli.md)** — Plan 1 (core + CLI).
-- **[docs/plans/2026-06-13-kickback-opentui-watch.md](docs/plans/2026-06-13-kickback-opentui-watch.md)** — Plan 2 (OpenTUI `watch`).
-- **[docs/plans/2026-06-13-kickback-poller-watchdog.md](docs/plans/2026-06-13-kickback-poller-watchdog.md)** — Plan 3 (poller + watchdog).
-- **[docs/plans/2026-06-13-kickback-menubar-app.md](docs/plans/2026-06-13-kickback-menubar-app.md)** — Plan 4 (Swift menu-bar app).
-- **[docs/plans/2026-06-13-kickback-homebrew-tap.md](docs/plans/2026-06-13-kickback-homebrew-tap.md)** — Plan 5 (Homebrew tap).
+- **[docs/plans/2026-06-13-kickbacks-core-cli.md](docs/plans/2026-06-13-kickbacks-core-cli.md)** — Plan 1 (core + CLI).
+- **[docs/plans/2026-06-13-kickbacks-opentui-watch.md](docs/plans/2026-06-13-kickbacks-opentui-watch.md)** — Plan 2 (OpenTUI `watch`).
+- **[docs/plans/2026-06-13-kickbacks-poller-watchdog.md](docs/plans/2026-06-13-kickbacks-poller-watchdog.md)** — Plan 3 (poller + watchdog).
+- **[docs/plans/2026-06-13-kickbacks-menubar-app.md](docs/plans/2026-06-13-kickbacks-menubar-app.md)** — Plan 4 (Swift menu-bar app).
+- **[docs/plans/2026-06-13-kickbacks-homebrew-tap.md](docs/plans/2026-06-13-kickbacks-homebrew-tap.md)** — Plan 5 (Homebrew tap).
 
 ## Install (Homebrew)
 
 ```bash
-brew install amitray007/kickback/kickback   # builds the CLI + menu-bar app from source (bun + swift)
-kickback login                     # Google sign-in
-kickback                           # earnings dashboard  ·  kickback watch  for the live view
-kickback poller install            # background sampling + stall/cap alerts (launchd)
-kickback bar install               # menu-bar app at login
+brew install amitray007/kickbacks/kickbacks   # builds the CLI + menu-bar app from source (bun + swift)
+kickbacks login                     # Google sign-in
+kickbacks                           # earnings dashboard  ·  kickbacks watch  for the live view
+kickbacks poller install            # background sampling + stall/cap alerts (launchd)
+kickbacks bar install               # menu-bar app at login
 ```
 
 Build-from-source means no code-signing/notarization is required (it compiles on your machine). See [packaging/](packaging/) for the tap formula. Not affiliated with Kickbacks.ai / ShiftKeys, Inc.
 
-**Prefer a Mac app (no brew)?** Run `scripts/install-app.sh` — it builds a self-contained `Kickback.app` (the `kickback` CLI is bundled inside) and installs it to `/Applications`; launch it from Launchpad. `scripts/build-release.sh` just builds the raw `dist/` binaries.
+**Prefer a Mac app (no brew)?** Run `scripts/install-app.sh` — it builds a self-contained `Kickbacks.app` (the `kickbacks` CLI is bundled inside) and installs it to `/Applications`; launch it from Launchpad. `scripts/build-release.sh` just builds the raw `dist/` binaries.
 
 ## What it will be
 
-- **CLI** (`kickback`) — TypeScript + OpenTUI framed dashboard; `kickback watch` for a live view.
+- **CLI** (`kickbacks`) — TypeScript + OpenTUI framed dashboard; `kickbacks watch` for a live view.
 - **Menu bar** — native Swift `MenuBarExtra`; today's earnings + trend always visible, dropdown with cap / rate / served ad, stall notifications.
 - **Core** (TypeScript) — API client, Google-OAuth (its own session), SQLite history, poller + stall watchdog.
 - **Distribution** — Homebrew tap (formula + cask).
@@ -47,8 +47,8 @@ Build-from-source means no code-signing/notarization is required (it compiles on
 ```
 kickbacks/    ← this repo (umbrella)
   docs/       ← design + plans
-  cli/        ← the `kickback` CLI (TypeScript/Bun) — also hosts the shared core + poller
-  app/        ← the menu-bar app (Swift `MenuBarExtra`) — renders `kickback model`
+  cli/        ← the `kickbacks` CLI (TypeScript/Bun) — also hosts the shared core + poller
+  app/        ← the menu-bar app (Swift `MenuBarExtra`) — renders `kickbacks model`
   packaging/  ← Homebrew tap (formula + cask)          · Plan 5
 ```
 

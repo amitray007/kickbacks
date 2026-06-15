@@ -1,4 +1,4 @@
-// kickback/test/ui.test.ts
+// kickbacks/test/ui.test.ts
 import { test, expect } from "bun:test";
 import { palette, bar, badge, renderDashboard, renderEarnings, renderStatus, sparkline } from "../src/ui";
 import type { Portfolio, Earnings } from "../src/types";

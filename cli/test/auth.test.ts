@@ -1,4 +1,4 @@
-// kickback/test/auth.test.ts
+// kickbacks/test/auth.test.ts
 import { test, expect } from "bun:test";
 import { startLogin, pollOnce, refresh, signout } from "../src/auth";
 

@@ -1,6 +1,6 @@
-// app/Sources/KickbackBar/MiniView.swift
+// app/Sources/KickbacksBar/MiniView.swift
 import SwiftUI
-import KickbackKit
+import KickbacksKit
 
 /// The floating mini HUD: a state dot + today's earnings. Driven by the same view-model as
 /// the panel, so it reflects Demo/Privacy modes live. Drag anywhere to move it.

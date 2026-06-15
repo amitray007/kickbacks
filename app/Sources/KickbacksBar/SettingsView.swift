@@ -1,6 +1,6 @@
-// app/Sources/KickbackBar/SettingsView.swift
+// app/Sources/KickbacksBar/SettingsView.swift
 import SwiftUI
-import KickbackKit
+import KickbacksKit
 
 /// The Preferences window, opened from the panel's bottom-bar Settings button. Reads/writes
 /// the persisted settings on MenuVM so the menu bar + panel react live.

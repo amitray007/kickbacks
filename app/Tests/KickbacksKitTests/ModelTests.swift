@@ -1,5 +1,5 @@
 import XCTest
-@testable import KickbackKit
+@testable import KickbacksKit
 
 final class ModelTests: XCTestCase {
   func testDecodesEarningModel() throws {
@@ -17,7 +17,7 @@ final class ModelTests: XCTestCase {
   }
 
   func testDecodesSignedOut() throws {
-    let json = #"{"signedIn":false,"state":"signed-out","title":"kickback","today":"$0.00","lifetime":"$0.00","rate":"","trend":"flat","cap":"","capPct":0,"resets":"","projection":"","spark":"","ad":"","adUrl":"","status":"Signed out","ageSeconds":0,"menuValue":"—","viewThresholdSeconds":null,"ads":[],"lastEarnedAgoSeconds":null,"collecting":false,"recentAds":[],"todayUsd":0,"hourUsd":0,"lifetimeUsd":0}"#
+    let json = #"{"signedIn":false,"state":"signed-out","title":"kickbacks","today":"$0.00","lifetime":"$0.00","rate":"","trend":"flat","cap":"","capPct":0,"resets":"","projection":"","spark":"","ad":"","adUrl":"","status":"Signed out","ageSeconds":0,"menuValue":"—","viewThresholdSeconds":null,"ads":[],"lastEarnedAgoSeconds":null,"collecting":false,"recentAds":[],"todayUsd":0,"hourUsd":0,"lifetimeUsd":0}"#
     let m = try XCTUnwrap(MenuModel.decode(Data(json.utf8)))
     XCTAssertEqual(m.state, .signedOut)
     XCTAssertEqual(m.menuValue, "—")

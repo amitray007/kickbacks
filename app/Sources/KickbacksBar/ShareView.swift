@@ -1,7 +1,7 @@
-// app/Sources/KickbackBar/ShareView.swift
+// app/Sources/KickbacksBar/ShareView.swift
 import SwiftUI
 import AppKit
-import KickbackKit
+import KickbacksKit
 import Charts
 import UniformTypeIdentifiers
 
@@ -74,7 +74,7 @@ struct ShareView: View {
 
   @MainActor private func postToX() {
     copyImage()   // X compose URLs can't attach an image, so put it on the clipboard to paste
-    let text = "My Kickbacks earnings 💸 (via Kickback)"
+    let text = "My Kickbacks earnings 💸 (via Kickbacks)"
     let encoded = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
     if let u = URL(string: "https://x.com/intent/post?text=\(encoded)") { NSWorkspace.shared.open(u) }
   }

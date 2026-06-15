@@ -1,12 +1,12 @@
-# Kickback — Plan 4: native Swift menu-bar app
+# Kickbacks — Plan 4: native Swift menu-bar app
 
 > **For agentic workers:** implement task-by-task. TS work in `cli/` (TDD, `bun test`); Swift work in `app/` (`swift build` / `swift test`). Commit per task on `main`. The menu-bar **display** + launch-at-login are GUI/user-QA — everything else is verified headlessly.
 
-**Goal:** A native macOS `MenuBarExtra` app (design §15.1): title shows today's earnings + a trend arrow (amber when stalled); the dropdown shows lifetime, rate, daily cap + reset + projection, a 24h sparkline, the served ad, and a status line, with Refresh / Open dashboard / Quit. It is a **thin renderer**: it shells out to `kickback model --json` and maps the result onto SwiftUI views — no earnings logic duplicated in Swift.
+**Goal:** A native macOS `MenuBarExtra` app (design §15.1): title shows today's earnings + a trend arrow (amber when stalled); the dropdown shows lifetime, rate, daily cap + reset + projection, a 24h sparkline, the served ad, and a status line, with Refresh / Open dashboard / Quit. It is a **thin renderer**: it shells out to `kickbacks model --json` and maps the result onto SwiftUI views — no earnings logic duplicated in Swift.
 
 **Decisions (locked 2026-06-13):**
 - **SwiftPM executable** (`app/Package.swift`) — builds/tests headless; Plan 5 wraps the binary in a `.app` for the cask.
-- **Data bridge = `kickback model --json`** — a new read/derive command in the TS CLI; Swift spawns it. One model source, thinnest Swift.
+- **Data bridge = `kickbacks model --json`** — a new read/derive command in the TS CLI; Swift spawns it. One model source, thinnest Swift.
 
 **Architecture:** TS adds `model.ts` (`buildMenuModel`, pure) + a `model` command (live fetch with graceful degradation to last-known from the store, then JSON). Swift `app/` is a `MenuBarExtra` app with a `Codable` DTO mirroring the JSON, a `ModelClient` that runs the binary on a timer, and SwiftUI views for the title + dropdown. The two languages share **data via JSON over a process boundary** (the CLI already bridges to the SQLite store).
 
@@ -14,7 +14,7 @@
 
 ---
 
-## The bridge contract — `kickback model --json`
+## The bridge contract — `kickbacks model --json`
 
 A single JSON object (display-ready strings + a `state` enum for coloring). Stable contract between TS and Swift:
 
@@ -22,7 +22,7 @@ A single JSON object (display-ready strings + a `state` enum for coloring). Stab
 {
   "signedIn": true,
   "state": "earning",            // signed-out | killed | cap | stalled | no-serve | earning
-  "title": "$0.56 ▴",            // menu-bar title ("kickback" when signed out)
+  "title": "$0.56 ▴",            // menu-bar title ("kickbacks" when signed out)
   "today": "$0.56",
   "lifetime": "$12.34",
   "rate": "$0.18/hr",            // "" when rate is 0
@@ -52,19 +52,19 @@ cli/
   test/model.test.ts  # NEW — buildMenuModel cases
 app/                  # NEW — SwiftPM executable
   Package.swift
-  Sources/KickbackBar/
-    KickbackBarApp.swift   # @main MenuBarExtra app (accessory activation)
+  Sources/KickbacksBar/
+    KickbacksBarApp.swift   # @main MenuBarExtra app (accessory activation)
     Model.swift            # Codable MenuModel DTO + state enum
-    ModelClient.swift      # runs `kickback model --json` via Process; finds the binary
+    ModelClient.swift      # runs `kickbacks model --json` via Process; finds the binary
     MenuContent.swift      # the dropdown SwiftUI view (design §15.1)
-  Tests/KickbackBarTests/
+  Tests/KickbacksBarTests/
     ModelTests.swift       # JSON decode + a couple of presentation assertions
   README.md
 ```
 
 ---
 
-## Task 1 — `buildMenuModel` + `kickback model --json` (TS)
+## Task 1 — `buildMenuModel` + `kickbacks model --json` (TS)
 
 **Files:** `cli/src/model.ts`, `cli/src/cli.ts`, `cli/test/model.test.ts`.
 
@@ -99,7 +99,7 @@ test("buildMenuModel signed-out shows the brand title", () => {
   const m = buildMenuModel({ p: null, e: null, store, now: 1, signedIn: false });
   expect(m.signedIn).toBe(false);
   expect(m.state).toBe("signed-out");
-  expect(m.title).toBe("kickback");
+  expect(m.title).toBe("kickbacks");
 });
 ```
 
@@ -127,7 +127,7 @@ const STATUS: Record<MenuState, string> = {
 };
 
 export function buildMenuModel(i: MenuInput): MenuModel {
-  const blank: MenuModel = { signedIn: false, state: "signed-out", title: "kickback",
+  const blank: MenuModel = { signedIn: false, state: "signed-out", title: "kickbacks",
     today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capPct: 0, resets: "",
     projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0 };
   if (!i.signedIn || !i.p) return blank;
@@ -189,13 +189,13 @@ async function cmdModel() {
 ```
 Register `model: cmdModel` in the table + usage. (`recordSample` already exists; note it only records when the live fetch succeeded.)
 
-- [ ] **Step 6:** `bun test` (full) + `tsc` green. Manual: `KICKBACK_CONFIG_DIR=/tmp/x bun run src/cli.ts model` (signed out) → prints `{"signedIn":false,...,"title":"kickback"}`. Commit `feat(model): kickback model --json bridge for the menu-bar app`.
+- [ ] **Step 6:** `bun test` (full) + `tsc` green. Manual: `KICKBACKS_CONFIG_DIR=/tmp/x bun run src/cli.ts model` (signed out) → prints `{"signedIn":false,...,"title":"kickbacks"}`. Commit `feat(model): kickbacks model --json bridge for the menu-bar app`.
 
 ---
 
 ## Task 2 — Swift package scaffold + `Model` DTO + decode test
 
-**Files:** `app/Package.swift`, `app/Sources/KickbackBar/Model.swift`, `app/Tests/KickbackBarTests/ModelTests.swift`.
+**Files:** `app/Package.swift`, `app/Sources/KickbacksBar/Model.swift`, `app/Tests/KickbacksBarTests/ModelTests.swift`.
 
 - [ ] **Step 1:** `app/Package.swift`:
 ```swift
@@ -203,11 +203,11 @@ Register `model: cmdModel` in the table + usage. (`recordSample` already exists;
 import PackageDescription
 
 let package = Package(
-  name: "KickbackBar",
+  name: "KickbacksBar",
   platforms: [.macOS(.v13)],
   targets: [
-    .executableTarget(name: "KickbackBar"),
-    .testTarget(name: "KickbackBarTests", dependencies: ["KickbackBar"]),
+    .executableTarget(name: "KickbacksBar"),
+    .testTarget(name: "KickbacksBarTests", dependencies: ["KickbacksBar"]),
   ]
 )
 ```
@@ -227,7 +227,7 @@ struct MenuModel: Codable, Equatable {
   var resets, projection, spark, ad, adUrl, status: String
   var ageSeconds: Int
 
-  static let signedOut = MenuModel(signedIn: false, state: .signedOut, title: "kickback",
+  static let signedOut = MenuModel(signedIn: false, state: .signedOut, title: "kickbacks",
     today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capPct: 0,
     resets: "", projection: "", spark: "", ad: "", adUrl: "", status: "Signed out", ageSeconds: 0)
 
@@ -238,7 +238,7 @@ struct MenuModel: Codable, Equatable {
 - [ ] **Step 3:** `ModelTests.swift` — decode the exact TS JSON shape:
 ```swift
 import XCTest
-@testable import KickbackBar
+@testable import KickbacksBar
 
 final class ModelTests: XCTestCase {
   func testDecodesEarningModel() throws {
@@ -248,8 +248,8 @@ final class ModelTests: XCTestCase {
     XCTAssertEqual(m.today, "$0.56"); XCTAssertEqual(m.capPct, 56)
   }
   func testDecodesSignedOut() throws {
-    let m = try XCTUnwrap(MenuModel.decode(Data(#"{"signedIn":false,"state":"signed-out","title":"kickback","today":"$0.00","lifetime":"$0.00","rate":"","trend":"flat","cap":"","capPct":0,"resets":"","projection":"","spark":"","ad":"","adUrl":"","status":"Signed out","ageSeconds":0}"#.utf8)))
-    XCTAssertEqual(m.state, .signedOut); XCTAssertEqual(m.title, "kickback")
+    let m = try XCTUnwrap(MenuModel.decode(Data(#"{"signedIn":false,"state":"signed-out","title":"kickbacks","today":"$0.00","lifetime":"$0.00","rate":"","trend":"flat","cap":"","capPct":0,"resets":"","projection":"","spark":"","ad":"","adUrl":"","status":"Signed out","ageSeconds":0}"#.utf8)))
+    XCTAssertEqual(m.state, .signedOut); XCTAssertEqual(m.title, "kickbacks")
   }
 }
 ```
@@ -260,21 +260,21 @@ final class ModelTests: XCTestCase {
 
 ## Task 3 — `ModelClient` (run the CLI, parse)
 
-**Files:** `app/Sources/KickbackBar/ModelClient.swift`.
+**Files:** `app/Sources/KickbacksBar/ModelClient.swift`.
 
-- [ ] **Step 1:** locate the binary (`KICKBACK_BIN` env, else PATH, else common brew paths) and run `model`:
+- [ ] **Step 1:** locate the binary (`KICKBACKS_BIN` env, else PATH, else common brew paths) and run `model`:
 ```swift
 import Foundation
 
 enum ModelClient {
-  /// Resolve the kickback binary: $KICKBACK_BIN, then PATH, then brew defaults.
+  /// Resolve the kickbacks binary: $KICKBACKS_BIN, then PATH, then brew defaults.
   static func binaryPath() -> String? {
-    if let b = ProcessInfo.processInfo.environment["KICKBACK_BIN"], !b.isEmpty { return b }
-    for p in ["/opt/homebrew/bin/kickback", "/usr/local/bin/kickback"] where FileManager.default.isExecutableFile(atPath: p) { return p }
+    if let b = ProcessInfo.processInfo.environment["KICKBACKS_BIN"], !b.isEmpty { return b }
+    for p in ["/opt/homebrew/bin/kickbacks", "/usr/local/bin/kickbacks"] where FileManager.default.isExecutableFile(atPath: p) { return p }
     return nil
   }
 
-  /// Run `kickback model` and decode. Returns signedOut on any failure (UI stays alive).
+  /// Run `kickbacks model` and decode. Returns signedOut on any failure (UI stays alive).
   static func fetch() -> MenuModel {
     guard let bin = binaryPath() else { return .signedOut }
     let proc = Process()
@@ -289,20 +289,20 @@ enum ModelClient {
 }
 ```
 
-- [ ] **Step 2:** `swift build` → compiles. Commit `feat(app): ModelClient runs `kickback model``.
+- [ ] **Step 2:** `swift build` → compiles. Commit `feat(app): ModelClient runs `kickbacks model``.
 
 ---
 
 ## Task 4 — MenuBarExtra UI (title + dropdown)
 
-**Files:** `app/Sources/KickbackBar/KickbackBarApp.swift`, `app/Sources/KickbackBar/MenuContent.swift`.
+**Files:** `app/Sources/KickbacksBar/KickbacksBarApp.swift`, `app/Sources/KickbacksBar/MenuContent.swift`.
 
-- [ ] **Step 1:** `KickbackBarApp.swift` — `MenuBarExtra` with the title + a poll timer:
+- [ ] **Step 1:** `KickbacksBarApp.swift` — `MenuBarExtra` with the title + a poll timer:
 ```swift
 import SwiftUI
 
 @main
-struct KickbackBarApp: App {
+struct KickbacksBarApp: App {
   @StateObject private var vm = MenuVM()
   var body: some Scene {
     MenuBarExtra { MenuContent(vm: vm) } label: { Text(vm.model.title) }
@@ -327,7 +327,7 @@ struct MenuContent: View {
   var m: MenuModel { vm.model }
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
-      HStack { Text("Kickback").bold(); Spacer(); Text(m.status).foregroundStyle(color) }
+      HStack { Text("Kickbacks").bold(); Spacer(); Text(m.status).foregroundStyle(color) }
       Divider()
       row("Today", m.today); row("Lifetime", m.lifetime)
       if !m.rate.isEmpty { row("Rate", "\(m.rate) \(m.trend == "up" ? "▴" : m.trend == "down" ? "▾" : "—")") }
@@ -351,7 +351,7 @@ struct MenuContent: View {
 
 ## Task 5 — Accessory activation + build smoke + README
 
-**Files:** `app/Sources/KickbackBar/KickbackBarApp.swift` (accessory policy), `app/README.md`.
+**Files:** `app/Sources/KickbacksBar/KickbacksBarApp.swift` (accessory policy), `app/README.md`.
 
 - [ ] **Step 1:** make it a menu-bar-only (no dock icon) app — add an `AppDelegate` setting `NSApp.setActivationPolicy(.accessory)` via `@NSApplicationDelegateAdaptor`, or set `LSUIElement` in the bundled Info.plist (Plan 5). For the SwiftPM run, the adaptor approach:
 ```swift
@@ -360,8 +360,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 // in App: @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
 ```
-- [ ] **Step 2:** `cd app && swift build -c release` → produces `.build/release/KickbackBar`. (Run is GUI-only — user QA.)
-- [ ] **Step 3:** `app/README.md` — how to build/run (`swift run`), `KICKBACK_BIN` override, and that the dropdown reflects `kickback model`.
+- [ ] **Step 2:** `cd app && swift build -c release` → produces `.build/release/KickbacksBar`. (Run is GUI-only — user QA.)
+- [ ] **Step 3:** `app/README.md` — how to build/run (`swift run`), `KICKBACKS_BIN` override, and that the dropdown reflects `kickbacks model`.
 - [ ] **Step 4:** commit `feat(app): accessory (menu-bar-only) activation + build`.
 
 ---
@@ -371,7 +371,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 - [ ] `bun test` + `tsc` green; `cd app && swift build && swift test` green.
 - [ ] compound-engineering review over `model.ts` + cli `model` wiring (TS reviewer). Triage + apply. (Swift is small + GUI; lean on swift build/test.)
 - [ ] README (root): mark Plan 4; document `app/` build. design.md: note menu app shipped.
-- [ ] **Manual GUI QA (user):** `cd app && KICKBACK_BIN=<path-to-kickback-or-"bun run …"> swift run` → a menu-bar item appears showing today's earnings; dropdown matches §15.1; Refresh updates; clicking the ad opens the URL; amber when stalled (with the poller running). Then Plan 5 bundles it into a signed `.app` + cask.
+- [ ] **Manual GUI QA (user):** `cd app && KICKBACKS_BIN=<path-to-kickbacks-or-"bun run …"> swift run` → a menu-bar item appears showing today's earnings; dropdown matches §15.1; Refresh updates; clicking the ad opens the URL; amber when stalled (with the poller running). Then Plan 5 bundles it into a signed `.app` + cask.
 
 ---
 

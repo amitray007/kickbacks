@@ -1,10 +1,10 @@
 import SwiftUI
 import AppKit
-import KickbackKit
+import KickbacksKit
 import UserNotifications
 
 @main
-struct KickbackBarApp: App {
+struct KickbacksBarApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
   @StateObject private var vm = MenuVM()
 

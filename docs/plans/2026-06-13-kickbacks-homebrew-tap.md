@@ -1,13 +1,13 @@
-# Kickback — Plan 5: Homebrew tap (build-from-source)
+# Kickbacks — Plan 5: Homebrew tap (build-from-source)
 
 > **For agentic workers:** TS in `cli/`, packaging in `packaging/` + root. Commit per task on `main`. The actual `brew install` / tap-publish are the user's (their GitHub + Homebrew); everything else is built/verified here.
 
-**Goal:** Ship `kickback` (CLI) + `kickback-bar` (menu-bar app) via a Homebrew **tap formula** that **builds from source** (bun + swift) — so there's **no code-signing, no notarization, no Gatekeeper quarantine** (locally-compiled binaries aren't quarantined). `brew install <user>/tap/kickback` → both binaries on PATH; `kickback bar install` sets up the menu-bar app to launch at login.
+**Goal:** Ship `kickbacks` (CLI) + `kickbacks-bar` (menu-bar app) via a Homebrew **tap formula** that **builds from source** (bun + swift) — so there's **no code-signing, no notarization, no Gatekeeper quarantine** (locally-compiled binaries aren't quarantined). `brew install <user>/tap/kickbacks` → both binaries on PATH; `kickbacks bar install` sets up the menu-bar app to launch at login.
 
 **Decisions (locked 2026-06-13):**
 - **License: Apache-2.0** (design §8/§13.3 — resolves the open item).
 - **Build-from-source formula** (no bottles, no cask, no signing). Verified: `bun build --compile` (66 MB) + `swift build -c release` (205 KB) both build + run here.
-- **Menu-bar app = `kickback-bar` binary** (no `.app` bundle); auto-start via a GUI LaunchAgent (`kickback bar install`), symmetric with the poller. Manual Login Items documented as the alternative.
+- **Menu-bar app = `kickbacks-bar` binary** (no `.app` bundle); auto-start via a GUI LaunchAgent (`kickbacks bar install`), symmetric with the poller. Manual Login Items documented as the alternative.
 
 **Hand-off (user-only):** create the GitHub tap repo, tag a release (fill the formula `url`+`sha256`), run `brew install`, and the live GUI/login checks. I provide the formula, build script, LICENSE, the `bar` command, and docs.
 
@@ -22,7 +22,7 @@ cli/src/config.ts               # + BAR_LAUNCHD_LABEL
 cli/src/launchd.ts              # + guiPlistContent + installBarAgent (reuse load/uninstall)
 cli/src/cli.ts                  # + `bar install|uninstall|status`
 cli/test/launchd.test.ts        # + guiPlistContent test
-packaging/kickback.rb           # NEW — the Homebrew formula (build-from-source)
+packaging/kickbacks.rb           # NEW — the Homebrew formula (build-from-source)
 packaging/README.md             # NEW — tap setup + release steps
 scripts/build-release.sh        # NEW — build both binaries into dist/ (CI / local)
 README.md                       # + Install (Homebrew) section
@@ -40,7 +40,7 @@ README.md                       # + Install (Homebrew) section
 
 ---
 
-## Task 2 — GUI LaunchAgent + `kickback bar`
+## Task 2 — GUI LaunchAgent + `kickbacks bar`
 
 **Files:** `cli/src/config.ts`, `cli/src/launchd.ts`, `cli/src/cli.ts`, `cli/test/launchd.test.ts`.
 
@@ -48,9 +48,9 @@ README.md                       # + Install (Homebrew) section
 ```ts
 import { guiPlistContent } from "../src/launchd";
 test("guiPlistContent runs the binary at login in the Aqua session", () => {
-  const xml = guiPlistContent("ai.kickback.bar", "/opt/homebrew/bin/kickback-bar");
-  expect(xml).toContain("<string>ai.kickback.bar</string>");
-  expect(xml).toContain("<string>/opt/homebrew/bin/kickback-bar</string>");
+  const xml = guiPlistContent("ai.kickbacks.bar", "/opt/homebrew/bin/kickbacks-bar");
+  expect(xml).toContain("<string>ai.kickbacks.bar</string>");
+  expect(xml).toContain("<string>/opt/homebrew/bin/kickbacks-bar</string>");
   expect(xml).toContain("<key>RunAtLoad</key><true/>");
   expect(xml).toContain("Aqua"); // LimitLoadToSessionType
   expect(xml).not.toContain("StartInterval"); // long-running, not interval
@@ -81,17 +81,17 @@ export function installBarAgent(label: string, binPath: string): string {
 }
 ```
 (`uninstallAgent` / `agentInstalled` already work by label.)
-- [ ] **Step 3:** `config.ts` — `export const BAR_LAUNCHD_LABEL = "ai.kickback.bar";`
-- [ ] **Step 4:** `cli.ts` — `bar` command; resolve the sibling binary (`kickback-bar` next to `kickback`):
+- [ ] **Step 3:** `config.ts` — `export const BAR_LAUNCHD_LABEL = "ai.kickbacks.bar";`
+- [ ] **Step 4:** `cli.ts` — `bar` command; resolve the sibling binary (`kickbacks-bar` next to `kickbacks`):
 ```ts
 async function cmdBar() {
   const sub = (process.argv[3] || "status").toLowerCase();
   if (sub === "install") {
     if (process.argv[1]?.endsWith(".ts")) { console.error("`bar install` needs the installed binaries (brew), not `bun run`."); process.exit(1); }
-    const barBin = join(dirname(process.execPath), "kickback-bar");
-    if (!existsSync(barBin)) { console.error(`kickback-bar not found at ${barBin} (install via brew).`); process.exit(1); }
+    const barBin = join(dirname(process.execPath), "kickbacks-bar");
+    if (!existsSync(barBin)) { console.error(`kickbacks-bar not found at ${barBin} (install via brew).`); process.exit(1); }
     const path = installBarAgent(BAR_LAUNCHD_LABEL, barBin);
-    console.log(`Installed menu-bar agent → ${path}\nThe menu bar starts at login. Uninstall: kickback bar uninstall`);
+    console.log(`Installed menu-bar agent → ${path}\nThe menu bar starts at login. Uninstall: kickbacks bar uninstall`);
   } else if (sub === "uninstall") { uninstallAgent(BAR_LAUNCHD_LABEL); console.log("Menu-bar agent uninstalled."); }
   else { console.log(`Menu-bar agent ${agentInstalled(BAR_LAUNCHD_LABEL) ? "installed" : "not installed"}  (${BAR_LAUNCHD_LABEL})`); }
 }
@@ -112,23 +112,23 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:-$ROOT/dist}"; mkdir -p "$OUT"
 echo "→ building CLI (bun)…"
-( cd "$ROOT/cli" && bun install --frozen-lockfile && bun build ./src/cli.ts --compile --outfile "$OUT/kickback" )
+( cd "$ROOT/cli" && bun install --frozen-lockfile && bun build ./src/cli.ts --compile --outfile "$OUT/kickbacks" )
 echo "→ building menu-bar app (swift)…"
-( cd "$ROOT/app" && swift build -c release && cp .build/release/KickbackBar "$OUT/kickback-bar" )
-echo "✓ built: $OUT/kickback  $OUT/kickback-bar"
+( cd "$ROOT/app" && swift build -c release && cp .build/release/KickbacksBar "$OUT/kickbacks-bar" )
+echo "✓ built: $OUT/kickbacks  $OUT/kickbacks-bar"
 ```
-- [ ] **Step 2:** `chmod +x scripts/build-release.sh`; run it → both binaries in `dist/`; `dist/kickback status` works. (`dist/` is gitignored.)
+- [ ] **Step 2:** `chmod +x scripts/build-release.sh`; run it → both binaries in `dist/`; `dist/kickbacks status` works. (`dist/` is gitignored.)
 - [ ] **Step 3:** commit `chore: add build-release.sh (CLI + menu-bar binaries)`.
 
 ---
 
 ## Task 4 — Homebrew formula
 
-**Files:** `packaging/kickback.rb`.
+**Files:** `packaging/kickbacks.rb`.
 
 - [ ] **Step 1:** build-from-source formula (placeholders for the release `url`/`sha256`; `head` for testing-from-source):
 ```ruby
-class Kickback < Formula
+class Kickbacks < Formula
   desc "Read-only CLI + menu-bar app for your own Kickbacks.ai earnings (unofficial)"
   homepage "https://github.com/USER/kickbacks"
   url "https://github.com/USER/kickbacks/archive/refs/tags/v0.1.0.tar.gz"
@@ -143,12 +143,12 @@ class Kickback < Formula
   def install
     cd "cli" do
       system "bun", "install", "--frozen-lockfile"
-      system "bun", "build", "./src/cli.ts", "--compile", "--outfile", "kickback"
-      bin.install "kickback"
+      system "bun", "build", "./src/cli.ts", "--compile", "--outfile", "kickbacks"
+      bin.install "kickbacks"
     end
     cd "app" do
       system "swift", "build", "-c", "release", "--disable-sandbox"
-      bin.install ".build/release/KickbackBar" => "kickback-bar"
+      bin.install ".build/release/KickbacksBar" => "kickbacks-bar"
     end
   end
 
@@ -157,20 +157,20 @@ class Kickback < Formula
       Read-only companion for Kickbacks.ai — not affiliated with Kickbacks.ai / ShiftKeys, Inc.
 
       Get started:
-        kickback login
-        kickback                 # earnings dashboard
-        kickback poller install  # background sampling + stall/cap alerts (launchd)
-        kickback bar install     # menu-bar app at login
+        kickbacks login
+        kickbacks                 # earnings dashboard
+        kickbacks poller install  # background sampling + stall/cap alerts (launchd)
+        kickbacks bar install     # menu-bar app at login
     EOS
   end
 
   test do
-    assert_match "kickback status", shell_output("#{bin}/kickback status 2>&1")
-    assert_path_exists bin/"kickback-bar"
+    assert_match "kickbacks status", shell_output("#{bin}/kickbacks status 2>&1")
+    assert_path_exists bin/"kickbacks-bar"
   end
 end
 ```
-- [ ] **Step 2:** `brew style packaging/kickback.rb` and `brew audit --formula packaging/kickback.rb` → clean (fix lint). **Do not** `brew install` here (that's the user's, and needs the published tarball). 
+- [ ] **Step 2:** `brew style packaging/kickbacks.rb` and `brew audit --formula packaging/kickbacks.rb` → clean (fix lint). **Do not** `brew install` here (that's the user's, and needs the published tarball). 
 - [ ] **Step 3:** commit `feat(packaging): Homebrew formula (build-from-source: CLI + menu-bar)`.
 
 ---
@@ -179,8 +179,8 @@ end
 
 **Files:** `packaging/README.md`, `README.md`, `docs/design.md`, memory.
 
-- [ ] **Step 1:** `packaging/README.md` — tap setup + release: create `homebrew-tap` repo, copy `kickback.rb`, tag a release, fill `url`/`sha256` (`brew fetch`/`shasum -a 256`), test with `brew install --HEAD USER/tap/kickback`, then `brew install USER/tap/kickback`.
-- [ ] **Step 2:** `README.md` — an **Install (Homebrew)** section (`brew install USER/tap/kickback`, then `kickback login` / `poller install` / `bar install`).
+- [ ] **Step 1:** `packaging/README.md` — tap setup + release: create `homebrew-tap` repo, copy `kickbacks.rb`, tag a release, fill `url`/`sha256` (`brew fetch`/`shasum -a 256`), test with `brew install --HEAD USER/tap/kickbacks`, then `brew install USER/tap/kickbacks`.
+- [ ] **Step 2:** `README.md` — an **Install (Homebrew)** section (`brew install USER/tap/kickbacks`, then `kickbacks login` / `poller install` / `bar install`).
 - [ ] **Step 3:** `docs/design.md` §13.3 → license RESOLVED (Apache-2.0); mark Plan 5 in the roadmap.
 - [ ] **Step 4:** update memory (Plans 1–5 shipped).
 - [ ] **Step 5:** commit `docs: Homebrew install + tap setup; license resolved (Apache-2.0)`.

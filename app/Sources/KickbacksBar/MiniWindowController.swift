@@ -1,4 +1,4 @@
-// app/Sources/KickbackBar/MiniWindowController.swift
+// app/Sources/KickbacksBar/MiniWindowController.swift
 import AppKit
 import SwiftUI
 
@@ -31,8 +31,8 @@ import SwiftUI
       host.frame = NSRect(x: 0, y: 0, width: 150, height: 56)
       host.autoresizingMask = [.width, .height]
       p.contentView = host
-      p.setFrameAutosaveName("ai.kickback.mini")     // remember where the user parks it
-      if !p.setFrameUsingName("ai.kickback.mini") { p.center() }
+      p.setFrameAutosaveName("ai.kickbacks.mini")     // remember where the user parks it
+      if !p.setFrameUsingName("ai.kickbacks.mini") { p.center() }
       panel = p
     }
     panel?.orderFrontRegardless()

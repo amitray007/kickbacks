@@ -1,12 +1,12 @@
 # Kickbacks Companion — Design & Build Doc
 
-**Name:** **Kickback** (CLI: `kickback`) — named for the incentive ("kickback") payments it surfaces. A deliberately *unofficial*, **read-only** companion; the name is distinct (singular) from the **"Kickbacks"** mark, not a claim of affiliation. _Not affiliated with Kickbacks.ai / ShiftKeys, Inc._
+**Name:** **Kickbacks** (CLI: `kickbacks`) — named for the incentive ("kickbacks") payments it surfaces. A deliberately *unofficial*, **read-only** companion; the name is distinct (singular) from the **"Kickbacks"** mark, not a claim of affiliation. _Not affiliated with Kickbacks.ai / ShiftKeys, Inc._
 **Status:** Decisions locked (2026-06-13) — entering implementation
 **Date:** 2026-06-13
 **Scope:** A reliable, open-source, standalone **CLI + native macOS menu-bar app** for viewing and protecting your *own* Kickbacks.ai earnings — independent of VS Code and the extension.
 
 ### Decisions locked (2026-06-13)
-- **Name:** Kickback (`kickback`). Brand-adjacent but distinct (singular vs. the "Kickbacks" mark); keep the prominent "not affiliated" disclaimer; email ShiftKeys before public share (§14.2). _(Renamed from the earlier working name "Kicker" on 2026-06-13.)_
+- **Name:** Kickbacks (`kickbacks`). Brand-adjacent but distinct (singular vs. the "Kickbacks" mark); keep the prominent "not affiliated" disclaimer; email ShiftKeys before public share (§14.2). _(Renamed from the earlier working name "Kicker" on 2026-06-13.)_
 - **Architecture:** TypeScript **core** (API client, Google OAuth, SQLite history, poller + stall watchdog) → **CLI** (TS + **OpenTUI**, Bun-compiled binary) + **menu bar** (native Swift `MenuBarExtra`, thin reader). Two languages bridged by a shared local SQLite store.
 - **Distribution:** Homebrew **only** — a tap with a **formula** (CLI) + **cask** (menu app).
 - **Posture:** read-only forever (never `/v1/metrics`); no subscription / no paid tier (§10).
@@ -167,17 +167,17 @@ The single fragile boundary. Isolate it behind one module so an API change is a 
 ## 8. Open-source plan
 
 - **License:** **Apache-2.0** (patent grant + explicit, good for a tool touching a third-party API) or **MIT** (simplest). Recommend Apache-2.0.
-- **Naming / affiliation note:** "Kickbacks Companion" uses their mark. For an *unofficial* OSS tool, prefer a **distinct name** + an "*for Kickbacks.ai*" descriptor + a prominent **"not affiliated with Kickbacks.ai"** disclaimer. Candidates: `kb` (CLI) + app names like **Tally**, **Sidecar**, **Kickback HUD**, **Stash**. Decide in §13.
+- **Naming / affiliation note:** "Kickbacks Companion" uses their mark. For an *unofficial* OSS tool, prefer a **distinct name** + an "*for Kickbacks.ai*" descriptor + a prominent **"not affiliated with Kickbacks.ai"** disclaimer. Candidates: `kb` (CLI) + app names like **Tally**, **Sidecar**, **Kickbacks HUD**, **Stash**. Decide in §13.
 - **Repo layout — finalized 2026-06-13 (the locked hybrid):**
   ```
-  kickbacks/        umbrella repo (companion project; tools branded "Kickback")
+  kickbacks/        umbrella repo (companion project; tools branded "Kickbacks")
     docs/           this doc, API contract, plans, CONTRIBUTING
-    cli/            Tool 1 — TS/Bun: shared core + `kickback` CLI + launchd poller
+    cli/            Tool 1 — TS/Bun: shared core + `kickbacks` CLI + launchd poller
     app/            Tool 2 — Swift MenuBarExtra app (reads the shared store)   [Plan 4]
     packaging/      Homebrew tap: formula (cli) + cask (app)                   [Plan 5]
   ```
   The two tools are different languages, so they share **data, not code** — both read
-  `~/.config/kickback/history.db`. The TS core lives in `cli/` (imported by the CLI and the
+  `~/.config/kickbacks/history.db`. The TS core lives in `cli/` (imported by the CLI and the
   poller); the Swift app is a thin reader of the store. _(The Swift-only Option-1 sketch is superseded.)_
 - **Contribution surface:** the isolated API client. Document the contract (§6) so when Kickbacks changes an endpoint, a contributor fixes one file. Add issue/PR templates, semver, signed releases.
 - **Security policy:** the tool handles OAuth tokens — store in Keychain, `chmod 600` for any file fallback, never log tokens, `SECURITY.md` for disclosure.
@@ -243,7 +243,7 @@ _Shipped (2026-06-13): Plans 1–5 — core + CLI, OpenTUI `watch`, launchd poll
 
 1. ✅ **Language path** — RESOLVED: TS core + TS/OpenTUI CLI + native Swift menu (hybrid; shared SQLite).
 2. ✅ **App form** — RESOLVED: menu-bar first (lightest); optional history window later.
-3. ✅ **Name + license** — RESOLVED: Name = **Kickback**; license = **Apache-2.0** (chosen 2026-06-13, over MIT).
+3. ✅ **Name + license** — RESOLVED: Name = **Kickbacks**; license = **Apache-2.0** (chosen 2026-06-13, over MIT).
 4. ◑ **Contact ShiftKeys** — YES, before any public share (draft in §14.2). Not yet sent.
 5. ✅ **Auth default** — RESOLVED (2026-06-13): CLI `login` tested working end-to-end by the user; **authed (own-session) mode confirmed as the primary path**. Passive mode stays an optional P2 fallback, not needed for MVP.
 
@@ -324,12 +324,12 @@ $0.56 ▴   rising        $0.56 ▾   falling        $0.56 —   flat
 ```
 
 - Trend arrow comes from the local-history rate over the last ~30 min.
-- **Stall surfacing (watchdog USP, preserved despite the minimal title):** when *active but flat* (stalled), the flat `—` renders **amber** and a one-time macOS **notification** fires — *"Kickback: you're coding but not earning — the ad injection may have broken. Run 'Kickbacks: Restore'."* **Killed** → title dims; **signed out** → shows `kickback`.
+- **Stall surfacing (watchdog USP, preserved despite the minimal title):** when *active but flat* (stalled), the flat `—` renders **amber** and a one-time macOS **notification** fires — *"Kickbacks: you're coding but not earning — the ad injection may have broken. Run 'Kickbacks: Restore'."* **Killed** → title dims; **signed out** → shows `kickbacks`.
 
 **Dropdown (on click):**
 
 ```
-  Kickback                         ● Earning
+  Kickbacks                         ● Earning
   ──────────────────────────────────────────
   Today          $0.56
   Lifetime       $12.34
@@ -344,17 +344,17 @@ $0.56 ▴   rising        $0.56 ▾   falling        $0.56 —   flat
    Inflowpay: Global sales, 50% less fees…  ↗   (opens click URL)
   ──────────────────────────────────────────
   ↻ Refresh now            Open dashboard ⌘D
-  Sign out                       Quit Kickback
+  Sign out                       Quit Kickbacks
 ```
 
 - The dropdown always carries the **explicit status line** (top-right dot) so the precise state is one click away. "Open dashboard" launches the CLI TUI.
 
 ### 15.2 CLI (OpenTUI — framed dashboard)
 
-`kickback` renders a framed dashboard; `kickback watch` keeps it live (animated sparkline, pulsing status).
+`kickbacks` renders a framed dashboard; `kickbacks watch` keeps it live (animated sparkline, pulsing status).
 
 ```
-╭ kickback ──────────────────────────────────────  ● earning ╮
+╭ kickbacks ──────────────────────────────────────  ● earning ╮
 │   TODAY          LIFETIME          RATE                   │
 │   $0.56          $12.34            $0.18/hr ▴             │
 │                                                           │
@@ -368,7 +368,7 @@ $0.56 ▴   rising        $0.56 ▾   falling        $0.56 —   flat
 ╰─────────────────────────────────────────────  r refresh · q ╯
 ```
 
-- Keys: `r` refresh · `h` history (wider chart) · `q` quit. `kickback watch` = live mode.
+- Keys: `r` refresh · `h` history (wider chart) · `q` quit. `kickbacks watch` = live mode.
 - Non-TTY / piped output falls back to plain text (the Plan 1 renderer) so it stays scriptable.
 
 ### 15.3 State matrix
@@ -380,6 +380,6 @@ $0.56 ▴   rising        $0.56 ▾   falling        $0.56 —   flat
 | Cap reached | `$0.56 —` | ◐ Daily cap hit | "won't earn until reset" |
 | Killed | `$0.56` (dim) | ⊘ Killswitch on | server kill flag |
 | No-serve | `$0.00 —` | ○ No ad serving | "Your ad here" placeholder |
-| Signed out | `kickback` | ○ Signed out | "run kickback login" |
+| Signed out | `kickbacks` | ○ Signed out | "run kickbacks login" |
 
 This drives **Plan 2** (OpenTUI dashboard) and **Plan 4** (Swift menu).

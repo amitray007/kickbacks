@@ -56,7 +56,7 @@ const STATUS: Record<MenuState, string> = {
 export function buildMenuModel(i: MenuInput): MenuModel {
   if (!i.signedIn || !i.p) {
     return {
-      signedIn: false, state: "signed-out", title: "kickback",
+      signedIn: false, state: "signed-out", title: "kickbacks",
       today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capScope: null, capPct: 0,
       resets: "", todayUsd: 0, hourUsd: 0, lifetimeUsd: 0, projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0,
       menuValue: "—", viewThresholdSeconds: null, ads: [], lastEarnedAgoSeconds: null, collecting: false,

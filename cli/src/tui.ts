@@ -48,14 +48,14 @@ const BADGE: Record<EarningState, { glyph: string; label: string; color: string 
   "no-serve": { glyph: "○", label: "No ad serving", color: COL.dim },
 };
 
-/** Build the framed OpenTUI dashboard tree for `kickback watch` (design §15.2). A pure
+/** Build the framed OpenTUI dashboard tree for `kickbacks watch` (design §15.2). A pure
  *  view over the same model the static renderer uses; verified headless via createTestRenderer. */
 export function buildDashboardTree(renderer: CliRenderer, m: WatchModel): BoxRenderable {
   const b = BADGE[m.state];
   const box = new BoxRenderable(renderer, {
     id: "dash", border: true, borderStyle: "rounded", borderColor: b.color,
     padding: 1, flexDirection: "column", width: 62,
-    title: ` kickback   ${b.glyph} ${b.label} `, titleAlignment: "left",
+    title: ` kickbacks   ${b.glyph} ${b.label} `, titleAlignment: "left",
   });
   const line = (id: string, content: string | ReturnType<typeof t>) =>
     box.add(new TextRenderable(renderer, { id, content, fg: COL.fg }));

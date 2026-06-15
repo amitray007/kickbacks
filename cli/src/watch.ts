@@ -8,7 +8,7 @@ export interface WatchDeps {
   now: () => number;
 }
 
-/** Owns the renderer, the refresh timer, and key input for `kickback watch`. Rebuilds the
+/** Owns the renderer, the refresh timer, and key input for `kickbacks watch`. Rebuilds the
  *  tree each refresh (cheap at this cadence). `q`/Ctrl-C quit; `r` refreshes now. A refresh
  *  already in flight is skipped (no overlap). Transient errors render inline; an AuthError
  *  is fatal — the renderer is destroyed (terminal restored) and the error rethrown so the

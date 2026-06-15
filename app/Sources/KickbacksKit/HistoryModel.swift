@@ -11,7 +11,7 @@ public struct BestDay: Codable, Equatable, Sendable {
   public var usd: Double
 }
 
-/// Decoded from `kickback history`. Mirrors HistoryJson in cli/src/history.ts.
+/// Decoded from `kickbacks history`. Mirrors HistoryJson in cli/src/history.ts.
 public struct HistoryModel: Codable, Equatable, Sendable {
   public var thisWeekUsd: Double
   public var thisMonthUsd: Double

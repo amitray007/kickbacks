@@ -1,4 +1,4 @@
-// kickback/test/derive.test.ts
+// kickbacks/test/derive.test.ts
 import { test, expect } from "bun:test";
 import { ratePerHour, projectSecondsToCap, isStalled, fmtUsd, fmtDuration, earningState } from "../src/derive";
 import type { Sample, Portfolio, Earnings } from "../src/types";

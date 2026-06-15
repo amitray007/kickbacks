@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS, POLL_SECONDS, LAUNCHD_LABEL, BAR_LAUNCHD_LABEL } from "./config";
+import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS, POLL_SECONDS, LAUNCHD_LABEL, BAR_LAUNCHD_LABEL, migrateLegacyConfigDir } from "./config";
 import { startLogin, pollOnce, signout, loadTokens, saveTokens, clearTokens, makeAuthedRunner, AuthError } from "./auth";
 import { fetchPortfolio, fetchEarnings, fetchRaw } from "./api";
 import { openStore, type Store } from "./store";
@@ -66,9 +66,9 @@ async function cmdLogin() {
     await new Promise((r) => setTimeout(r, 1500));
     process.stdout.write(c.dim("."));
     const t = await pollOnce({ fetch, base: BASE }, state).catch(() => null);
-    if (t) { saveTokens(t); console.log(c.green("\n\n  ✓ Signed in.") + c.dim("  Run 'kickback' to see your earnings.\n")); return; }
+    if (t) { saveTokens(t); console.log(c.green("\n\n  ✓ Signed in.") + c.dim("  Run 'kickbacks' to see your earnings.\n")); return; }
   }
-  console.error(c.yellow("\n\n  Timed out. Run 'kickback login' to try again.\n")); process.exit(1);
+  console.error(c.yellow("\n\n  Timed out. Run 'kickbacks login' to try again.\n")); process.exit(1);
 }
 
 async function cmdPortfolio() {
@@ -93,7 +93,7 @@ async function cmdEarnings() {
 
 // One poll cycle for the launchd agent (also runnable by hand): sample + stall/cap alerts.
 async function cmdPoll() {
-  if (!loadTokens()) { console.error("Not signed in. Run: kickback login"); process.exit(1); }
+  if (!loadTokens()) { console.error("Not signed in. Run: kickbacks login"); process.exit(1); }
   const store = openStore(DB_FILE);
   const now = Date.now();
   try {
@@ -109,17 +109,17 @@ async function cmdPoll() {
   } finally { store.close(); }
 }
 
-// Manage the launchd agent that runs `kickback poll` periodically. `install` must be
+// Manage the launchd agent that runs `kickbacks poll` periodically. `install` must be
 // run from the standalone binary (not `bun run`) — launchd needs the binary's own path.
 async function cmdPoller() {
   const sub = (process.argv[3] || "status").toLowerCase();
   if (sub === "install") {
     if (process.argv[1]?.endsWith(".ts")) { // running via `bun run`, not the standalone binary
-      console.error("`poller install` needs the standalone `kickback` binary (build with `bun run build`), not `bun run`.");
+      console.error("`poller install` needs the standalone `kickbacks` binary (build with `bun run build`), not `bun run`.");
       process.exit(1);
     }
     const path = installAgent(LAUNCHD_LABEL, process.execPath, POLL_SECONDS);
-    console.log(`Installed launchd agent → ${path}\nPolling every ${POLL_SECONDS}s. Uninstall with: kickback poller uninstall`);
+    console.log(`Installed launchd agent → ${path}\nPolling every ${POLL_SECONDS}s. Uninstall with: kickbacks poller uninstall`);
   } else if (sub === "uninstall") {
     uninstallAgent(LAUNCHD_LABEL);
     console.log("Poller uninstalled.");
@@ -162,16 +162,16 @@ async function cmdModel() {
   store.close();
 }
 
-// Manage the menu-bar app's login agent (the `kickback-bar` binary installed alongside).
+// Manage the menu-bar app's login agent (the `kickbacks-bar` binary installed alongside).
 // Run from the installed binary (brew), not `bun run`.
 async function cmdBar() {
   const sub = (process.argv[3] || "status").toLowerCase();
   if (sub === "install") {
     if (process.argv[1]?.endsWith(".ts")) { console.error("`bar install` needs the installed binaries (brew), not `bun run`."); process.exit(1); }
-    const barBin = `${dirname(process.execPath)}/kickback-bar`;
-    if (!existsSync(barBin)) { console.error(`kickback-bar not found at ${barBin} — install via brew.`); process.exit(1); }
+    const barBin = `${dirname(process.execPath)}/kickbacks-bar`;
+    if (!existsSync(barBin)) { console.error(`kickbacks-bar not found at ${barBin} — install via brew.`); process.exit(1); }
     const path = installBarAgent(BAR_LAUNCHD_LABEL, barBin);
-    console.log(`Installed menu-bar agent → ${path}\nThe menu bar now starts at login. Uninstall: kickback bar uninstall`);
+    console.log(`Installed menu-bar agent → ${path}\nThe menu bar now starts at login. Uninstall: kickbacks bar uninstall`);
   } else if (sub === "uninstall") {
     uninstallAgent(BAR_LAUNCHD_LABEL);
     console.log("Menu-bar agent uninstalled.");
@@ -181,11 +181,11 @@ async function cmdBar() {
 }
 
 // Live framed dashboard. Non-TTY (piped) → one static render so it stays scriptable.
-// Interval via KICKBACK_WATCH_SECONDS (default 30, min 5).
+// Interval via KICKBACKS_WATCH_SECONDS (default 30, min 5).
 async function cmdWatch() {
   if (!process.stdout.isTTY) { await cmdPortfolio(); return; }
-  if (!loadTokens()) { console.error("Not signed in. Run: kickback login"); process.exit(1); } // don't enter the alt-screen unauthenticated
-  const seconds = Math.max(5, Number(process.env.KICKBACK_WATCH_SECONDS) || 30);
+  if (!loadTokens()) { console.error("Not signed in. Run: kickbacks login"); process.exit(1); } // don't enter the alt-screen unauthenticated
+  const seconds = Math.max(5, Number(process.env.KICKBACKS_WATCH_SECONDS) || 30);
   const store = openStore(DB_FILE);
   try {
     await runWatch({
@@ -221,6 +221,7 @@ async function cmdLogout() {
   console.log(c.dim(`\n  Signed out${t?.refresh_token ? " — local tokens cleared, server session revoked." : " — local tokens cleared."}\n`));
 }
 
+migrateLegacyConfigDir();   // kickback → kickbacks: one-time data-dir move (preserves tokens + history)
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
 const table: Record<string, () => unknown> = {
   login: cmdLogin, portfolio: cmdPortfolio, watch: cmdWatch, earnings: cmdEarnings,

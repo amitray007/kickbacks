@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Kickback < Formula
+class Kickbacks < Formula
   desc "Read-only CLI + menu-bar app for your own Kickbacks.ai earnings (unofficial)"
   homepage "https://github.com/amitray007/kickbacks"
   url "https://github.com/amitray007/kickbacks/archive/refs/tags/v0.1.0.tar.gz"
@@ -16,12 +16,12 @@ class Kickback < Formula
   def install
     cd "cli" do
       system "bun", "install", "--frozen-lockfile"
-      system "bun", "build", "./src/cli.ts", "--compile", "--outfile", "kickback"
-      bin.install "kickback"
+      system "bun", "build", "./src/cli.ts", "--compile", "--outfile", "kickbacks"
+      bin.install "kickbacks"
     end
     cd "app" do
       system "swift", "build", "-c", "release", "--disable-sandbox"
-      bin.install ".build/release/KickbackBar" => "kickback-bar"
+      bin.install ".build/release/KickbacksBar" => "kickbacks-bar"
     end
   end
 
@@ -30,15 +30,15 @@ class Kickback < Formula
       Read-only companion for Kickbacks.ai — not affiliated with Kickbacks.ai / ShiftKeys, Inc.
 
       Get started:
-        kickback login
-        kickback                 # earnings dashboard
-        kickback poller install  # background sampling + stall/cap alerts (launchd)
-        kickback bar install     # menu-bar app at login
+        kickbacks login
+        kickbacks                 # earnings dashboard
+        kickbacks poller install  # background sampling + stall/cap alerts (launchd)
+        kickbacks bar install     # menu-bar app at login
     EOS
   end
 
   test do
-    assert_match "kickback status", shell_output("#{bin}/kickback status 2>&1")
-    assert_path_exists bin/"kickback-bar"
+    assert_match "kickbacks status", shell_output("#{bin}/kickbacks status 2>&1")
+    assert_path_exists bin/"kickbacks-bar"
   end
 end

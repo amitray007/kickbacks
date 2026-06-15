@@ -1,7 +1,7 @@
-// app/Sources/KickbackBar/MenuContent.swift
+// app/Sources/KickbacksBar/MenuContent.swift
 import SwiftUI
 import AppKit
-import KickbackKit
+import KickbacksKit
 
 private struct ContentHeightKey: PreferenceKey {
   static var defaultValue: CGFloat { 0 }

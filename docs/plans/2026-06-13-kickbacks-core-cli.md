@@ -1,6 +1,6 @@
-# Kickback — Core + CLI MVP Implementation Plan
+# Kickbacks — Core + CLI MVP Implementation Plan
 
-> **Naming note (2026-06-13):** authored as **"Kicker"** (`kicker` binary, `~/.config/kicker`, `KICKER_*`). The tool was later renamed **Kickback** (`kickback`, `~/.config/kickback`, `KICKBACK_*`) and the package dir `kicker/` → `cli/`. Read the historical `kicker`/`kicker/` references below accordingly.
+> **Naming note (2026-06-13):** authored as **"Kicker"** (`kicker` binary, `~/.config/kicker`, `KICKER_*`). The tool was later renamed **Kickbacks** (`kickbacks`, `~/.config/kickbacks`, `KICKBACKS_*`) and the package dir `kicker/` → `cli/`. Read the historical `kicker`/`kicker/` references below accordingly.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
