@@ -124,10 +124,53 @@ struct ShareCard: View {
         Text("Kickbacks").font(.system(size: 21, weight: .bold)).foregroundStyle(.white)
       }
       Spacer()
-      Text(pillText).font(.system(size: 14, weight: .semibold)).foregroundStyle(Color(0x6EE7B7))
-        .padding(.horizontal, 14).padding(.vertical, 7)
-        .background(Color(0x34D399).opacity(0.15), in: Capsule())
+      badgeView
     }
+  }
+
+  // Smart badge: a trend arrow (Today/Weekly), a "best ever" star, or a streak flame (Lifetime).
+  private struct Badge { let icon: String; let text: String; let tint: Color }
+
+  private var badgeView: some View {
+    let b = badge
+    return HStack(spacing: 6) {
+      Image(systemName: b.icon).font(.system(size: 12, weight: .bold))
+      Text(b.text).font(.system(size: 14, weight: .semibold))
+    }
+    .foregroundStyle(b.tint)
+    .padding(.horizontal, 12).padding(.vertical, 7)
+    .background(b.tint.opacity(0.16), in: Capsule())
+  }
+
+  private var badge: Badge {
+    switch metric {
+    case .today:
+      if model.todayUsd > 0, let mx = history?.daily.map(\.usd).max(), model.todayUsd >= mx {
+        return Badge(icon: "star.fill", text: "Best day yet", tint: Color(0xFBBF24))
+      }
+      return trendBadge
+    case .weekly:
+      return trendBadge
+    case .lifetime:
+      let s = streakDays
+      if s >= 2 { return Badge(icon: "flame.fill", text: "\(s)-day streak", tint: Color(0xFB923C)) }
+      return Badge(icon: "infinity", text: "all-time", tint: Color(0x6EE7B7))
+    }
+  }
+
+  private var trendBadge: Badge {
+    guard let p = trendPct else { return Badge(icon: "bolt.fill", text: "live", tint: Color(0x6EE7B7)) }
+    return p >= 0
+      ? Badge(icon: "arrow.up.right", text: "+\(p)%", tint: Color(0x34D399))
+      : Badge(icon: "arrow.down.right", text: "\(p)%", tint: Color(0xF87171))
+  }
+
+  private var streakDays: Int {
+    var n = 0
+    for b in (history?.daily ?? []).reversed() {
+      if b.usd > 0 { n += 1 } else { break }
+    }
+    return n
   }
 
   // MARK: viz
@@ -228,12 +271,6 @@ struct ShareCard: View {
     case .weekly:   return Int((h.thisWeekUsd / (h.avgPerDayUsd * 7) - 1) * 100)
     case .lifetime: return nil
     }
-  }
-
-  private var pillText: String {
-    if metric == .lifetime { return "all-time" }
-    if let p = trendPct { return (p >= 0 ? "+\(p)" : "\(p)") + "% vs avg" }
-    return "Kickback"
   }
 
   private var footStats: ((String, String), (String, String)) {

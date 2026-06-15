@@ -59,9 +59,9 @@ public struct MenuModel: Codable, Equatable, Sendable {
   /// Cache the result for the session (see MenuVM) rather than calling this on every render.
   public static func makeDemo() -> MenuModel {
     func money(_ v: Double) -> String { "$" + String(format: "%.2f", v) }
-    let today = Double.random(in: 8...185)
+    let today = Double.random(in: 4...18)
     let lifetime = Double.random(in: 300...4800)
-    let hour = Double.random(in: 0.5...18)
+    let hour = today * Double.random(in: 0.2...0.6)
     let rate = Double.random(in: 1...6)
     let pool = ["Demo Co — your ad here", "Sample Labs — try it free", "Acme — build something",
                 "Globex — ship faster", "Initech — automate it", "Hooli — search smarter"].shuffled()
