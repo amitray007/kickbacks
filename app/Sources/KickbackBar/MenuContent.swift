@@ -99,7 +99,7 @@ struct MenuContent: View {
       if showData {
         Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
       }
-      Button { showAbout() } label: { Label("About Kickbacks", systemImage: "info.circle") }
+      Button { showAbout() } label: { Label("About", systemImage: "info.circle") }
       Divider()
       Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
     } label: {
