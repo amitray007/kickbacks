@@ -16,8 +16,11 @@ export interface MenuModel {
   rate: string;
   trend: "up" | "down" | "flat";
   cap: string;
+  capScope: "hourly" | "daily" | null;
   capPct: number;
   resets: string;
+  todayUsd: number;
+  hourUsd: number;
   projection: string;
   spark: string;
   ad: string;
@@ -53,8 +56,8 @@ export function buildMenuModel(i: MenuInput): MenuModel {
   if (!i.signedIn || !i.p) {
     return {
       signedIn: false, state: "signed-out", title: "kickback",
-      today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capPct: 0,
-      resets: "", projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0,
+      today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capScope: null, capPct: 0,
+      resets: "", todayUsd: 0, hourUsd: 0, projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0,
       menuValue: "—", viewThresholdSeconds: null, ads: [], lastEarnedAgoSeconds: null, collecting: false,
       recentAds: [],
     };
@@ -75,14 +78,21 @@ export function buildMenuModel(i: MenuInput): MenuModel {
   const cap = e?.cap ?? null;
   const eta = cap ? projectSecondsToCap(p.todayUsd, cap.capUsd, rate) : null;
   const ad = p.ads[0];
+  // Trailing-60-min earnings for the (client-side) hourly cap. Best-effort: needs ≥2
+  // samples in the window, so it's only as dense as the panel/poller sampling.
+  const hourAgo = i.now - 3_600_000;
+  const firstInHour = samples.find((s) => s.ts >= hourAgo);
+  const hourUsd = firstInHour ? Math.max(0, (latest?.todayUsd ?? p.todayUsd) - firstInHour.todayUsd) : 0;
   return {
     signedIn: true, state,
     title: `${fmtUsd(p.todayUsd)} ${arrow}`,
     today: fmtUsd(p.todayUsd), lifetime: fmtUsd(p.lifetimeUsd),
     rate: rate > 0 ? `${fmtUsd(rate)}/hr` : "", trend,
     cap: cap ? `${fmtUsd(p.todayUsd)} / ${fmtUsd(cap.capUsd)}` : "",
+    capScope: cap ? cap.scope : null,
     capPct: cap && cap.capUsd > 0 ? Math.min(100, Math.round((p.todayUsd / cap.capUsd) * 100)) : 0,
     resets: cap ? fmtDuration(cap.resetSeconds) : "",
+    todayUsd: p.todayUsd, hourUsd,
     projection: eta !== null && eta > 0 ? `~${fmtDuration(eta)}` : "",
     spark: samples.length >= 2 ? sparkline(samples.map((s) => s.todayUsd)) : "",
     ad: ad?.text ?? "", adUrl: ad?.clickUrl ?? "",

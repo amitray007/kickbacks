@@ -144,10 +144,7 @@ struct MenuContent: View {
         statCard(bg: tint.opacity(0.12)) {        // Today tile, faintly state-tinted
           VStack(alignment: .leading, spacing: 2) {
             Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-            HStack(alignment: .firstTextBaseline, spacing: 5) {
-              Text(mask(m.today)).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
-              trendBadge
-            }
+            Text(mask(m.today)).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
             Text(m.rate.isEmpty ? " " : mask(m.rate)).font(.caption2).foregroundStyle(.secondary)
           }
         }
@@ -159,7 +156,8 @@ struct MenuContent: View {
           }
         }
       }
-      if !m.cap.isEmpty { Divider(); capSection }
+      Divider()
+      capsSection
       if let ago = m.lastEarnedAgoSeconds, m.state == .killed {
         Text("Last earned \(agoText(ago))").font(.caption).foregroundStyle(.secondary)
       }
@@ -186,19 +184,21 @@ struct MenuContent: View {
       .background(color.opacity(0.12)).clipShape(RoundedRectangle(cornerRadius: 6))
   }
 
-  // Cap as text only (no bar / graph).
-  private var capSection: some View {
-    VStack(alignment: .leading, spacing: 2) {
-      HStack {
-        Text("Daily cap").foregroundStyle(.secondary)
-        Spacer()
-        Text("\(mask(m.cap)) · \(m.capPct)%").monospacedDigit()
-      }
-      if !m.resets.isEmpty {
-        Text("resets in \(m.resets)").foregroundStyle(.secondary)
-          .frame(maxWidth: .infinity, alignment: .trailing)
-      }
+  // Your personal caps (set in Settings), text only. Hourly = trailing-60-min earnings.
+  private var capsSection: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      capRow("Hourly cap", earned: m.hourUsd, limit: vm.hourlyCapUsd)
+      capRow("Daily cap", earned: m.todayUsd, limit: vm.dailyCapUsd)
     }.font(.caption)
+  }
+
+  private func capRow(_ label: String, earned: Double, limit: Double) -> some View {
+    let pct = limit > 0 ? min(100, Int((earned / limit) * 100)) : 0
+    return HStack {
+      Text(label).foregroundStyle(.secondary)
+      Spacer()
+      Text("\(mask(usd(earned))) / \(mask(usd(limit))) · \(pct)%").monospacedDigit()
+    }
   }
 
   // Recent ads: current first (full opacity), the prior couple dimmed. Capped to 3 by the CLI.
@@ -307,14 +307,6 @@ struct MenuContent: View {
       .padding(10)
       .background(bg)
       .clipShape(RoundedRectangle(cornerRadius: 10))
-  }
-
-  @ViewBuilder private var trendBadge: some View {
-    switch m.trend {
-    case "up":   Image(systemName: "chart.line.uptrend.xyaxis").font(.system(size: 16, weight: .bold)).foregroundStyle(.green)
-    case "down": Image(systemName: "chart.line.downtrend.xyaxis").font(.system(size: 16, weight: .bold)).foregroundStyle(.red)
-    default:     EmptyView()
-    }
   }
 
   private var shortStatus: String {

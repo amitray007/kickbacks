@@ -27,6 +27,7 @@ public struct MenuModel: Codable, Equatable, Sendable {
   public var rate: String
   public var trend: String
   public var cap: String
+  public var capScope: String?
   public var capPct: Int
   public var resets: String
   public var projection: String
@@ -41,26 +42,41 @@ public struct MenuModel: Codable, Equatable, Sendable {
   public var lastEarnedAgoSeconds: Int?
   public var collecting: Bool
   public var recentAds: [AdItem]
+  public var todayUsd: Double
+  public var hourUsd: Double
 
   /// Fallback shown on any failure (no binary, spawn/parse error, signed out).
   public static let signedOut = MenuModel(
     signedIn: false, state: .signedOut, title: "kickback",
-    today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capPct: 0,
+    today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capScope: nil, capPct: 0,
     resets: "", projection: "", spark: "", ad: "", adUrl: "", status: "Signed out", ageSeconds: 0,
-    menuValue: "—", viewThresholdSeconds: nil, ads: [], lastEarnedAgoSeconds: nil, collecting: false, recentAds: [])
+    menuValue: "—", viewThresholdSeconds: nil, ads: [], lastEarnedAgoSeconds: nil, collecting: false, recentAds: [],
+    todayUsd: 0, hourUsd: 0)
 
-  /// Believable demo data for the "Fake data" toggle (demos / screenshots). Fictional ads.
-  public static let demo = MenuModel(
-    signedIn: true, state: .earning, title: "$42.00", today: "$42.00", lifetime: "$1,337.00",
-    rate: "$3.50/hr", trend: "up", cap: "$42.00 / $50.00", capPct: 84, resets: "3h20m",
-    projection: "~2h", spark: "", ad: "Demo Co — your ad here", adUrl: "https://example.com",
-    status: "Earning", ageSeconds: 5, menuValue: "42.00", viewThresholdSeconds: 15,
-    ads: [AdItem(text: "Demo Co — your ad here", url: "https://example.com", icon: ""),
-          AdItem(text: "Sample Labs — try it free", url: "https://example.com", icon: "")],
-    lastEarnedAgoSeconds: 12, collecting: false,
-    recentAds: [AdItem(text: "Demo Co — your ad here", url: "https://example.com", icon: ""),
-                AdItem(text: "Sample Labs — try it free", url: "https://example.com", icon: ""),
-                AdItem(text: "Acme — build something", url: "https://example.com", icon: "")])
+  /// Believable demo data for "Demo mode" — randomized per call, so each app launch looks
+  /// different. Fictional ads only; amounts stay under the default caps so cap rows read sane.
+  /// Cache the result for the session (see MenuVM) rather than calling this on every render.
+  public static func makeDemo() -> MenuModel {
+    func money(_ v: Double) -> String { "$" + String(format: "%.2f", v) }
+    let today = Double.random(in: 8...185)
+    let lifetime = Double.random(in: 300...4800)
+    let hour = Double.random(in: 0.5...18)
+    let rate = Double.random(in: 1...6)
+    let pool = ["Demo Co — your ad here", "Sample Labs — try it free", "Acme — build something",
+                "Globex — ship faster", "Initech — automate it", "Hooli — search smarter"].shuffled()
+    let recent = pool.prefix(3).map { AdItem(text: $0, url: "https://example.com", icon: "") }
+    return MenuModel(
+      signedIn: true, state: .earning, title: money(today),
+      today: money(today), lifetime: money(lifetime),
+      rate: money(rate) + "/hr", trend: Bool.random() ? "up" : "down",
+      cap: "", capScope: nil, capPct: 0, resets: "",
+      projection: "", spark: "", ad: recent.first?.text ?? "", adUrl: "https://example.com",
+      status: "Earning", ageSeconds: Int.random(in: 2...40),
+      menuValue: String(format: "%.2f", today), viewThresholdSeconds: 15,
+      ads: Array(recent.prefix(2)),
+      lastEarnedAgoSeconds: Int.random(in: 3...90), collecting: false,
+      recentAds: Array(recent), todayUsd: today, hourUsd: hour)
+  }
 
   public static func decode(_ data: Data) -> MenuModel? {
     try? JSONDecoder().decode(MenuModel.self, from: data)

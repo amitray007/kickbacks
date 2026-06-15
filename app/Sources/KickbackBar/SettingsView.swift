@@ -23,6 +23,23 @@ struct SettingsView: View {
                 in: 15...3600, step: 15)
       }
 
+      Section("Caps") {
+        HStack {
+          Text("Hourly")
+          Spacer()
+          TextField("", value: Binding(get: { vm.hourlyCapUsd }, set: { vm.setHourlyCap($0) }), format: .number)
+            .multilineTextAlignment(.trailing).frame(width: 80)
+        }
+        HStack {
+          Text("Daily")
+          Spacer()
+          TextField("", value: Binding(get: { vm.dailyCapUsd }, set: { vm.setDailyCap($0) }), format: .number)
+            .multilineTextAlignment(.trailing).frame(width: 80)
+        }
+        Text("Your personal targets in $ (not enforced). Hourly tracks your last 60 minutes.")
+          .font(.caption).foregroundStyle(.secondary)
+      }
+
       Section("Menu bar") {
         Picker("Show", selection: Binding(get: { vm.menuBarStyle }, set: { vm.setMenuBarStyle($0) })) {
           Text("Today $").tag(MenuBarStyle.today)
@@ -49,6 +66,6 @@ struct SettingsView: View {
       }
     }
     .formStyle(.grouped)
-    .frame(width: 380, height: 480)
+    .frame(width: 380, height: 540)
   }
 }

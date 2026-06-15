@@ -16,6 +16,12 @@ import KickbackKit
   @Published private(set) var hideAmounts = false      // mask $ amounts (for screen sharing)
   @Published private(set) var demoMode = false         // show fake demo data
   @Published private(set) var lastUpdated: Date?       // when a fresh model was last applied — drives "Updated Nm ago"
+  @Published private(set) var hourlyCapUsd: Double = 20    // personal hourly cap (editable in Settings)
+  @Published private(set) var dailyCapUsd: Double = 200    // personal daily cap (editable in Settings)
+
+  // Generated once per launch so Demo mode is stable across toggles (re-rolls only on restart).
+  private let demoModel = MenuModel.makeDemo()
+  private let demoHistory = HistoryModel.makeDemo()
 
   private var pollTask: Task<Void, Never>?
   private var loginProc: Process?
@@ -30,6 +36,8 @@ import KickbackKit
     menuBarStyle = MenuBarStyle(rawValue: UserDefaults.standard.string(forKey: "menuBarStyle") ?? "") ?? .today
     hideAmounts = UserDefaults.standard.bool(forKey: "hideAmounts")
     demoMode = UserDefaults.standard.bool(forKey: "demoMode")
+    hourlyCapUsd = UserDefaults.standard.object(forKey: "hourlyCapUsd") as? Double ?? 20
+    dailyCapUsd = UserDefaults.standard.object(forKey: "dailyCapUsd") as? Double ?? 200
     refresh()
     startPolling()
   }
@@ -58,10 +66,12 @@ import KickbackKit
   func setMenuBarStyle(_ s: MenuBarStyle) { menuBarStyle = s; UserDefaults.standard.set(s.rawValue, forKey: "menuBarStyle") }
   func setHideAmounts(_ on: Bool) { hideAmounts = on; UserDefaults.standard.set(on, forKey: "hideAmounts") }
   func setDemoMode(_ on: Bool) { demoMode = on; UserDefaults.standard.set(on, forKey: "demoMode") }
+  func setHourlyCap(_ v: Double) { hourlyCapUsd = max(0, v); UserDefaults.standard.set(hourlyCapUsd, forKey: "hourlyCapUsd") }
+  func setDailyCap(_ v: Double) { dailyCapUsd = max(0, v); UserDefaults.standard.set(dailyCapUsd, forKey: "dailyCapUsd") }
 
-  /// Effective display values — swap in demo data when demoMode is on.
-  var effModel: MenuModel { demoMode ? .demo : model }
-  var effHistory: HistoryModel? { demoMode ? .demo : history }
+  /// Effective display values — swap in the cached demo data when demoMode is on.
+  var effModel: MenuModel { demoMode ? demoModel : model }
+  var effHistory: HistoryModel? { demoMode ? demoHistory : history }
   var effPhase: AuthPhase { demoMode ? .signedIn : phase }
 
   /// `showSpinner` is set only by the Refresh button so the 60s background poll doesn't
