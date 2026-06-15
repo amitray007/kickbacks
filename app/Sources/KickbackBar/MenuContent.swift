@@ -113,20 +113,20 @@ struct MenuContent: View {
     VStack(alignment: .leading, spacing: 11) {
       bannerView
       HStack(alignment: .top, spacing: 14) {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: 2) {
           Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
           HStack(alignment: .center, spacing: 5) {
-            Text(m.today).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+            Text(m.today).font(.system(size: 32, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
             trendBadge
           }
+          if !m.rate.isEmpty {
+            Text(m.rate).font(.caption2).foregroundStyle(.secondary)   // today's pace, under Today
+          }
         }.frame(maxWidth: .infinity, alignment: .leading)
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: 2) {
           Text("LIFETIME").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-          Text(m.lifetime).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+          Text(m.lifetime).font(.system(size: 22, weight: .bold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
         }.frame(maxWidth: .infinity, alignment: .leading)
-      }
-      if !m.rate.isEmpty {
-        Text(m.rate).font(.caption).foregroundStyle(.secondary)
       }
       if m.ageSeconds > 180 {
         Text("Couldn't refresh · showing data from \(agoText(m.ageSeconds))")
