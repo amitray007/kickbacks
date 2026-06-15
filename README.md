@@ -19,6 +19,7 @@ The TypeScript core + CLI (**Plan 1**), the live OpenTUI `watch` dashboard (**Pl
 
 ```bash
 brew tap amitray007/kickbacks https://github.com/amitray007/kickbacks
+brew trust amitray007/kickbacks     # one-time: Homebrew gates third-party taps
 brew install kickbacks              # builds the CLI + menu-bar app from source (bun + swift)
 kickbacks login                     # Google sign-in
 kickbacks                           # earnings dashboard  ·  kickbacks watch  for the live view
