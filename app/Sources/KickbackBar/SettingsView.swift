@@ -2,8 +2,8 @@
 import SwiftUI
 import KickbackKit
 
-/// The Preferences window (⌘, or gear → Settings…). Reads/writes the persisted settings
-/// on MenuVM so the menu bar + panel react live.
+/// The Preferences window, opened from the panel's bottom-bar Settings button. Reads/writes
+/// the persisted settings on MenuVM so the menu bar + panel react live.
 struct SettingsView: View {
   @ObservedObject var vm: MenuVM
   private let presets = [60, 300, 600, 1800]
@@ -29,12 +29,14 @@ struct SettingsView: View {
           Text("Lifetime $").tag(MenuBarStyle.lifetime)
           Text("Icon only").tag(MenuBarStyle.iconOnly)
         }.pickerStyle(.segmented)
+      }
 
-        Toggle("Hide amounts", isOn: Binding(get: { vm.hideAmounts }, set: { vm.setHideAmounts($0) }))
+      Section("Privacy & demo") {
+        Toggle("Privacy mode", isOn: Binding(get: { vm.hideAmounts }, set: { vm.setHideAmounts($0) }))
         Text("Mask every $ value — handy when screen sharing.")
           .font(.caption).foregroundStyle(.secondary)
 
-        Toggle("Fake data (demo mode)", isOn: Binding(get: { vm.demoMode }, set: { vm.setDemoMode($0) }))
+        Toggle("Demo mode", isOn: Binding(get: { vm.demoMode }, set: { vm.setDemoMode($0) }))
         Text("Show believable sample numbers instead of your real earnings.")
           .font(.caption).foregroundStyle(.secondary)
       }
@@ -47,6 +49,6 @@ struct SettingsView: View {
       }
     }
     .formStyle(.grouped)
-    .frame(width: 380, height: 440)
+    .frame(width: 380, height: 480)
   }
 }

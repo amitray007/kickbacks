@@ -29,6 +29,8 @@ struct MenuContent: View {
           case .signedIn:  signedIn
           }
         }
+        Divider()
+        bottomBar
       }
       .padding(12)
       .background(GeometryReader { g in Color.clear.preference(key: ContentHeightKey.self, value: g.size.height) })
@@ -73,21 +75,20 @@ struct MenuContent: View {
       ProgressView().controlSize(.small)
     } else {
       Button { vm.refresh(showSpinner: true) } label: {
-        Label("Refresh", systemImage: "arrow.clockwise").font(.caption)
+        Image(systemName: "arrow.clockwise")
       }
       .buttonStyle(.plain)
       .foregroundStyle(.secondary)
+      .help("Refresh")
       .onHover(perform: pointer)
     }
   }
 
+  // Quick feature toggles + app actions. Full preferences live in the bottom-bar Settings button.
   private func overflowMenu(showData: Bool) -> some View {
     Menu {
-      Button { NSApp.activate(ignoringOtherApps: true); openWindow(id: "settings") } label: {
-        Label("Settings…", systemImage: "slider.horizontal.3")
-      }.keyboardShortcut(",", modifiers: .command)
-      Toggle("Hide amounts", isOn: Binding(get: { vm.hideAmounts }, set: { vm.setHideAmounts($0) }))
-      Toggle("Fake data", isOn: Binding(get: { vm.demoMode }, set: { vm.setDemoMode($0) }))
+      Toggle("Privacy mode", isOn: Binding(get: { vm.hideAmounts }, set: { vm.setHideAmounts($0) }))
+      Toggle("Demo mode", isOn: Binding(get: { vm.demoMode }, set: { vm.setDemoMode($0) }))
       Divider()
       if showData {
         Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
@@ -96,7 +97,7 @@ struct MenuContent: View {
       Divider()
       Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
     } label: {
-      Image(systemName: "gearshape")
+      Image(systemName: "switch.2")
     }
     .menuStyle(.borderlessButton)
     .menuIndicator(.hidden)
@@ -165,8 +166,6 @@ struct MenuContent: View {
       if !m.recentAds.isEmpty { Divider(); recentAdsSection }
       Divider()
       statsSection
-      Divider()
-      footer
     }
   }
 
@@ -267,19 +266,30 @@ struct MenuContent: View {
     }.frame(maxWidth: .infinity, alignment: .leading)
   }
 
-  // Freshness + refresh, at the foot of the panel. The time counts up live (driven by `now`).
-  private var footer: some View {
-    VStack(spacing: 6) {
-      Text(updatedText)
-        .font(.caption2)
-        .foregroundStyle(isStale ? Color.orange : Color.secondary)
-      refreshControl
+  // Bottom bar: Settings on the left; freshness + refresh on the right (signed-in only).
+  // The "Updated" time counts up live (driven by `now`).
+  private var bottomBar: some View {
+    HStack(spacing: 8) {
+      Button { openSettings() } label: { Image(systemName: "gearshape") }
+        .buttonStyle(.plain).foregroundStyle(.secondary)
+        .help("Settings").onHover(perform: pointer)
+      Spacer()
+      if vm.effPhase == .signedIn {
+        Text(updatedText)
+          .font(.caption2)
+          .foregroundStyle(isStale ? Color.orange : Color.secondary)
+        refreshControl
+      }
     }
-    .frame(maxWidth: .infinity)
+  }
+
+  private func openSettings() {
+    NSApp.activate(ignoringOtherApps: true)
+    openWindow(id: "settings")
   }
 
   private var updatedText: String {
-    if vm.demoMode { return "Demo data" }
+    if vm.demoMode { return "Demo mode" }
     guard let t = vm.lastUpdated else { return "Updating…" }
     return "Updated \(agoText(max(0, Int(now.timeIntervalSince(t)))))"
   }
