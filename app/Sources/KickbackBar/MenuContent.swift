@@ -112,14 +112,22 @@ struct MenuContent: View {
   private var signedIn: some View {
     VStack(alignment: .leading, spacing: 11) {
       bannerView
-      VStack(alignment: .leading, spacing: 1) {
-        Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-        HStack(alignment: .center, spacing: 7) {
-          Text(m.today).font(.system(size: 34, weight: .heavy)).monospacedDigit()
-          trendBadge
-        }
+      HStack(alignment: .top, spacing: 14) {
+        VStack(alignment: .leading, spacing: 1) {
+          Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+          HStack(alignment: .center, spacing: 5) {
+            Text(m.today).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+            trendBadge
+          }
+        }.frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: 1) {
+          Text("LIFETIME").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+          Text(m.lifetime).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+        }.frame(maxWidth: .infinity, alignment: .leading)
       }
-      Text(secondaryLine).font(.caption).foregroundStyle(.secondary)
+      if !m.rate.isEmpty {
+        Text(m.rate).font(.caption).foregroundStyle(.secondary)
+      }
       if m.ageSeconds > 180 {
         Text("Couldn't refresh · showing data from \(agoText(m.ageSeconds))")
           .font(.caption2).foregroundStyle(.secondary)
@@ -240,12 +248,6 @@ struct MenuContent: View {
     case "down": Image(systemName: "chart.line.downtrend.xyaxis").font(.system(size: 16, weight: .bold)).foregroundStyle(.red)
     default:     EmptyView()
     }
-  }
-
-  private var secondaryLine: String {
-    var s = "Lifetime \(m.lifetime)"
-    if !m.rate.isEmpty { s += "  ·  \(m.rate)" }
-    return s
   }
 
   private var shortStatus: String {
