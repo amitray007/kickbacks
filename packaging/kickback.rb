@@ -3,11 +3,11 @@
 
 class Kickback < Formula
   desc "Read-only CLI + menu-bar app for your own Kickbacks.ai earnings (unofficial)"
-  homepage "https://github.com/USER/kickbacks"
-  url "https://github.com/USER/kickbacks/archive/refs/tags/v0.1.0.tar.gz"
+  homepage "https://github.com/amitray007/kickbacks"
+  url "https://github.com/amitray007/kickbacks/archive/refs/tags/v0.1.0.tar.gz"
   sha256 "replace_on_release"
   license "Apache-2.0"
-  head "https://github.com/USER/kickbacks.git", branch: "main"
+  head "https://github.com/amitray007/kickbacks.git", branch: "main"
 
   depends_on "bun" => :build
   depends_on xcode: :build
