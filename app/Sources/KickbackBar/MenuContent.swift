@@ -83,7 +83,7 @@ struct MenuContent: View {
       Divider()
       Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
     } label: {
-      Image(systemName: "ellipsis.circle")
+      Image(systemName: "gearshape")
     }
     .menuStyle(.borderlessButton)
     .menuIndicator(.hidden)
