@@ -8,11 +8,23 @@ private struct ContentHeightKey: PreferenceKey {
   static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
+/// Grabs the hosting NSWindow (the MenuBarExtra panel) so we can dismiss it programmatically.
+private struct WindowAccessor: NSViewRepresentable {
+  let onResolve: (NSWindow?) -> Void
+  func makeNSView(context: Context) -> NSView {
+    let v = NSView()
+    DispatchQueue.main.async { onResolve(v.window) }
+    return v
+  }
+  func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
 struct MenuContent: View {
   @ObservedObject var vm: MenuVM
   @Environment(\.openWindow) private var openWindow
   @State private var contentHeight: CGFloat = 0
   @State private var now = Date()            // ticked every second so "Updated Nm ago" counts up live
+  @State private var panelWindow: NSWindow?  // the MenuBarExtra panel — collapsed when Settings/Share opens
   private var m: MenuModel { vm.effModel }   // demo data when Fake-data is on
 
   var body: some View {
@@ -46,6 +58,7 @@ struct MenuContent: View {
     }
     .onAppear { now = Date(); vm.refresh() }   // re-fetch + reset the clock each time the panel opens
     .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { now = $0 }
+    .background(WindowAccessor { panelWindow = $0 })
   }
 
   private var maxPanelHeight: CGFloat { (NSScreen.main?.visibleFrame.height ?? 760) - 80 }
@@ -299,11 +312,13 @@ struct MenuContent: View {
   }
 
   private func openSettings() {
+    panelWindow?.orderOut(nil)   // collapse the menu-bar panel so the window has focus
     NSApp.activate(ignoringOtherApps: true)
     openWindow(id: "settings")
   }
 
   private func openShare() {
+    panelWindow?.orderOut(nil)   // collapse the menu-bar panel so the window has focus
     NSApp.activate(ignoringOtherApps: true)
     openWindow(id: "share")
   }

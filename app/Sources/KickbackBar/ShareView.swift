@@ -178,8 +178,6 @@ struct ShareCard: View {
             .frame(width: g.size.width * pct)
         }
       }.frame(height: 12)
-      Text("\(money(max(0, goal - model.lifetimeUsd))) to go" + (history.map { " · since install, \($0.daysTracked) days" } ?? ""))
-        .font(.system(size: 13)).foregroundStyle(.white.opacity(0.55))
     }
   }
 
