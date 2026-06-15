@@ -95,7 +95,12 @@ import KickbackKit
   }
 
   func signOut() {
-    Task.detached { ModelClient.logout(); await MainActor.run { self.refresh() } }
+    // Optimistic: flip to signed-out instantly; clear tokens + revoke server session in the background.
+    phase = .signedOut
+    model = .signedOut
+    history = nil
+    loading = false
+    Task.detached { ModelClient.logout() }
   }
 
   private func finishLogin(_ p: AuthPhase) {

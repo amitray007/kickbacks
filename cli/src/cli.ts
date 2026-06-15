@@ -213,9 +213,9 @@ function cmdStatus() {
 async function cmdLogout() {
   const c = palette(useColor());
   const t = loadTokens();
+  clearTokens();   // clear locally first → app reads signed-out instantly; server revoke is best-effort
   if (t?.refresh_token) await signout({ fetch, base: BASE }, t.refresh_token).catch(() => {});
-  clearTokens();
-  console.log(c.dim(`\n  Signed out${t?.refresh_token ? " — server session revoked, local tokens cleared." : " — local tokens cleared."}\n`));
+  console.log(c.dim(`\n  Signed out${t?.refresh_token ? " — local tokens cleared, server session revoked." : " — local tokens cleared."}\n`));
 }
 
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
