@@ -26,6 +26,11 @@ struct KickbackBarApp: App {
       SettingsView(vm: vm)
     }
     .windowResizability(.contentSize)
+
+    Window("Share", id: "share") {
+      ShareView(vm: vm)
+    }
+    .windowResizability(.contentSize)
   }
 }
 

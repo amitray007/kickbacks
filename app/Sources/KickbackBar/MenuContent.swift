@@ -93,6 +93,8 @@ struct MenuContent: View {
   // Quick feature toggles + app actions. Full preferences live in the bottom-bar Settings button.
   private func overflowMenu(showData: Bool) -> some View {
     Menu {
+      Button { openShare() } label: { Label("Share…", systemImage: "square.and.arrow.up") }
+      Divider()
       Toggle("Privacy mode", isOn: Binding(get: { vm.hideAmounts }, set: { vm.setHideAmounts($0) }))
       Toggle("Demo mode", isOn: Binding(get: { vm.demoMode }, set: { vm.setDemoMode($0) }))
       Divider()
@@ -298,6 +300,11 @@ struct MenuContent: View {
   private func openSettings() {
     NSApp.activate(ignoringOtherApps: true)
     openWindow(id: "settings")
+  }
+
+  private func openShare() {
+    NSApp.activate(ignoringOtherApps: true)
+    openWindow(id: "share")
   }
 
   private var updatedText: String {
