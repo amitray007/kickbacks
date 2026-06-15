@@ -256,12 +256,14 @@ struct MenuContent: View {
           statCell("Best day", mask(h.bestDay.map { usd($0.usd) } ?? "—"))
           statCell("Avg / day", mask(usd(h.avgPerDayUsd)))
         }
+        if h.hasEnough {
+          HStack(spacing: 10) {
+            statCell("Proj. week", mask(usd(h.avgPerDayUsd * 7)))
+            statCell("Proj. month", mask(usd(h.avgPerDayUsd * 30)))
+          }
+        }
         Text("Since install \(mask(usd(h.sinceInstallUsd))) · \(h.daysTracked) day\(h.daysTracked == 1 ? "" : "s")")
           .font(.caption2).foregroundStyle(.secondary)
-        if h.hasEnough {
-          Text("At this pace · ~\(mask(usd(h.avgPerDayUsd * 7)))/wk · ~\(mask(usd(h.avgPerDayUsd * 30)))/mo")
-            .font(.caption2).foregroundStyle(.secondary)
-        }
       } else {
         Text("No history yet — fills in as you keep earning.")
           .font(.caption).foregroundStyle(.secondary)
