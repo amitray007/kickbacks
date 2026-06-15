@@ -106,8 +106,6 @@ struct MenuContent: View {
   // Quick feature toggles + app actions. Full preferences live in the bottom-bar Settings button.
   private func overflowMenu(showData: Bool) -> some View {
     Menu {
-      Button { openShare() } label: { Label("Share…", systemImage: "square.and.arrow.up") }
-      Divider()
       Toggle("Privacy mode", isOn: Binding(get: { vm.hideAmounts }, set: { vm.setHideAmounts($0) }))
       Toggle("Demo mode", isOn: Binding(get: { vm.demoMode }, set: { vm.setDemoMode($0) }))
       Toggle("Floating window", isOn: Binding(get: { vm.pinned }, set: { vm.setPinned($0) }))
@@ -296,13 +294,18 @@ struct MenuContent: View {
     }.frame(maxWidth: .infinity, alignment: .leading)
   }
 
-  // Bottom bar: Settings on the left; freshness + refresh on the right (signed-in only).
+  // Bottom bar: Settings + Share on the left; freshness + refresh on the right (signed-in only).
   // The "Updated" time counts up live (driven by `now`).
   private var bottomBar: some View {
     HStack(spacing: 8) {
       Button { openSettings() } label: { Image(systemName: "gearshape") }
         .buttonStyle(.plain).foregroundStyle(.secondary)
         .help("Settings").onHover(perform: pointer)
+      if vm.effPhase == .signedIn {
+        Button { openShare() } label: { Image(systemName: "square.and.arrow.up") }
+          .buttonStyle(.plain).foregroundStyle(.secondary)
+          .help("Share").onHover(perform: pointer)
+      }
       Spacer()
       if vm.effPhase == .signedIn {
         Text(updatedText)
