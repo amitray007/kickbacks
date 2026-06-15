@@ -112,23 +112,23 @@ struct MenuContent: View {
   private var signedIn: some View {
     VStack(alignment: .leading, spacing: 11) {
       bannerView
-      VStack(alignment: .leading, spacing: 3) {
-        // labels: TODAY (left) ... LIFETIME (right), over their numbers
-        HStack {
-          Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-          Spacer()
-          Text("LIFETIME").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+      HStack(alignment: .top, spacing: 10) {
+        statCard(bg: tint.opacity(0.12)) {        // Today tile, faintly state-tinted
+          VStack(alignment: .leading, spacing: 2) {
+            Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+              Text(m.today).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
+              trendBadge
+            }
+            Text(m.rate.isEmpty ? " " : m.rate).font(.caption2).foregroundStyle(.secondary)
+          }
         }
-        // numbers bookend the row on a shared baseline; Lifetime muted + smaller (secondary)
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-          Text(m.today).font(.system(size: 32, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
-          trendBadge
-          Spacer()
-          Text(m.lifetime).font(.system(size: 24, weight: .bold)).monospacedDigit()
-            .foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.5)
-        }
-        if !m.rate.isEmpty {
-          Text(m.rate).font(.caption2).foregroundStyle(.secondary)   // today's pace, under Today
+        statCard(bg: Color.secondary.opacity(0.10)) {   // Lifetime tile, neutral
+          VStack(alignment: .leading, spacing: 2) {
+            Text("LIFETIME").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+            Text(m.lifetime).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
+            Text("all-time").font(.caption2).foregroundStyle(.secondary)
+          }
         }
       }
       if m.ageSeconds > 180 {
@@ -244,6 +244,14 @@ struct MenuContent: View {
   }
 
   // MARK: helpers
+
+  private func statCard<C: View>(bg: Color, @ViewBuilder _ content: () -> C) -> some View {
+    content()
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(10)
+      .background(bg)
+      .clipShape(RoundedRectangle(cornerRadius: 10))
+  }
 
   @ViewBuilder private var trendBadge: some View {
     switch m.trend {
