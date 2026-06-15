@@ -1,6 +1,6 @@
 import type { Portfolio, Earnings } from "./types";
 import type { Store } from "./store";
-import { ratePerHour, projectSecondsToCap, earningState, isStalled, fmtUsd, fmtDuration } from "./derive";
+import { ratePerHour, projectSecondsToCap, earningState, fmtUsd, fmtDuration } from "./derive";
 import { sparkline } from "./ui";
 import { lastEarnedAgoSeconds } from "./history";
 import type { RecentAd } from "./ads";
@@ -69,10 +69,7 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     ? (rate > 0 ? "up" : "flat")
     : a.todayUsd > b.todayUsd ? "up" : a.todayUsd < b.todayUsd ? "down" : "flat";
   // `active` is from the latest stored sample (poll cadence; null on pre-Plan-3 samples → inactive).
-  const active = latest?.active === true;
-  const stalled = isStalled({ samples, now: i.now, windowMs: 10 * 60_000, active });
-  const base = earningState(p, e); // killed | cap | no-serve | earning
-  const state: MenuState = base === "earning" && stalled ? "stalled" : base;
+  const state: MenuState = earningState(p, e); // killed | cap | no-serve | earning (stalled removed — detection was unreliable)
 
   const arrow = trend === "up" ? "▴" : trend === "down" ? "▾" : "—";
   const cap = e?.cap ?? null;

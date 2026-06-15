@@ -41,9 +41,9 @@ async function authed<T>(call: (token: string) => Promise<T>): Promise<T> {
   }
 }
 
-function recordSample(store: Store, p: Portfolio, active: boolean | null = null): void {
+function recordSample(store: Store, p: Portfolio): void {
   store.insertSample({ ts: Date.now(), lifetimeUsd: p.lifetimeUsd, todayUsd: p.todayUsd,
-    adId: p.ads[0]?.adId ?? "", kill: p.kill, active });
+    adId: p.ads[0]?.adId ?? "", kill: p.kill });
 }
 
 function rateLast6h(): number {
@@ -149,7 +149,7 @@ async function cmdModel() {
     try {
       p = await runAuthed((tk) => fetchPortfolio(deps(tk)));
       e = await runAuthed((tk) => fetchEarnings(deps(tk))).catch(() => null);
-      recordSample(store, p, isActive(ACTIVITY_DIRS, now, ACTIVITY_WINDOW_MS));   // record activity → in-app stall detection
+      recordSample(store, p);
       const current: RecentAd[] = p.ads.map((a) => ({ adId: a.adId, text: a.text, url: a.clickUrl, icon: a.iconUrl }));
       recentAds = mergeRecentAds(loadRecentAds(store), current);
       saveRecentAds(store, recentAds);
