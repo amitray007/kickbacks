@@ -5,6 +5,14 @@ import { sparkline } from "./ui";
 import { lastEarnedAgoSeconds } from "./history";
 import type { RecentAd } from "./ads";
 
+/** Ad icon: the API's custom icon if present, else the site's own favicon (derived from the
+ *  click URL's domain) — fills the blank-box ads that ship no icon. No third-party service. */
+function iconFor(iconUrl: string, clickUrl: string): string {
+  if (iconUrl) return iconUrl;
+  try { const h = new URL(clickUrl).hostname; return h ? `https://${h}/favicon.ico` : ""; }
+  catch { return ""; }
+}
+
 export type MenuState = "signed-out" | "killed" | "cap" | "stalled" | "no-serve" | "earning";
 
 export interface MenuModel {
@@ -101,9 +109,9 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     ageSeconds: latest ? Math.max(0, Math.round((i.now - latest.ts) / 1000)) : 0,
     menuValue: p.todayUsd.toFixed(2),
     viewThresholdSeconds: p.viewThresholdSeconds,
-    ads: p.ads.map((a) => ({ text: a.text, url: a.clickUrl, icon: a.iconUrl })),
+    ads: p.ads.map((a) => ({ text: a.text, url: a.clickUrl, icon: iconFor(a.iconUrl, a.clickUrl) })),
     lastEarnedAgoSeconds: lastEarnedAgoSeconds(samples, i.now),
     collecting: samples.length < 2,
-    recentAds: (i.recentAds ?? []).map((a) => ({ text: a.text, url: a.url, icon: a.icon })),
+    recentAds: (i.recentAds ?? []).map((a) => ({ text: a.text, url: a.url, icon: iconFor(a.icon, a.url) })),
   };
 }
