@@ -34,11 +34,12 @@ public struct HistoryModel: Codable, Equatable, Sendable {
     let week = Double.random(in: 60...300)
     let month = week * Double.random(in: 3...4.2)
     let days = Int.random(in: 8...40)
+    let daily = (0..<10).map { DayBucket(date: "2026-06-\(10 + $0)", usd: Double.random(in: 1...18), hitCap: false) }
     return HistoryModel(
       thisWeekUsd: week, thisMonthUsd: month, bestDay: BestDay(date: "2026-06-10", usd: Double.random(in: 20...75)),
       avgPerDayUsd: month / Double(min(days, 30)), daysTracked: days,
       lifetimeUsd: month * Double.random(in: 1.5...3), sinceInstallUsd: month,
-      firstSampleTs: nil, daily: [], capHitsLast7: Int.random(in: 0...5),
+      firstSampleTs: nil, daily: daily, capHitsLast7: Int.random(in: 0...5),
       campaignsSeen: Int.random(in: 10...50), activeHours: Double.random(in: 10...50))
   }
 
