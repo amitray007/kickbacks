@@ -13,10 +13,11 @@ struct KickbackBarApp: App {
       MenuContent(vm: vm)
     } label: {
       Text((vm.loading && !vm.demoMode) ? "K$ …" : MenuPresentation.menuBarLabel(
-             phase: vm.effPhase,
-             todayValue: vm.effModel.menuValue,
-             lifetimeValue: vm.effModel.lifetime.replacingOccurrences(of: "$", with: ""),
-             style: vm.menuBarStyle, hideAmounts: vm.hideAmounts))
+             phase: vm.effPhase, style: vm.menuBarStyle, hideAmounts: vm.hideAmounts,
+             today: vm.effModel.menuValue,
+             week: vm.effHistory.map { String(format: "%.2f", $0.thisWeekUsd) } ?? "—",
+             lifetime: vm.effModel.lifetime.replacingOccurrences(of: "$", with: ""),
+             rate: vm.effModel.rate.replacingOccurrences(of: "$", with: "")))
         .foregroundStyle(labelColor(vm))
     }
     .menuBarExtraStyle(.window)

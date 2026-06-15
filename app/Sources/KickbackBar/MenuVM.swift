@@ -27,6 +27,7 @@ import KickbackKit
   private var loginProc: Process?
   private var loginWatch: Task<Void, Never>?
   private var lastNotifiedState: MenuState?   // edge-trigger for alert notifications
+  private var milestoneSeen: Double?          // highest lifetime milestone already notified (persisted)
 
   private static let intervalKey = "refreshIntervalSeconds"
 
@@ -38,6 +39,7 @@ import KickbackKit
     demoMode = UserDefaults.standard.bool(forKey: "demoMode")
     hourlyCapUsd = UserDefaults.standard.object(forKey: "hourlyCapUsd") as? Double ?? 20
     dailyCapUsd = UserDefaults.standard.object(forKey: "dailyCapUsd") as? Double ?? 200
+    milestoneSeen = UserDefaults.standard.object(forKey: "milestoneSeen") as? Double
     refresh()
     startPolling()
   }
@@ -119,6 +121,7 @@ import KickbackKit
       phase = m.signedIn ? .signedIn : .signedOut
     }
     handleAlerts(m)
+    handleMilestone(m)
   }
 
   /// Fire a native notification on signed-in state transitions (edge-triggered; the
@@ -129,6 +132,20 @@ import KickbackKit
       Notifier.fire(note)
     }
     lastNotifiedState = m.state
+  }
+
+  /// Notify when lifetime earnings cross a new milestone. The first signed-in model seeds the
+  /// baseline silently so we don't alert for milestones passed before the app was installed.
+  private func handleMilestone(_ m: MenuModel) {
+    guard m.signedIn else { return }
+    let level = MilestoneAlert.highestCrossed(m.lifetimeUsd)
+    if let last = milestoneSeen, level > last {
+      Notifier.fire(title: "🎉 Kickbacks milestone", body: "You've earned $\(Int(level)) all-time!", id: "ai.kickback.milestone")
+    }
+    if milestoneSeen == nil || level > (milestoneSeen ?? 0) {
+      milestoneSeen = level
+      UserDefaults.standard.set(level, forKey: "milestoneSeen")
+    }
   }
 
   func signIn() {

@@ -21,6 +21,7 @@ export interface MenuModel {
   resets: string;
   todayUsd: number;
   hourUsd: number;
+  lifetimeUsd: number;
   projection: string;
   spark: string;
   ad: string;
@@ -57,7 +58,7 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     return {
       signedIn: false, state: "signed-out", title: "kickback",
       today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capScope: null, capPct: 0,
-      resets: "", todayUsd: 0, hourUsd: 0, projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0,
+      resets: "", todayUsd: 0, hourUsd: 0, lifetimeUsd: 0, projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0,
       menuValue: "—", viewThresholdSeconds: null, ads: [], lastEarnedAgoSeconds: null, collecting: false,
       recentAds: [],
     };
@@ -92,7 +93,7 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     capScope: cap ? cap.scope : null,
     capPct: cap && cap.capUsd > 0 ? Math.min(100, Math.round((p.todayUsd / cap.capUsd) * 100)) : 0,
     resets: cap ? fmtDuration(cap.resetSeconds) : "",
-    todayUsd: p.todayUsd, hourUsd,
+    todayUsd: p.todayUsd, hourUsd, lifetimeUsd: p.lifetimeUsd,
     projection: eta !== null && eta > 0 ? `~${fmtDuration(eta)}` : "",
     spark: samples.length >= 2 ? sparkline(samples.map((s) => s.todayUsd)) : "",
     ad: ad?.text ?? "", adUrl: ad?.clickUrl ?? "",

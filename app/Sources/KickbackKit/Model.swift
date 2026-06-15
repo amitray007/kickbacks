@@ -44,6 +44,7 @@ public struct MenuModel: Codable, Equatable, Sendable {
   public var recentAds: [AdItem]
   public var todayUsd: Double
   public var hourUsd: Double
+  public var lifetimeUsd: Double
 
   /// Fallback shown on any failure (no binary, spawn/parse error, signed out).
   public static let signedOut = MenuModel(
@@ -51,7 +52,7 @@ public struct MenuModel: Codable, Equatable, Sendable {
     today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capScope: nil, capPct: 0,
     resets: "", projection: "", spark: "", ad: "", adUrl: "", status: "Signed out", ageSeconds: 0,
     menuValue: "—", viewThresholdSeconds: nil, ads: [], lastEarnedAgoSeconds: nil, collecting: false, recentAds: [],
-    todayUsd: 0, hourUsd: 0)
+    todayUsd: 0, hourUsd: 0, lifetimeUsd: 0)
 
   /// Believable demo data for "Demo mode" — randomized per call, so each app launch looks
   /// different. Fictional ads only; amounts stay under the default caps so cap rows read sane.
@@ -75,7 +76,7 @@ public struct MenuModel: Codable, Equatable, Sendable {
       menuValue: String(format: "%.2f", today), viewThresholdSeconds: 15,
       ads: Array(recent.prefix(2)),
       lastEarnedAgoSeconds: Int.random(in: 3...90), collecting: false,
-      recentAds: Array(recent), todayUsd: today, hourUsd: hour)
+      recentAds: Array(recent), todayUsd: today, hourUsd: hour, lifetimeUsd: lifetime)
   }
 
   public static func decode(_ data: Data) -> MenuModel? {

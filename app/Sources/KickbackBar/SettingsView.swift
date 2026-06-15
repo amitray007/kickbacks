@@ -43,9 +43,11 @@ struct SettingsView: View {
       Section("Menu bar") {
         Picker("Show", selection: Binding(get: { vm.menuBarStyle }, set: { vm.setMenuBarStyle($0) })) {
           Text("Today $").tag(MenuBarStyle.today)
+          Text("This week $").tag(MenuBarStyle.week)
           Text("Lifetime $").tag(MenuBarStyle.lifetime)
+          Text("Per hour").tag(MenuBarStyle.rate)
           Text("Icon only").tag(MenuBarStyle.iconOnly)
-        }.pickerStyle(.segmented)
+        }
       }
 
       Section("Privacy & demo") {
