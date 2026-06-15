@@ -8,6 +8,7 @@ import KickbackKit
 @MainActor final class MenuVM: ObservableObject {
   @Published private(set) var model: MenuModel = .signedOut
   @Published private(set) var phase: AuthPhase = .signedOut
+  @Published private(set) var loading = true       // true until the first fetch resolves (no "Sign in" flash on launch)
   @Published private(set) var refreshing = false   // true only during a user-initiated refresh
   @Published private(set) var history: HistoryModel?   // local stats, shown inline
   @Published private(set) var pollSeconds: Int = 60    // auto-refresh cadence (persisted)
@@ -54,7 +55,7 @@ import KickbackKit
       let m = ModelClient.fetch()
       let h = ModelClient.history()
       await MainActor.run {
-        if let m { self.apply(m) }
+        if let m { self.apply(m); self.loading = false }   // first model resolves the loading state
         if let h { self.history = h }
         if showSpinner { self.refreshing = false }
       }

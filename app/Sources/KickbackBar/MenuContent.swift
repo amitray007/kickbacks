@@ -11,10 +11,14 @@ struct MenuContent: View {
     VStack(alignment: .leading, spacing: 10) {
       header
       Divider()
-      switch vm.phase {
-      case .signedOut: signedOut
-      case .signingIn: signingIn
-      case .signedIn:  signedIn
+      if vm.loading {
+        loadingView
+      } else {
+        switch vm.phase {
+        case .signedOut: signedOut
+        case .signingIn: signingIn
+        case .signedIn:  signedIn
+        }
       }
     }
     .padding(12)
@@ -107,6 +111,13 @@ struct MenuContent: View {
         .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
       Button("Cancel", action: vm.cancelLogin)
     }.frame(maxWidth: .infinity).padding(.vertical, 6)
+  }
+
+  private var loadingView: some View {
+    VStack(spacing: 10) {
+      ProgressView()
+      Text("Loading…").font(.caption).foregroundStyle(.secondary)
+    }.frame(maxWidth: .infinity).padding(.vertical, 16)
   }
 
   private var signedIn: some View {

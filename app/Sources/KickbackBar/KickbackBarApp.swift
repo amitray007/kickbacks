@@ -11,7 +11,7 @@ struct KickbackBarApp: App {
     MenuBarExtra {
       MenuContent(vm: vm)
     } label: {
-      Text(MenuPresentation.menuBarLabel(phase: vm.phase, menuValue: vm.model.menuValue))
+      Text(vm.loading ? "K$ …" : MenuPresentation.menuBarLabel(phase: vm.phase, menuValue: vm.model.menuValue))
         .foregroundStyle(labelColor(vm))
     }
     .menuBarExtraStyle(.window)
