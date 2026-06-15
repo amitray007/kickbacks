@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS, POLL_SECONDS, LAUNCHD_LABEL, BAR_LAUNCHD_LABEL, migrateLegacyConfigDir } from "./config";
+import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS, POLL_SECONDS, LAUNCHD_LABEL, BAR_LAUNCHD_LABEL } from "./config";
 import { startLogin, pollOnce, signout, loadTokens, saveTokens, clearTokens, makeAuthedRunner, AuthError } from "./auth";
 import { fetchPortfolio, fetchEarnings, fetchRaw } from "./api";
 import { openStore, type Store } from "./store";
@@ -221,7 +221,6 @@ async function cmdLogout() {
   console.log(c.dim(`\n  Signed out${t?.refresh_token ? " — local tokens cleared, server session revoked." : " — local tokens cleared."}\n`));
 }
 
-migrateLegacyConfigDir();   // kickback → kickbacks: one-time data-dir move (preserves tokens + history)
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
 const table: Record<string, () => unknown> = {
   login: cmdLogin, portfolio: cmdPortfolio, watch: cmdWatch, earnings: cmdEarnings,
