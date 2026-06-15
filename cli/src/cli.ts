@@ -23,7 +23,10 @@ const deps = (token: string) => ({ fetch, token, base: BASE, ccVersion: CC_VERSI
 const runAuthed = makeAuthedRunner({ fetch, base: BASE });
 
 function openBrowser(url: string): boolean {
-  const cmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
+  // Absolute path on macOS: a PATH-shadowed "open" (e.g. cmux's, or another app's bin)
+  // would otherwise hijack it and the browser never opens.
+  const cmd = process.platform === "darwin" ? "/usr/bin/open"
+    : process.platform === "win32" ? "start" : "xdg-open";
   try { spawn(cmd, [url], { stdio: "ignore", detached: true }).unref(); return true; } catch { return false; }
 }
 
