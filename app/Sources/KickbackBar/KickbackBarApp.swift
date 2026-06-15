@@ -12,10 +12,19 @@ struct KickbackBarApp: App {
     MenuBarExtra {
       MenuContent(vm: vm)
     } label: {
-      Text(vm.loading ? "K$ …" : MenuPresentation.menuBarLabel(phase: vm.phase, menuValue: vm.model.menuValue))
+      Text((vm.loading && !vm.demoMode) ? "K$ …" : MenuPresentation.menuBarLabel(
+             phase: vm.effPhase,
+             todayValue: vm.effModel.menuValue,
+             lifetimeValue: vm.effModel.lifetime.replacingOccurrences(of: "$", with: ""),
+             style: vm.menuBarStyle, hideAmounts: vm.hideAmounts))
         .foregroundStyle(labelColor(vm))
     }
     .menuBarExtraStyle(.window)
+
+    Window("Kickbacks Settings", id: "settings") {
+      SettingsView(vm: vm)
+    }
+    .windowResizability(.contentSize)
   }
 }
 
@@ -36,7 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 }
 
 @MainActor private func labelColor(_ vm: MenuVM) -> Color {
-  switch MenuPresentation.tint(state: vm.model.state, phase: vm.phase) {
+  switch MenuPresentation.tint(state: vm.effModel.state, phase: vm.effPhase) {
   case .amber: return .orange
   case .green: return .green
   case .red: return .red

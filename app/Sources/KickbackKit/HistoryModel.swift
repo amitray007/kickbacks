@@ -29,6 +29,12 @@ public struct HistoryModel: Codable, Equatable, Sendable {
   public var isEmpty: Bool { daysTracked == 0 }
   public var hasEnough: Bool { daysTracked >= 2 }
 
+  /// Demo stats for the "Fake data" toggle.
+  public static let demo = HistoryModel(
+    thisWeekUsd: 184.5, thisMonthUsd: 642, bestDay: BestDay(date: "2026-06-10", usd: 58),
+    avgPerDayUsd: 26.4, daysTracked: 24, lifetimeUsd: 1337, sinceInstallUsd: 642,
+    firstSampleTs: nil, daily: [], capHitsLast7: 4, campaignsSeen: 37, activeHours: 31.5)
+
   public static func decode(_ data: Data) -> HistoryModel? {
     try? JSONDecoder().decode(HistoryModel.self, from: data)
   }

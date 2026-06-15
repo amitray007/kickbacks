@@ -10,18 +10,19 @@ private struct ContentHeightKey: PreferenceKey {
 
 struct MenuContent: View {
   @ObservedObject var vm: MenuVM
+  @Environment(\.openWindow) private var openWindow
   @State private var contentHeight: CGFloat = 0
-  private var m: MenuModel { vm.model }
+  private var m: MenuModel { vm.effModel }   // demo data when Fake-data is on
 
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 10) {
         header
         Divider()
-        if vm.loading {
+        if vm.loading && !vm.demoMode {
           loadingView
         } else {
-          switch vm.phase {
+          switch vm.effPhase {
           case .signedOut: signedOut
           case .signingIn: signingIn
           case .signedIn:  signedIn
@@ -39,7 +40,7 @@ struct MenuContent: View {
 
   private var maxPanelHeight: CGFloat { (NSScreen.main?.visibleFrame.height ?? 760) - 80 }
 
-  // MARK: header (brand + status + refresh + overflow)
+  // MARK: header (brand + status + refresh + gear)
 
   private var header: some View {
     HStack(spacing: 8) {
@@ -48,11 +49,11 @@ struct MenuContent: View {
         Text("Kickbacks").fontWeight(.bold)
       }
       Spacer()
-      if vm.phase == .signedIn {
+      if vm.effPhase == .signedIn {
         statusPill
         refreshControl
       }
-      overflowMenu(showData: vm.phase == .signedIn)
+      overflowMenu(showData: vm.effPhase == .signedIn)
     }
   }
 
@@ -82,18 +83,15 @@ struct MenuContent: View {
 
   private func overflowMenu(showData: Bool) -> some View {
     Menu {
-      Picker("Refresh every", selection: Binding(get: { vm.pollSeconds }, set: { vm.setPollSeconds($0) })) {
-        Text("1 min").tag(60)
-        Text("5 min").tag(300)
-        Text("10 min").tag(600)
-        Text("30 min").tag(1800)
-      }
+      Button { NSApp.activate(ignoringOtherApps: true); openWindow(id: "settings") } label: {
+        Label("Settings…", systemImage: "slider.horizontal.3")
+      }.keyboardShortcut(",", modifiers: .command)
+      Toggle("Hide amounts", isOn: Binding(get: { vm.hideAmounts }, set: { vm.setHideAmounts($0) }))
+      Toggle("Fake data", isOn: Binding(get: { vm.demoMode }, set: { vm.setDemoMode($0) }))
       Divider()
       if showData {
         Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
       }
-      Toggle("Start at login", isOn: Binding(get: { LoginItem.isEnabled() }, set: { LoginItem.setEnabled($0) }))
-      Toggle("Background monitoring", isOn: Binding(get: { ModelClient.pollerInstalled() }, set: { ModelClient.setPoller($0) }))
       Button { showAbout() } label: { Label("About Kickbacks", systemImage: "info.circle") }
       Divider()
       Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
@@ -114,7 +112,7 @@ struct MenuContent: View {
       Text("Today, lifetime, and stall alerts — live in your menu bar.")
         .font(.caption).foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
-        .fixedSize(horizontal: false, vertical: true)   // wrap, never truncate
+        .fixedSize(horizontal: false, vertical: true)
       Button(action: vm.signIn) {
         Text("Sign in with Google").frame(maxWidth: .infinity)
       }.buttonStyle(.borderedProminent).tint(.green).controlSize(.large)
@@ -146,31 +144,31 @@ struct MenuContent: View {
           VStack(alignment: .leading, spacing: 2) {
             Text("TODAY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
             HStack(alignment: .firstTextBaseline, spacing: 5) {
-              Text(m.today).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
+              Text(mask(m.today)).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
               trendBadge
             }
-            Text(m.rate.isEmpty ? " " : m.rate).font(.caption2).foregroundStyle(.secondary)
+            Text(m.rate.isEmpty ? " " : mask(m.rate)).font(.caption2).foregroundStyle(.secondary)
           }
         }
         statCard(bg: Color.secondary.opacity(0.10)) {   // Lifetime tile, neutral
           VStack(alignment: .leading, spacing: 2) {
             Text("LIFETIME").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-            Text(m.lifetime).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
+            Text(mask(m.lifetime)).font(.system(size: 28, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
             Text("all-time").font(.caption2).foregroundStyle(.secondary)
           }
         }
       }
-      if m.ageSeconds > 180 {
-        Text("Couldn't refresh · showing data from \(agoText(m.ageSeconds))")
-          .font(.caption2).foregroundStyle(.secondary)
-      }
       if !m.cap.isEmpty { Divider(); capSection }
-      if let ago = m.lastEarnedAgoSeconds, m.state == .stalled || m.state == .killed {
+      if let ago = m.lastEarnedAgoSeconds, m.state == .killed {
         Text("Last earned \(agoText(ago))").font(.caption).foregroundStyle(.secondary)
       }
       if !m.recentAds.isEmpty { Divider(); recentAdsSection }
       Divider()
       statsSection
+      Text("Updated \(agoText(m.ageSeconds))")
+        .font(.caption2)
+        .foregroundStyle(m.ageSeconds > 180 ? Color.orange : Color.secondary)
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
   }
 
@@ -178,8 +176,7 @@ struct MenuContent: View {
 
   @ViewBuilder private var bannerView: some View {
     switch m.state {
-    case .stalled: banner("⚠ Earnings flat while you're active — VS Code may have stopped serving.", .orange)
-    case .cap:     banner("✓ Daily cap reached — \(m.today). Resets in \(m.resets).", .green)
+    case .cap:     banner("✓ Daily cap reached — \(mask(m.today)). Resets in \(m.resets).", .green)
     case .killed:  banner("✕ Not earning — stopped or signed out in VS Code.", .red)
     case .noServe: banner("No ad serving right now — you'll earn again when one shows.", .gray)
     default:       EmptyView()
@@ -198,7 +195,7 @@ struct MenuContent: View {
       HStack {
         Text("Daily cap").foregroundStyle(.secondary)
         Spacer()
-        Text("\(m.cap) · \(m.capPct)%").monospacedDigit()
+        Text("\(mask(m.cap)) · \(m.capPct)%").monospacedDigit()
       }
       if !m.resets.isEmpty {
         Text("resets in \(m.resets)").foregroundStyle(.secondary)
@@ -247,16 +244,16 @@ struct MenuContent: View {
   private var statsSection: some View {
     VStack(alignment: .leading, spacing: 7) {
       Text("HISTORY").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-      if let h = vm.history, !h.isEmpty {
+      if let h = vm.effHistory, !h.isEmpty {
         HStack(spacing: 10) {
-          statCell("This week", usd(h.thisWeekUsd))
-          statCell("This month", usd(h.thisMonthUsd))
+          statCell("This week", mask(usd(h.thisWeekUsd)))
+          statCell("This month", mask(usd(h.thisMonthUsd)))
         }
         HStack(spacing: 10) {
-          statCell("Best day", h.bestDay.map { usd($0.usd) } ?? "—")
-          statCell("Avg / day", usd(h.avgPerDayUsd))
+          statCell("Best day", mask(h.bestDay.map { usd($0.usd) } ?? "—"))
+          statCell("Avg / day", mask(usd(h.avgPerDayUsd)))
         }
-        Text("Since install \(usd(h.sinceInstallUsd)) · \(h.daysTracked) day\(h.daysTracked == 1 ? "" : "s")")
+        Text("Since install \(mask(usd(h.sinceInstallUsd))) · \(h.daysTracked) day\(h.daysTracked == 1 ? "" : "s")")
           .font(.caption2).foregroundStyle(.secondary)
       } else {
         Text("No history yet — fills in as you keep earning.")
@@ -293,7 +290,7 @@ struct MenuContent: View {
   private var shortStatus: String {
     switch m.state {
     case .earning: return "Earning"
-    case .stalled: return "Stalled"
+    case .stalled: return "Earning"   // stalled removed — treat as earning
     case .cap:     return "Capped"
     case .killed:  return "Stopped"
     case .noServe: return "Idle"
@@ -302,7 +299,7 @@ struct MenuContent: View {
   }
 
   private var tint: Color {
-    switch MenuPresentation.tint(state: m.state, phase: vm.phase) {
+    switch MenuPresentation.tint(state: m.state, phase: vm.effPhase) {
     case .amber: return .orange
     case .green: return .green
     case .red: return .red
@@ -310,6 +307,8 @@ struct MenuContent: View {
     case .muted: return .secondary
     }
   }
+
+  private func mask(_ s: String) -> String { vm.hideAmounts ? "•••" : s }
 
   private func agoText(_ sec: Int) -> String {
     sec >= 3600 ? "\(sec / 3600)h ago" : sec >= 60 ? "\(sec / 60)m ago" : "\(sec)s ago"

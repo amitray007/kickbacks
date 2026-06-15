@@ -12,6 +12,9 @@ import KickbackKit
   @Published private(set) var refreshing = false   // true only during a user-initiated refresh
   @Published private(set) var history: HistoryModel?   // local stats, shown inline
   @Published private(set) var pollSeconds: Int = 60    // auto-refresh cadence (persisted)
+  @Published private(set) var menuBarStyle: MenuBarStyle = .today   // what the menu bar shows
+  @Published private(set) var hideAmounts = false      // mask $ amounts (for screen sharing)
+  @Published private(set) var demoMode = false         // show fake demo data
 
   private var pollTask: Task<Void, Never>?
   private var loginProc: Process?
@@ -23,11 +26,14 @@ import KickbackKit
   init() {
     let stored = UserDefaults.standard.integer(forKey: Self.intervalKey)
     pollSeconds = stored > 0 ? max(15, stored) : 60
+    menuBarStyle = MenuBarStyle(rawValue: UserDefaults.standard.string(forKey: "menuBarStyle") ?? "") ?? .today
+    hideAmounts = UserDefaults.standard.bool(forKey: "hideAmounts")
+    demoMode = UserDefaults.standard.bool(forKey: "demoMode")
     refresh()
     startPolling()
   }
 
-  deinit { pollTask?.cancel(); loginWatch?.cancel() }
+  deinit { pollTask?.cancel(); loginWatch?.cancel(); retryTask?.cancel() }
 
   private func startPolling() {
     pollTask?.cancel()
@@ -48,6 +54,15 @@ import KickbackKit
     refresh()
   }
 
+  func setMenuBarStyle(_ s: MenuBarStyle) { menuBarStyle = s; UserDefaults.standard.set(s.rawValue, forKey: "menuBarStyle") }
+  func setHideAmounts(_ on: Bool) { hideAmounts = on; UserDefaults.standard.set(on, forKey: "hideAmounts") }
+  func setDemoMode(_ on: Bool) { demoMode = on; UserDefaults.standard.set(on, forKey: "demoMode") }
+
+  /// Effective display values — swap in demo data when demoMode is on.
+  var effModel: MenuModel { demoMode ? .demo : model }
+  var effHistory: HistoryModel? { demoMode ? .demo : history }
+  var effPhase: AuthPhase { demoMode ? .signedIn : phase }
+
   /// `showSpinner` is set only by the Refresh button so the 60s background poll doesn't
   /// flicker the spinner. The model is kept on a transient (nil) fetch.
   func refresh(showSpinner: Bool = false) {
@@ -56,10 +71,31 @@ import KickbackKit
       let m = ModelClient.fetch()
       let h = ModelClient.history()
       await MainActor.run {
-        if let m { self.apply(m); self.loading = false }   // first model resolves the loading state
+        if let m {
+          self.apply(m); self.loading = false             // first model resolves the loading state
+          self.fetchFails = 0; self.retryTask?.cancel()    // recovered → stop retrying
+        } else {
+          self.scheduleRetry()                             // transient failure → quick retry, not a full interval
+        }
         if let h { self.history = h }
         if showSpinner { self.refreshing = false }
       }
+    }
+  }
+
+  private var fetchFails = 0
+  private var retryTask: Task<Void, Never>?
+
+  /// On a transient fetch failure, retry a few times with short backoff (5/10/15s) before
+  /// falling back to the normal poll cadence. Resets once a fetch succeeds.
+  private func scheduleRetry() {
+    guard !demoMode, fetchFails < 3 else { return }
+    fetchFails += 1
+    retryTask?.cancel()
+    let delay = UInt64(5 * fetchFails)
+    retryTask = Task { [weak self] in
+      try? await Task.sleep(nanoseconds: delay * 1_000_000_000)
+      if !Task.isCancelled { self?.refresh() }
     }
   }
 

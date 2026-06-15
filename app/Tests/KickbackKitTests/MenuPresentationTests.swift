@@ -3,9 +3,15 @@ import XCTest
 
 final class MenuPresentationTests: XCTestCase {
   func testLabel() {
-    XCTAssertEqual(MenuPresentation.menuBarLabel(phase: .signedOut, menuValue: "—"), "K$ —")
-    XCTAssertEqual(MenuPresentation.menuBarLabel(phase: .signingIn, menuValue: "1.20"), "K$ …")
-    XCTAssertEqual(MenuPresentation.menuBarLabel(phase: .signedIn, menuValue: "12.34"), "K$ 12.34")
+    func label(_ p: AuthPhase, _ style: MenuBarStyle = .today, hide: Bool = false) -> String {
+      MenuPresentation.menuBarLabel(phase: p, todayValue: "12.34", lifetimeValue: "402.10", style: style, hideAmounts: hide)
+    }
+    XCTAssertEqual(label(.signedOut), "K$ —")
+    XCTAssertEqual(label(.signingIn), "K$ …")
+    XCTAssertEqual(label(.signedIn, .today), "K$ 12.34")
+    XCTAssertEqual(label(.signedIn, .lifetime), "K$ 402.10")
+    XCTAssertEqual(label(.signedIn, .iconOnly), "K$")
+    XCTAssertEqual(label(.signedIn, .today, hide: true), "K$ ••")
   }
 
   func testTint() {

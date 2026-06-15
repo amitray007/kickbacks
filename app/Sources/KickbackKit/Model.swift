@@ -49,6 +49,19 @@ public struct MenuModel: Codable, Equatable, Sendable {
     resets: "", projection: "", spark: "", ad: "", adUrl: "", status: "Signed out", ageSeconds: 0,
     menuValue: "—", viewThresholdSeconds: nil, ads: [], lastEarnedAgoSeconds: nil, collecting: false, recentAds: [])
 
+  /// Believable demo data for the "Fake data" toggle (demos / screenshots). Fictional ads.
+  public static let demo = MenuModel(
+    signedIn: true, state: .earning, title: "$42.00", today: "$42.00", lifetime: "$1,337.00",
+    rate: "$3.50/hr", trend: "up", cap: "$42.00 / $50.00", capPct: 84, resets: "3h20m",
+    projection: "~2h", spark: "", ad: "Demo Co — your ad here", adUrl: "https://example.com",
+    status: "Earning", ageSeconds: 5, menuValue: "42.00", viewThresholdSeconds: 15,
+    ads: [AdItem(text: "Demo Co — your ad here", url: "https://example.com", icon: ""),
+          AdItem(text: "Sample Labs — try it free", url: "https://example.com", icon: "")],
+    lastEarnedAgoSeconds: 12, collecting: false,
+    recentAds: [AdItem(text: "Demo Co — your ad here", url: "https://example.com", icon: ""),
+                AdItem(text: "Sample Labs — try it free", url: "https://example.com", icon: ""),
+                AdItem(text: "Acme — build something", url: "https://example.com", icon: "")])
+
   public static func decode(_ data: Data) -> MenuModel? {
     try? JSONDecoder().decode(MenuModel.self, from: data)
   }
