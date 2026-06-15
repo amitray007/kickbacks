@@ -12,6 +12,7 @@ struct MenuContent: View {
   @ObservedObject var vm: MenuVM
   @Environment(\.openWindow) private var openWindow
   @State private var contentHeight: CGFloat = 0
+  @State private var now = Date()            // ticked every second so "Updated Nm ago" counts up live
   private var m: MenuModel { vm.effModel }   // demo data when Fake-data is on
 
   var body: some View {
@@ -35,7 +36,8 @@ struct MenuContent: View {
     // Size to content, but cap below the screen so a tall panel scrolls instead of clipping.
     .frame(width: 300, height: contentHeight > 0 ? min(contentHeight, maxPanelHeight) : nil)
     .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
-    .onAppear { vm.refresh() }   // re-fetch each time the panel opens, not just every 60s
+    .onAppear { now = Date(); vm.refresh() }   // re-fetch + reset the clock each time the panel opens
+    .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { now = $0 }
   }
 
   private var maxPanelHeight: CGFloat { (NSScreen.main?.visibleFrame.height ?? 760) - 80 }
@@ -51,7 +53,6 @@ struct MenuContent: View {
       Spacer()
       if vm.effPhase == .signedIn {
         statusPill
-        refreshControl
       }
       overflowMenu(showData: vm.effPhase == .signedIn)
     }
@@ -72,11 +73,10 @@ struct MenuContent: View {
       ProgressView().controlSize(.small)
     } else {
       Button { vm.refresh(showSpinner: true) } label: {
-        Image(systemName: "arrow.clockwise")
+        Label("Refresh", systemImage: "arrow.clockwise").font(.caption)
       }
       .buttonStyle(.plain)
       .foregroundStyle(.secondary)
-      .help("Refresh · updated \(agoText(m.ageSeconds))")
       .onHover(perform: pointer)
     }
   }
@@ -165,10 +165,8 @@ struct MenuContent: View {
       if !m.recentAds.isEmpty { Divider(); recentAdsSection }
       Divider()
       statsSection
-      Text("Updated \(agoText(m.ageSeconds))")
-        .font(.caption2)
-        .foregroundStyle(m.ageSeconds > 180 ? Color.orange : Color.secondary)
-        .frame(maxWidth: .infinity, alignment: .trailing)
+      Divider()
+      footer
     }
   }
 
@@ -267,6 +265,28 @@ struct MenuContent: View {
       Text(label).font(.caption2).foregroundStyle(.secondary)
       Text(value).font(.callout.weight(.semibold)).monospacedDigit()
     }.frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  // Freshness + refresh, at the foot of the panel. The time counts up live (driven by `now`).
+  private var footer: some View {
+    VStack(spacing: 6) {
+      Text(updatedText)
+        .font(.caption2)
+        .foregroundStyle(isStale ? Color.orange : Color.secondary)
+      refreshControl
+    }
+    .frame(maxWidth: .infinity)
+  }
+
+  private var updatedText: String {
+    if vm.demoMode { return "Demo data" }
+    guard let t = vm.lastUpdated else { return "Updating…" }
+    return "Updated \(agoText(max(0, Int(now.timeIntervalSince(t)))))"
+  }
+
+  private var isStale: Bool {
+    guard !vm.demoMode, let t = vm.lastUpdated else { return false }
+    return now.timeIntervalSince(t) > 180
   }
 
   // MARK: helpers

@@ -15,6 +15,7 @@ import KickbackKit
   @Published private(set) var menuBarStyle: MenuBarStyle = .today   // what the menu bar shows
   @Published private(set) var hideAmounts = false      // mask $ amounts (for screen sharing)
   @Published private(set) var demoMode = false         // show fake demo data
+  @Published private(set) var lastUpdated: Date?       // when a fresh model was last applied — drives "Updated Nm ago"
 
   private var pollTask: Task<Void, Never>?
   private var loginProc: Process?
@@ -101,6 +102,7 @@ import KickbackKit
 
   private func apply(_ m: MenuModel) {
     model = m
+    lastUpdated = Date()   // a fresh model arrived = data is current as of now
     if phase == .signingIn {
       if m.signedIn { finishLogin(.signedIn) }   // login completed
     } else {
