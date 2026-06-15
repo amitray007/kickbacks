@@ -37,7 +37,13 @@ struct MenuContent: View {
     }
     // Size to content, but cap below the screen so a tall panel scrolls instead of clipping.
     .frame(width: 300, height: contentHeight > 0 ? min(contentHeight, maxPanelHeight) : nil)
-    .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
+    .onPreferenceChange(ContentHeightKey.self) { h in
+      // Ignore spurious 0-height passes (they collapse then re-grow the window — the "zoom"
+      // on menu/Settings open) and sub-pixel jitter from the 1s tick; snap, don't animate.
+      guard h > 0, abs(h - contentHeight) > 0.5 else { return }
+      var t = Transaction(); t.disablesAnimations = true
+      withTransaction(t) { contentHeight = h }
+    }
     .onAppear { now = Date(); vm.refresh() }   // re-fetch + reset the clock each time the panel opens
     .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { now = $0 }
   }
