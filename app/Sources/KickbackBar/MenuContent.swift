@@ -32,7 +32,7 @@ struct MenuContent: View {
     HStack(spacing: 8) {
       HStack(spacing: 0) {
         Text("K$ ").foregroundStyle(.green).fontWeight(.bold)
-        Text("Kickback").fontWeight(.bold)
+        Text("Kickbacks").fontWeight(.bold)
       }
       Spacer()
       if vm.phase == .signedIn {
@@ -80,7 +80,7 @@ struct MenuContent: View {
         Button { vm.signOut() } label: { Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right") }
       }
       Toggle("Start at login", isOn: Binding(get: { LoginItem.isEnabled() }, set: { LoginItem.setEnabled($0) }))
-      Button { showAbout() } label: { Label("About Kickback", systemImage: "info.circle") }
+      Button { showAbout() } label: { Label("About Kickbacks", systemImage: "info.circle") }
       Divider()
       Button { NSApplication.shared.terminate(nil) } label: { Label("Quit", systemImage: "xmark.circle") }
     } label: {
