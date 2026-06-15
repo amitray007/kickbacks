@@ -95,16 +95,20 @@ struct MenuContent: View {
   // MARK: states
 
   private var signedOut: some View {
-    VStack(spacing: 9) {
-      Text("See your earnings").font(.headline)
-      Text("Today, lifetime, recent ads, and stall alerts — live in your menu bar.")
-        .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
+    VStack(spacing: 10) {
+      Text("See your earnings").font(.title3.weight(.semibold))
+      Text("Today, lifetime, and stall alerts — live in your menu bar.")
+        .font(.caption).foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)   // wrap, never truncate
       Button(action: vm.signIn) {
         Text("Sign in with Google").frame(maxWidth: .infinity)
-      }.buttonStyle(.borderedProminent).tint(.green)
+      }.buttonStyle(.borderedProminent).tint(.green).controlSize(.large)
       Text("Read-only · only your account · never posts")
-        .font(.caption2).foregroundStyle(.secondary).multilineTextAlignment(.center)
-    }.frame(maxWidth: .infinity).padding(.vertical, 8)
+        .font(.caption2).foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+    }.frame(maxWidth: .infinity).padding(.vertical, 10)
   }
 
   private var signingIn: some View {
