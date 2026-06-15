@@ -104,10 +104,6 @@ struct MenuContent: View {
       Button(action: vm.signIn) {
         Text("Sign in with Google").frame(maxWidth: .infinity)
       }.buttonStyle(.borderedProminent).tint(.green).controlSize(.large)
-      Text("Read-only · only your account · never posts")
-        .font(.caption2).foregroundStyle(.secondary)
-        .multilineTextAlignment(.center)
-        .fixedSize(horizontal: false, vertical: true)
     }.frame(maxWidth: .infinity).padding(.vertical, 10)
   }
 
