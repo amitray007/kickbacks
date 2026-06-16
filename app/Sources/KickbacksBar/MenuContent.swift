@@ -32,6 +32,7 @@ struct MenuContent: View {
       VStack(alignment: .leading, spacing: 10) {
         header
         Divider()
+        updateBanner
         if vm.loading && !vm.demoMode {
           loadingView
         } else {
@@ -77,6 +78,34 @@ struct MenuContent: View {
       }
       overflowMenu(showData: vm.effPhase == .signedIn)
     }
+  }
+
+  @ViewBuilder private var updateBanner: some View {
+    if let up = vm.availableUpdate {
+      Button { openUpdate() } label: {
+        HStack(spacing: 6) {
+          if vm.updateState == .updating {
+            ProgressView().controlSize(.small)
+            Text("Updating to v\(up.version)…").font(.caption.weight(.semibold))
+          } else {
+            Image(systemName: "arrow.down.circle.fill")
+            Text("Update available — v\(up.version)").font(.caption.weight(.semibold))
+          }
+          Spacer(minLength: 4)
+          Image(systemName: "chevron.right").font(.caption2)
+        }
+        .padding(8).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.green.opacity(0.14)).clipShape(RoundedRectangle(cornerRadius: 6))
+        .foregroundStyle(.green)
+      }
+      .buttonStyle(.plain).onHover(perform: pointer)
+    }
+  }
+
+  private func openUpdate() {
+    panelWindow?.orderOut(nil)   // collapse the panel so the window takes focus
+    NSApp.activate(ignoringOtherApps: true)
+    openWindow(id: "update")
   }
 
   private var statusPill: some View {
