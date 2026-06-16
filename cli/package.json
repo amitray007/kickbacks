@@ -1,12 +1,22 @@
 {
   "name": "kickbacks",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "Apache-2.0",
   "description": "Unofficial, read-only CLI for your own Kickbacks.ai earnings.",
-  "repository": { "type": "git", "url": "https://github.com/amitray007/kickbacks.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amitray007/kickbacks.git"
+  },
   "homepage": "https://github.com/amitray007/kickbacks#readme",
   "bugs": "https://github.com/amitray007/kickbacks/issues",
-  "keywords": ["kickbacks", "earnings", "cli", "menu-bar", "macos", "bun"],
+  "keywords": [
+    "kickbacks",
+    "earnings",
+    "cli",
+    "menu-bar",
+    "macos",
+    "bun"
+  ],
   "author": "amitray007",
   "type": "module",
   "private": true,
