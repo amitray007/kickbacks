@@ -75,4 +75,47 @@ public enum Updater {
     if executablePath.contains(".app/Contents/MacOS/") { return .appBundle }
     return .unknown
   }
+
+  /// The installed version, via `kickbacks --version`; falls back to the .app Info.plist.
+  /// nil only if neither is available (no CLI + no bundle version).
+  public static func currentVersion() -> String? {
+    if let bin = ModelClient.binaryPath() {
+      let proc = Process()
+      proc.executableURL = URL(fileURLWithPath: bin)
+      proc.arguments = ["--version"]
+      let out = Pipe(); proc.standardOutput = out; proc.standardError = Pipe()
+      if (try? proc.run()) != nil {
+        let data = out.fileHandleForReading.readDataToEndOfFile()
+        proc.waitUntilExit()
+        if proc.terminationStatus == 0,
+           let s = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !s.isEmpty {
+          return s
+        }
+      }
+    }
+    return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+  }
+
+  /// Anonymous, read-only GET of this repo's latest stable release. nil on any failure.
+  public static func fetchLatest() async -> Release? {
+    guard let url = URL(string: "https://api.github.com/repos/\(repoSlug)/releases/latest") else { return nil }
+    var req = URLRequest(url: url)
+    req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+    req.setValue("kickbacks-bar", forHTTPHeaderField: "User-Agent")   // GitHub rejects UA-less requests
+    req.timeoutInterval = 15
+    do {
+      let (data, resp) = try await URLSession.shared.data(for: req)
+      guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return nil }
+      return parseRelease(data)
+    } catch { return nil }
+  }
+
+  /// Real install-method detection from the running binary + resolved CLI.
+  public static func installMethod() -> InstallMethod {
+    let exe = Bundle.main.executableURL?.resolvingSymlinksInPath().path ?? ""
+    return classify(executablePath: exe, cliPath: ModelClient.binaryPath()) {
+      FileManager.default.isExecutableFile(atPath: $0)
+    }
+  }
 }

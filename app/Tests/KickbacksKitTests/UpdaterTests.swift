@@ -54,4 +54,20 @@ final class UpdaterTests: XCTestCase {
       exists: { _ in false })
     XCTAssertEqual(m, .unknown)
   }
+
+  func testClassifyHomebrewByPrefix() {
+    let m = Updater.classify(
+      executablePath: "/opt/homebrew/Cellar/kickbacks/0.2.0/bin/kickbacks-bar",
+      cliPath: nil,
+      exists: { $0 == "/opt/homebrew/bin/brew" })
+    XCTAssertEqual(m, .homebrew(brewPath: "/opt/homebrew/bin/brew"))
+  }
+
+  func testParseReleaseDefaultsForMissingFields() {
+    let json = ###"{"tag_name":"v0.3.0","html_url":"https://example.test/r"}"###
+    let r = Updater.parseRelease(Data(json.utf8))
+    XCTAssertEqual(r?.version, "0.3.0")
+    XCTAssertEqual(r?.notes, "")        // body absent → ""
+    XCTAssertEqual(r?.publishedAt, "")  // published_at absent → ""
+  }
 }
