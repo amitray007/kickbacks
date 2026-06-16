@@ -169,13 +169,19 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
   /// Begin the upgrade. Homebrew installs run `brew upgrade` in the background and relaunch;
   /// other installs open the release page (brew can't update them).
   func startUpdate() {
-    guard case let .homebrew(brewPath) = installMethodCached else {
+    let brewPath: String?
+    let isCask: Bool
+    switch installMethodCached {
+    case .homebrew(let p):     brewPath = p; isCask = false
+    case .homebrewCask(let p): brewPath = p; isCask = true
+    default:
       if let u = availableUpdate.flatMap({ URL(string: $0.htmlURL) }) { NSWorkspace.shared.open(u) }
       return
     }
+    guard let brewPath else { return }
     updateState = .updating
     updateLog = []
-    UpdateRunner.upgrade(brewPath: brewPath, onLine: { [weak self] line in
+    UpdateRunner.upgrade(brewPath: brewPath, isCask: isCask, onLine: { [weak self] line in
       Task { @MainActor in
         guard let self else { return }
         self.updateLog.append(line)
@@ -185,7 +191,10 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
       Task { @MainActor in
         guard let self else { return }
         if ok {
-          if UpdateRunner.barAgentInstalled() {
+          if isCask {
+            Notifier.fire(title: "Kickbacks updated", body: "Relaunching the latest version…", id: "ai.kickbacks.update")
+            UpdateRunner.relaunchCask()
+          } else if UpdateRunner.barAgentInstalled() {
             Notifier.fire(title: "Kickbacks updated", body: "Relaunching the latest version…", id: "ai.kickbacks.update")
             UpdateRunner.relaunch()
           } else {
@@ -212,8 +221,10 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
 
   /// Whether the current install can self-update via brew (drives the primary button label).
   var canBrewUpdate: Bool {
-    if case .homebrew = installMethodCached { return true }
-    return false
+    switch installMethodCached {
+    case .homebrew, .homebrewCask: return true
+    default: return false
+    }
   }
 
   /// Effective display values — swap in the cached demo data when demoMode is on.

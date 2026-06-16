@@ -1,7 +1,8 @@
+import AppKit
 import Foundation
 
-/// Runs `brew upgrade kickbacks` detached, streaming output line-by-line, then relaunches
-/// the menu-bar app via launchd. All callbacks are delivered on the main queue.
+/// Runs `brew upgrade kickbacks` (or `--cask`) detached, streaming output line-by-line, then
+/// relaunches the menu-bar app. All callbacks are delivered on the main queue.
 enum UpdateRunner {
   /// Whether the `ai.kickbacks.bar` launchd agent is installed (file check — no spawn).
   static func barAgentInstalled() -> Bool {
@@ -9,13 +10,16 @@ enum UpdateRunner {
     return FileManager.default.fileExists(atPath: p)
   }
 
-  /// `brew update && brew upgrade kickbacks` via a login shell (so brew's PATH/env is set).
+  /// `brew update && brew upgrade [--cask] kickbacks` via a login shell.
   /// `onLine` fires per output line; `completion(true)` on exit status 0.
-  static func upgrade(brewPath: String, onLine: @escaping @Sendable (String) -> Void, completion: @escaping @Sendable (Bool) -> Void) {
+  static func upgrade(brewPath: String, isCask: Bool = false,
+                      onLine: @escaping @Sendable (String) -> Void,
+                      completion: @escaping @Sendable (Bool) -> Void) {
     let brew = "'" + brewPath.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    let upgradeTarget = isCask ? "--cask kickbacks" : "kickbacks"
     let proc = Process()
     proc.executableURL = URL(fileURLWithPath: "/bin/sh")
-    proc.arguments = ["-lc", "\(brew) update && \(brew) upgrade kickbacks"]
+    proc.arguments = ["-lc", "\(brew) update && \(brew) upgrade \(upgradeTarget)"]
     let pipe = Pipe()
     proc.standardOutput = pipe
     proc.standardError = pipe
@@ -51,5 +55,15 @@ enum UpdateRunner {
     helper.executableURL = URL(fileURLWithPath: "/bin/sh")
     helper.arguments = ["-c", "sleep 0.5; launchctl kickstart -k \(label)"]
     try? helper.run()   // detached; kickstart -k will terminate + relaunch us
+  }
+
+  /// Relaunch after a cask upgrade: open the updated .app bundle and exit.
+  /// Used when running as Kickbacks.app (not a launchd agent).
+  static func relaunchCask() {
+    let helper = Process()
+    helper.executableURL = URL(fileURLWithPath: "/bin/sh")
+    helper.arguments = ["-c", "sleep 0.5; open /Applications/Kickbacks.app"]
+    try? helper.run()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { NSApp.terminate(nil) }
   }
 }

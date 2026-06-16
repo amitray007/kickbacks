@@ -14,9 +14,10 @@ public struct Release: Equatable, Sendable {
 
 /// How this build was installed — decides whether `brew upgrade` is the update path.
 public enum InstallMethod: Equatable, Sendable {
-  case homebrew(brewPath: String)
-  case appBundle   // /Applications/Kickbacks.app — release-page fallback
-  case unknown     // dev / other — release-page fallback
+  case homebrew(brewPath: String)         // formula install: bare CLI binaries via launchd
+  case homebrewCask(brewPath: String)     // cask install: .app bundle in /Applications
+  case appBundle                          // manual .app install — release-page fallback
+  case unknown                            // dev / other — release-page fallback
 }
 
 /// Update engine. Pure helpers (`parseVersion`/`isNewer`/`parseRelease`/`classify`) are
@@ -72,7 +73,10 @@ public enum Updater {
     if executablePath.contains("/Cellar/") || executablePath.hasPrefix("/opt/homebrew/") || executablePath.hasPrefix("/usr/local/") {
       for b in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"] where exists(b) { return .homebrew(brewPath: b) }
     }
-    if executablePath.contains(".app/Contents/MacOS/") { return .appBundle }
+    if executablePath.contains(".app/Contents/MacOS/") {
+      for b in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"] where exists(b) { return .homebrewCask(brewPath: b) }
+      return .appBundle
+    }
     return .unknown
   }
 
