@@ -1,10 +1,20 @@
+<div align="center">
+
+<img src=".github/assets/logo.png" alt="Kickbacks" width="104" height="104">
+
 # Kickbacks
+
+An unofficial, **read-only** companion for [Kickbacks.ai](https://kickbacks.ai) — a CLI and a native macOS menu-bar app that show *your own* earnings outside VS Code, keep the local history the API doesn't, and warn you when ad injection silently stops earning.
 
 [![CI](https://github.com/amitray007/kickbacks/actions/workflows/ci.yml/badge.svg)](https://github.com/amitray007/kickbacks/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/amitray007/kickbacks?sort=semver)](https://github.com/amitray007/kickbacks/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-An unofficial, **read-only** companion for [Kickbacks.ai](https://kickbacks.ai) — a CLI and a native macOS menu-bar app that show *your own* earnings outside VS Code, keep the local history the API doesn't, and warn you when ad injection silently stops earning.
+<img src=".github/assets/share-card.png" alt="Kickbacks share card" width="560">
+
+<sub><i>One of the built-in share cards (Today / This week / Lifetime).</i></sub>
+
+</div>
 
 > **Not affiliated** with Kickbacks.ai or ShiftKeys, Inc. It reads only your own account data (`GET /v1/portfolio`, `GET /v1/earnings`) and **never** sends billing or impression events. Read-only, forever.
 

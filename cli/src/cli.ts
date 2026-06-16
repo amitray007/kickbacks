@@ -18,6 +18,7 @@ import { spawn } from "node:child_process";
 import { dirname } from "node:path";
 import { existsSync } from "node:fs";
 import type { Portfolio, Earnings } from "./types";
+import pkg from "../package.json";
 
 const deps = (token: string) => ({ fetch, token, base: BASE, ccVersion: CC_VERSION });
 const runAuthed = makeAuthedRunner({ fetch, base: BASE });
@@ -222,6 +223,7 @@ async function cmdLogout() {
 }
 
 const cmd = (process.argv[2] || "portfolio").toLowerCase();
+if (cmd === "--version" || cmd === "-v" || cmd === "version") { console.log(pkg.version); process.exit(0); }
 const table: Record<string, () => unknown> = {
   login: cmdLogin, portfolio: cmdPortfolio, watch: cmdWatch, earnings: cmdEarnings,
   raw: cmdRaw, status: cmdStatus, logout: cmdLogout, poll: cmdPoll, poller: cmdPoller, model: cmdModel, bar: cmdBar, history: cmdHistory,

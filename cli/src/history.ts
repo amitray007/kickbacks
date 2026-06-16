@@ -1,5 +1,6 @@
 // cli/src/history.ts
 import type { Sample } from "./types";
+import type { Store } from "./store";
 
 export interface DayBucket { date: string; usd: number; hitCap: boolean }
 export interface BestDay { date: string; usd: number }
@@ -60,8 +61,6 @@ export function lastEarnedAgoSeconds(samples: Sample[], now: number): number | n
   }
   return lastTs == null ? null : Math.max(0, Math.round((now - lastTs) / 1000));
 }
-
-import type { Store } from "./store";
 
 export interface HistoryJson extends Summary {
   lifetimeUsd: number;
