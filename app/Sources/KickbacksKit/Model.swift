@@ -45,6 +45,10 @@ public struct MenuModel: Codable, Equatable, Sendable {
   public var todayUsd: Double
   public var hourUsd: Double
   public var lifetimeUsd: Double
+  /// True when the headline ad came from the extension's local cache (the ad actually
+  /// being served right now) rather than the API. Optional + defaulted so an older CLI
+  /// that doesn't emit it still decodes.
+  public var liveAdActive: Bool? = nil
 
   /// Fallback shown on any failure (no binary, spawn/parse error, signed out).
   public static let signedOut = MenuModel(
@@ -76,7 +80,8 @@ public struct MenuModel: Codable, Equatable, Sendable {
       menuValue: String(format: "%.2f", today), viewThresholdSeconds: 15,
       ads: Array(recent.prefix(2)),
       lastEarnedAgoSeconds: Int.random(in: 3...90), collecting: false,
-      recentAds: Array(recent), todayUsd: today, hourUsd: hour, lifetimeUsd: lifetime)
+      recentAds: Array(recent), todayUsd: today, hourUsd: hour, lifetimeUsd: lifetime,
+      liveAdActive: true)
   }
 
   public static func decode(_ data: Data) -> MenuModel? {

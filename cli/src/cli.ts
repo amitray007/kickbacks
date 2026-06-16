@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
-import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS, POLL_SECONDS, LAUNCHD_LABEL, BAR_LAUNCHD_LABEL } from "./config";
+import { BASE, CC_VERSION, DB_FILE, CONFIG_DIR, ACTIVITY_DIRS, ACTIVITY_WINDOW_MS, STALL_WINDOW_MS, POLL_SECONDS, LAUNCHD_LABEL, BAR_LAUNCHD_LABEL, LIVE_AD_FILE, LIVE_AD_FRESH_MS } from "./config";
+import { loadLiveAd } from "./live";
 import { startLogin, pollOnce, signout, loadTokens, saveTokens, clearTokens, makeAuthedRunner, AuthError } from "./auth";
 import { fetchPortfolio, fetchEarnings, fetchRaw } from "./api";
 import { openStore, type Store } from "./store";
@@ -159,7 +160,9 @@ async function cmdModel() {
       else { store.close(); process.exit(1); }        // transient network/API → no output; the app keeps its last model
     }
   }
-  console.log(JSON.stringify(buildMenuModel({ p, e, store, now, signedIn, recentAds })));
+  // Hybrid: prefer the extension's locally-cached live ad; null (absent/stale) → API ad.
+  const liveAd = p ? loadLiveAd(LIVE_AD_FILE, now, LIVE_AD_FRESH_MS) : null;
+  console.log(JSON.stringify(buildMenuModel({ p, e, store, now, signedIn, recentAds, liveAd })));
   store.close();
 }
 
