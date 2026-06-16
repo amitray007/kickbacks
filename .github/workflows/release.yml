@@ -46,9 +46,9 @@ jobs:
           (cd dist && zip -j kickbacks-cli-macos.zip kickbacks kickbacks-bar && ditto -c -k --keepParent Kickbacks.app Kickbacks.app.zip)
           gh release upload "$TAG" dist/kickbacks-cli-macos.zip dist/Kickbacks.app.zip --clobber
 
-          url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${TAG}.tar.gz"
-          sha="$(curl -fsSL "$url" | shasum -a 256 | awk '{print $1}')"
-          sed -i '' -E "s#archive/refs/tags/v[0-9][0-9.]*\.tar\.gz#archive/refs/tags/${TAG}.tar.gz#" Formula/kickbacks.rb
+          # The stable formula installs the prebuilt CLI zip; bump its url + sha256 to this release's asset.
+          sha="$(shasum -a 256 dist/kickbacks-cli-macos.zip | awk '{print $1}')"
+          sed -i '' -E "s#/releases/download/v[0-9][0-9.]*/kickbacks-cli-macos\.zip#/releases/download/${TAG}/kickbacks-cli-macos.zip#" Formula/kickbacks.rb
           sed -i '' -E "s#sha256 \"(replace_on_release|[a-f0-9]{64})\"#sha256 \"${sha}\"#" Formula/kickbacks.rb
           # main is branch-protected, so land the formula bump via an auto-merged PR.
           if ! git diff --quiet Formula/kickbacks.rb; then
