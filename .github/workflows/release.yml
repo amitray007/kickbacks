@@ -50,10 +50,16 @@ jobs:
           sha="$(curl -fsSL "$url" | shasum -a 256 | awk '{print $1}')"
           sed -i '' -E "s#archive/refs/tags/v[0-9][0-9.]*\.tar\.gz#archive/refs/tags/${TAG}.tar.gz#" Formula/kickbacks.rb
           sed -i '' -E "s#sha256 \"(replace_on_release|[a-f0-9]{64})\"#sha256 \"${sha}\"#" Formula/kickbacks.rb
+          # main is branch-protected, so land the formula bump via an auto-merged PR.
           if ! git diff --quiet Formula/kickbacks.rb; then
+            branch="brew-bump-${TAG}"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git switch -c "$branch"
             git add Formula/kickbacks.rb
             git commit -m "chore(brew): kickbacks ${TAG}"
-            git push origin HEAD:main || echo "formula push skipped (main moved)"
+            git push origin "$branch"
+            gh pr create --base main --head "$branch" \
+              --title "chore(brew): kickbacks ${TAG}" --body "Automated Homebrew formula bump for ${TAG}."
+            gh pr merge "$branch" --squash --auto || echo "formula PR opened — merge it to publish the brew bump"
           fi

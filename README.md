@@ -10,7 +10,6 @@ A tiny, read-only macOS menu-bar app (plus a CLI) that keeps today's total a gla
 remembers the history the API forgets, and gives you a heads-up if the ads quietly stop paying.
 
 [![CI](https://github.com/amitray007/kickbacks/actions/workflows/ci.yml/badge.svg)](https://github.com/amitray007/kickbacks/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/amitray007/kickbacks?sort=semver)](https://github.com/amitray007/kickbacks/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 <img src=".github/assets/panel-real.png" alt="The Kickbacks menu-bar panel" width="320">
