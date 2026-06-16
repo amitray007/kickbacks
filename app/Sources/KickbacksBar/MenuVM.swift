@@ -69,9 +69,9 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
     autoCheckUpdates = UserDefaults.standard.object(forKey: "autoCheckUpdates") as? Bool ?? true
     updateCheckHours = UserDefaults.standard.object(forKey: "updateCheckHours") as? Int ?? 24
     skippedVersion = UserDefaults.standard.string(forKey: "skippedUpdateVersion") ?? ""
-    Task.detached { [weak self] in
-      let v = Updater.currentVersion()
-      await MainActor.run { self?.currentVersionString = v ?? "—" }
+    Task { [weak self] in
+      let v = await Task.detached { Updater.currentVersion() }.value
+      self?.currentVersionString = v ?? "—"
     }
     refresh()
     startPolling()
