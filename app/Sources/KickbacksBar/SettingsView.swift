@@ -66,8 +66,27 @@ struct SettingsView: View {
         Text("Checks periodically and alerts on cap — even when the panel is closed.")
           .font(.caption).foregroundStyle(.secondary)
       }
+      Section("Updates") {
+        HStack {
+          Text("Version")
+          Spacer()
+          Text(vm.currentVersionString).foregroundStyle(.secondary).monospacedDigit()
+        }
+        Toggle("Automatically check for updates",
+               isOn: Binding(get: { vm.autoCheckUpdates }, set: { vm.setAutoCheckUpdates($0) }))
+        Picker("Check every", selection: Binding(get: { vm.updateCheckHours }, set: { vm.setUpdateCheckHours($0) })) {
+          Text("6 hours").tag(6)
+          Text("12 hours").tag(12)
+          Text("Daily").tag(24)
+          Text("Weekly").tag(168)
+        }.disabled(!vm.autoCheckUpdates)
+        Button("Check now") { Task { await vm.checkForUpdates(manual: true) } }
+        if let r = vm.updateCheckResult {
+          Text(r).font(.caption).foregroundStyle(.secondary)
+        }
+      }
     }
     .formStyle(.grouped)
-    .frame(width: 380, height: 540)
+    .frame(width: 380, height: 620)
   }
 }

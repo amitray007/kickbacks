@@ -1,6 +1,10 @@
 // app/Sources/KickbacksBar/MenuVM.swift
 import SwiftUI
+import AppKit
 import KickbacksKit
+
+/// UI phase for the update flow (the available release itself lives in `availableUpdate`).
+enum UpdateState: Equatable { case idle, checking, available, updating, failed }
 
 /// Holds the polled model + a small auth phase machine. Normal polling sets the phase
 /// from `model.signedIn`; `signIn()` overrides it with `.signingIn` while the spawned
@@ -19,6 +23,19 @@ import KickbacksKit
   @Published private(set) var lastUpdated: Date?       // when a fresh model was last applied — drives "Updated Nm ago"
   @Published private(set) var hourlyCapUsd: Double = 20    // personal hourly cap (editable in Settings)
   @Published private(set) var dailyCapUsd: Double = 200    // personal daily cap (editable in Settings)
+
+  // Updates
+  @Published private(set) var availableUpdate: Release?           // non-nil ⇒ banner shows
+  @Published private(set) var updateState: UpdateState = .idle
+  @Published private(set) var updateLog: [String] = []           // streamed brew output (tail)
+  @Published private(set) var updateCheckResult: String?         // inline feedback for "Check now"
+  @Published private(set) var currentVersionString = "—"         // shown in Settings (cached)
+  @Published private(set) var autoCheckUpdates = true
+  @Published private(set) var updateCheckHours = 24
+  private var skippedVersion = ""
+  private var lastNotifiedUpdateVersion: String?
+  private var updateCheckTask: Task<Void, Never>?
+  private let installMethodCached = Updater.installMethod()   // install method can't change at runtime
 
   // Generated once per launch so Demo mode is stable across toggles (re-rolls only on restart).
   private let demoModel = MenuModel.makeDemo()
@@ -49,11 +66,19 @@ import KickbacksKit
     })
     mini = controller
     if pinned { Task { controller.setVisible(true) } }   // defer until after launch settles
+    autoCheckUpdates = UserDefaults.standard.object(forKey: "autoCheckUpdates") as? Bool ?? true
+    updateCheckHours = UserDefaults.standard.object(forKey: "updateCheckHours") as? Int ?? 24
+    skippedVersion = UserDefaults.standard.string(forKey: "skippedUpdateVersion") ?? ""
+    Task { [weak self] in
+      let v = await Task.detached { Updater.currentVersion() }.value
+      self?.currentVersionString = v ?? "—"
+    }
     refresh()
     startPolling()
+    startUpdateChecks()
   }
 
-  deinit { pollTask?.cancel(); loginWatch?.cancel(); retryTask?.cancel() }
+  deinit { pollTask?.cancel(); loginWatch?.cancel(); retryTask?.cancel(); updateCheckTask?.cancel() }
 
   private func startPolling() {
     pollTask?.cancel()
@@ -80,6 +105,116 @@ import KickbacksKit
   func setHourlyCap(_ v: Double) { hourlyCapUsd = max(0, v); UserDefaults.standard.set(hourlyCapUsd, forKey: "hourlyCapUsd") }
   func setDailyCap(_ v: Double) { dailyCapUsd = max(0, v); UserDefaults.standard.set(dailyCapUsd, forKey: "dailyCapUsd") }
   func setPinned(_ on: Bool) { pinned = on; UserDefaults.standard.set(on, forKey: "miniPinned"); mini?.setVisible(on) }
+
+  func setAutoCheckUpdates(_ on: Bool) {
+    autoCheckUpdates = on
+    UserDefaults.standard.set(on, forKey: "autoCheckUpdates")
+    startUpdateChecks()
+  }
+
+  func setUpdateCheckHours(_ h: Int) {
+    updateCheckHours = max(1, h)
+    UserDefaults.standard.set(updateCheckHours, forKey: "updateCheckHours")
+    startUpdateChecks()
+  }
+
+  /// Initial check shortly after launch, then every `updateCheckHours`. No-op if auto-check is off.
+  private func startUpdateChecks() {
+    updateCheckTask?.cancel()
+    guard autoCheckUpdates else { return }
+    let hours = UInt64(max(1, updateCheckHours))
+    updateCheckTask = Task { [weak self] in
+      try? await Task.sleep(nanoseconds: 5_000_000_000)   // let launch settle
+      await self?.checkForUpdates()
+      while !Task.isCancelled {
+        try? await Task.sleep(nanoseconds: hours * 3600 * 1_000_000_000)
+        if Task.isCancelled { return }
+        await self?.checkForUpdates()
+      }
+    }
+  }
+
+  /// Fetch the latest release and compare to the installed version. `manual` adds inline
+  /// feedback for the Settings "Check now" button; auto checks notify once per new version.
+  func checkForUpdates(manual: Bool = false) async {
+    guard updateState != .updating else { return }   // don't disturb an in-progress upgrade
+    updateState = .checking
+    updateCheckResult = nil
+    let latest = await Updater.fetchLatest()
+    let current = await Task.detached { Updater.currentVersion() }.value ?? ""
+    currentVersionString = current.isEmpty ? "—" : current
+    guard let latest else {
+      updateState = availableUpdate == nil ? .idle : .available
+      if manual { updateCheckResult = "Couldn't check for updates." }
+      return
+    }
+    if Updater.isNewer(latest.version, than: current), latest.version != skippedVersion {
+      availableUpdate = latest
+      updateState = .available
+      if manual {
+        updateCheckResult = "Update available: v\(latest.version)"
+      } else if lastNotifiedUpdateVersion != latest.version {
+        lastNotifiedUpdateVersion = latest.version
+        Notifier.fire(title: "Kickbacks v\(latest.version) is available",
+                      body: "Open Kickbacks to see what's new and update.",
+                      id: "ai.kickbacks.update")
+      }
+    } else {
+      availableUpdate = nil
+      updateState = .idle
+      if manual { updateCheckResult = "You're up to date (v\(current))." }
+    }
+  }
+
+  /// Begin the upgrade. Homebrew installs run `brew upgrade` in the background and relaunch;
+  /// other installs open the release page (brew can't update them).
+  func startUpdate() {
+    guard case let .homebrew(brewPath) = installMethodCached else {
+      if let u = availableUpdate.flatMap({ URL(string: $0.htmlURL) }) { NSWorkspace.shared.open(u) }
+      return
+    }
+    updateState = .updating
+    updateLog = []
+    UpdateRunner.upgrade(brewPath: brewPath, onLine: { [weak self] line in
+      Task { @MainActor in
+        guard let self else { return }
+        self.updateLog.append(line)
+        if self.updateLog.count > 200 { self.updateLog.removeFirst(self.updateLog.count - 200) }
+      }
+    }, completion: { [weak self] ok in
+      Task { @MainActor in
+        guard let self else { return }
+        if ok {
+          if UpdateRunner.barAgentInstalled() {
+            Notifier.fire(title: "Kickbacks updated", body: "Relaunching the latest version…", id: "ai.kickbacks.update")
+            UpdateRunner.relaunch()
+          } else {
+            Notifier.fire(title: "Kickbacks updated", body: "Quit and reopen Kickbacks to finish.", id: "ai.kickbacks.update")
+            self.availableUpdate = nil
+            self.updateState = .idle
+          }
+        } else {
+          self.updateState = .failed
+        }
+      }
+    })
+  }
+
+  /// Suppress the current available version until a newer one appears.
+  func skipUpdate() {
+    if let v = availableUpdate?.version {
+      skippedVersion = v
+      UserDefaults.standard.set(v, forKey: "skippedUpdateVersion")
+    }
+    availableUpdate = nil
+    updateState = .idle
+  }
+
+  /// Whether the current install can self-update via brew (drives the primary button label).
+  var canBrewUpdate: Bool {
+    if case .homebrew = installMethodCached { return true }
+    return false
+  }
 
   /// Effective display values — swap in the cached demo data when demoMode is on.
   var effModel: MenuModel { demoMode ? demoModel : model }
