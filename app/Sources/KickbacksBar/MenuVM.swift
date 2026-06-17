@@ -232,6 +232,9 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
   var effHistory: HistoryModel? { demoMode ? demoHistory : history }
   var effPhase: AuthPhase { demoMode ? .signedIn : phase }
 
+  /// In demo mode, prefer real ads if any exist; only fall back to demo ads when there are none.
+  var effRecentAds: [AdItem] { demoMode && model.recentAds.isEmpty ? demoModel.recentAds : model.recentAds }
+
   /// `showSpinner` is set only by the Refresh button so the 60s background poll doesn't
   /// flicker the spinner. The model is kept on a transient (nil) fetch.
   func refresh(showSpinner: Bool = false) {
