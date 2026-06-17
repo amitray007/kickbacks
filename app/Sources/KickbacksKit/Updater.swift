@@ -62,9 +62,15 @@ public enum Updater {
   }
 
   /// Pure install-method classifier (paths + an existence probe are injected for tests).
-  /// Prefers a `brew` sibling of the resolved CLI; else a brew prefix on the running binary;
-  /// else an `.app` bundle; else unknown.
+  /// .app bundle path is checked first — a user with both cask and formula installed gets
+  /// .homebrewCask (updates the .app) rather than .homebrew (updates the CLI binaries).
   static func classify(executablePath: String, cliPath: String?, exists: (String) -> Bool) -> InstallMethod {
+    // Running inside a .app bundle → cask or manual install; checked before the CLI sibling
+    if executablePath.contains(".app/Contents/MacOS/") {
+      for b in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"] where exists(b) { return .homebrewCask(brewPath: b) }
+      return .appBundle
+    }
+    // Bare binary install (formula or dev build)
     if let cli = cliPath {
       let dir = (cli as NSString).deletingLastPathComponent
       let brew = (dir as NSString).appendingPathComponent("brew")
@@ -72,10 +78,6 @@ public enum Updater {
     }
     if executablePath.contains("/Cellar/") || executablePath.hasPrefix("/opt/homebrew/") || executablePath.hasPrefix("/usr/local/") {
       for b in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"] where exists(b) { return .homebrew(brewPath: b) }
-    }
-    if executablePath.contains(".app/Contents/MacOS/") {
-      for b in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"] where exists(b) { return .homebrewCask(brewPath: b) }
-      return .appBundle
     }
     return .unknown
   }
