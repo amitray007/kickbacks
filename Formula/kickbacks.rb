@@ -4,8 +4,8 @@
 class Kickbacks < Formula
   desc "Read-only CLI + menu-bar app for your own Kickbacks.ai earnings (unofficial)"
   homepage "https://github.com/amitray007/kickbacks"
-  url "https://github.com/amitray007/kickbacks/releases/download/v0.2.0/kickbacks-cli-macos.zip"
-  sha256 "149a8cc79c7b817a003b4afcc7a6449591ce7bd9d0dce3cfb17a4f339026bec0"
+  url "https://github.com/amitray007/kickbacks/releases/download/v0.3.0/kickbacks-cli-macos.zip"
+  sha256 "cb16d93dfb458ba52bb2a2385d32fefa474e4be25b79496411c1efbdc109c2de"
   license "Apache-2.0"
 
   # Stable installs prebuilt (unsigned) arm64 binaries from the GitHub release — no toolchain

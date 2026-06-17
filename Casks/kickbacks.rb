@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 cask "kickbacks" do
-  version "0.2.0"
-  sha256 "replace_on_release"
+  version "0.3.0"
+  sha256 "e76eef57b5733ef4de8f2967d1be82d95e8d570a1ec71593791656742d5dd52e"
 
   url "https://github.com/amitray007/kickbacks/releases/download/v#{version}/Kickbacks.dmg"
   name "Kickbacks"
