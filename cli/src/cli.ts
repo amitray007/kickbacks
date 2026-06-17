@@ -162,7 +162,8 @@ async function cmdModel() {
   }
   // Hybrid: prefer the extension's locally-cached live ad; null (absent/stale) → API ad.
   const liveAd = p ? loadLiveAd(LIVE_AD_FILE, now, LIVE_AD_FRESH_MS) : null;
-  console.log(JSON.stringify(buildMenuModel({ p, e, store, now, signedIn, recentAds, liveAd })));
+  const active = isActive(ACTIVITY_DIRS, now, ACTIVITY_WINDOW_MS);
+  console.log(JSON.stringify(buildMenuModel({ p, e, store, now, signedIn, recentAds, liveAd, active })));
   store.close();
 }
 

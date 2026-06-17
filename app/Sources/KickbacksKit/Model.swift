@@ -49,6 +49,10 @@ public struct MenuModel: Codable, Equatable, Sendable {
   /// being served right now) rather than the API. Optional + defaulted so an older CLI
   /// that doesn't emit it still decodes.
   public var liveAdActive: Bool? = nil
+  /// True when the user has active IDE sessions right now. The bar app backs off its
+  /// poll cadence when false to avoid hammering the API during idle periods. Optional +
+  /// defaulted true so an older CLI that doesn't emit it keeps the normal cadence.
+  public var active: Bool? = nil
 
   /// Fallback shown on any failure (no binary, spawn/parse error, signed out).
   public static let signedOut = MenuModel(

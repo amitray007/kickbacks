@@ -40,4 +40,17 @@ final class ModelTests: XCTestCase {
     let m = try XCTUnwrap(MenuModel.decode(Data(json.utf8)))
     XCTAssertEqual(m.liveAdActive, true)
   }
+
+  // Version-skew guard: an older CLI that predates `active` must still decode (defaults to nil).
+  func testDecodesWithoutActiveField() throws {
+    let json = #"{"signedIn":true,"state":"earning","title":"$1 ▴","today":"$1","lifetime":"$2","rate":"","trend":"flat","cap":"","capPct":0,"resets":"","projection":"","spark":"","ad":"A","adUrl":"https://x.test","status":"Earning","ageSeconds":1,"menuValue":"1","viewThresholdSeconds":null,"ads":[],"lastEarnedAgoSeconds":null,"collecting":false,"recentAds":[],"todayUsd":1,"hourUsd":0,"lifetimeUsd":2}"#
+    let m = try XCTUnwrap(MenuModel.decode(Data(json.utf8)))
+    XCTAssertNil(m.active)
+  }
+
+  func testDecodesActiveFieldWhenPresent() throws {
+    let json = #"{"signedIn":true,"state":"earning","title":"$1 ▴","today":"$1","lifetime":"$2","rate":"","trend":"flat","cap":"","capPct":0,"resets":"","projection":"","spark":"","ad":"A","adUrl":"https://x.test","status":"Earning","ageSeconds":1,"menuValue":"1","viewThresholdSeconds":null,"ads":[],"lastEarnedAgoSeconds":null,"collecting":false,"recentAds":[],"todayUsd":1,"hourUsd":0,"lifetimeUsd":2,"active":false}"#
+    let m = try XCTUnwrap(MenuModel.decode(Data(json.utf8)))
+    XCTAssertEqual(m.active, false)
+  }
 }

@@ -96,6 +96,17 @@ test("buildMenuModel falls back to the API ad when there is no live ad", () => {
   expect(m.liveAdActive).toBe(false);
 });
 
+test("buildMenuModel emits active=true when active flag is set", () => {
+  const store = openStore(":memory:");
+  expect(buildMenuModel({ p: P, e: E, store, now: 1, signedIn: true, active: true }).active).toBe(true);
+  expect(buildMenuModel({ p: P, e: E, store, now: 1, signedIn: true, active: false }).active).toBe(false);
+});
+
+test("buildMenuModel defaults active to true when omitted (backward compat)", () => {
+  const store = openStore(":memory:");
+  expect(buildMenuModel({ p: P, e: E, store, now: 1, signedIn: true }).active).toBe(true);
+});
+
 test("buildMenuModel dedupes a live ad that matches a recent ad, live icon wins", () => {
   const store = openStore(":memory:");
   const m = buildMenuModel({

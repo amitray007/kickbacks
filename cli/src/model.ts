@@ -44,6 +44,7 @@ export interface MenuModel {
   collecting: boolean;
   recentAds: { text: string; url: string; icon: string }[];
   liveAdActive: boolean;   // the headline ad came from the extension's local cache (live), not the API
+  active: boolean;         // user has open IDE activity right now (hint: back off poll cadence when false)
 }
 
 export interface MenuInput {
@@ -54,6 +55,7 @@ export interface MenuInput {
   signedIn: boolean;
   recentAds?: RecentAd[];
   liveAd?: LiveAd | null;   // the ad the extension is serving right now (local cache); null → use the API ad
+  active?: boolean;         // true when the user has open IDE activity (back-off hint for the bar app)
 }
 
 const STATUS: Record<MenuState, string> = {
@@ -71,7 +73,7 @@ export function buildMenuModel(i: MenuInput): MenuModel {
       today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capScope: null, capPct: 0,
       resets: "", todayUsd: 0, hourUsd: 0, lifetimeUsd: 0, projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0,
       menuValue: "—", viewThresholdSeconds: null, ads: [], lastEarnedAgoSeconds: null, collecting: false,
-      recentAds: [], liveAdActive: false,
+      recentAds: [], liveAdActive: false, active: false,
     };
   }
   const p = i.p, e = i.e;
@@ -129,5 +131,6 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     collecting: samples.length < 2,
     recentAds,
     liveAdActive: !!live,
+    active: i.active ?? true,
   };
 }
