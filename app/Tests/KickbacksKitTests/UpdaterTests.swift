@@ -55,6 +55,15 @@ final class UpdaterTests: XCTestCase {
     XCTAssertEqual(m, .homebrewCask(brewPath: "/opt/homebrew/bin/brew"))
   }
 
+  func testClassifyCaskWinsWhenBothCaskAndFormulaInstalled() {
+    // Cask + formula both installed: .app path must win so we upgrade the .app, not just the CLI binaries.
+    let m = Updater.classify(
+      executablePath: "/Applications/Kickbacks.app/Contents/MacOS/KickbacksBar",
+      cliPath: "/opt/homebrew/bin/kickbacks",
+      exists: { $0 == "/opt/homebrew/bin/brew" })
+    XCTAssertEqual(m, .homebrewCask(brewPath: "/opt/homebrew/bin/brew"))
+  }
+
   func testClassifyCaskFallsBackToAppBundleWhenNoBrew() {
     let m = Updater.classify(
       executablePath: "/Applications/Kickbacks.app/Contents/MacOS/KickbacksBar",
