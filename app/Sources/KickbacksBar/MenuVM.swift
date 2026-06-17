@@ -82,12 +82,16 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
 
   deinit { pollTask?.cancel(); loginWatch?.cancel(); retryTask?.cancel(); updateCheckTask?.cancel() }
 
+  // Multiplier applied to pollSeconds when the user is idle (no open IDE sessions).
+  // 1 = normal cadence; 5 = 5× slower. Resets to 1 when the next model reports active.
+  private var idleMultiplier: UInt64 = 1
+
   private func startPolling() {
     pollTask?.cancel()
-    let secs = pollSeconds
     pollTask = Task { [weak self] in
       while !Task.isCancelled {
-        try? await Task.sleep(nanoseconds: UInt64(secs) * 1_000_000_000)
+        let delay = UInt64(self?.pollSeconds ?? 60) * (self?.idleMultiplier ?? 1)
+        try? await Task.sleep(nanoseconds: delay * 1_000_000_000)
         self?.refresh()
       }
     }
@@ -240,7 +244,11 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
 
   /// `showSpinner` is set only by the Refresh button so the 60s background poll doesn't
   /// flicker the spinner. The model is kept on a transient (nil) fetch.
+  /// Implicit (panel-open) calls are debounced: skipped if a fetch ran in the last 10s.
   func refresh(showSpinner: Bool = false) {
+    let isImplicit = !showSpinner
+    if isImplicit, let last = lastFetchTime, Date().timeIntervalSince(last) < 10 { return }
+    lastFetchTime = Date()
     if showSpinner { refreshing = true }
     Task.detached(priority: .utility) {
       let m = ModelClient.fetch()
@@ -260,6 +268,7 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
 
   private var fetchFails = 0
   private var retryTask: Task<Void, Never>?
+  private var lastFetchTime: Date?
 
   /// On a transient fetch failure, retry a few times with short backoff (5/10/15s) before
   /// falling back to the normal poll cadence. Resets once a fetch succeeds.
@@ -277,6 +286,9 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
   private func apply(_ m: MenuModel) {
     model = m
     lastUpdated = Date()   // a fresh model arrived = data is current as of now
+    // Back off to 5× the normal interval when the user has no open IDE sessions.
+    // active == nil means the CLI didn't emit the field (old version) → keep current multiplier.
+    if let isActive = m.active { idleMultiplier = isActive ? 1 : 5 }
     if phase == .signingIn {
       if m.signedIn { finishLogin(.signedIn) }   // login completed
     } else {

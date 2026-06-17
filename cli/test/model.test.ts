@@ -73,3 +73,48 @@ test("buildMenuModel surfaces recentAds from input (text/url/icon only)", () => 
   });
   expect(m.recentAds).toEqual([{ text: "Acme", url: "u", icon: "i" }]);
 });
+
+test("buildMenuModel prefers the local live ad for the headline + real icon", () => {
+  const store = openStore(":memory:");
+  const m = buildMenuModel({
+    p: P, e: E, store, now: 1, signedIn: true,
+    recentAds: [{ adId: "a", text: "Acme", url: "u", icon: "i" }],
+    liveAd: { text: "LiveCo", url: "https://live.co/", icon: "data:image/png;base64,LIVE", ts: 1 },
+  });
+  expect(m.ad).toBe("LiveCo");
+  expect(m.adUrl).toBe("https://live.co/");
+  expect(m.liveAdActive).toBe(true);
+  // The live ad leads the recent list, carrying its real (data:) icon.
+  expect(m.recentAds[0]).toEqual({ text: "LiveCo", url: "https://live.co/", icon: "data:image/png;base64,LIVE" });
+});
+
+test("buildMenuModel falls back to the API ad when there is no live ad", () => {
+  const store = openStore(":memory:");
+  const m = buildMenuModel({ p: P, e: E, store, now: 1, signedIn: true });
+  expect(m.ad).toBe("Inflowpay");          // API portfolio ad
+  expect(m.adUrl).toBe("https://x.test");
+  expect(m.liveAdActive).toBe(false);
+});
+
+test("buildMenuModel emits active=true when active flag is set", () => {
+  const store = openStore(":memory:");
+  expect(buildMenuModel({ p: P, e: E, store, now: 1, signedIn: true, active: true }).active).toBe(true);
+  expect(buildMenuModel({ p: P, e: E, store, now: 1, signedIn: true, active: false }).active).toBe(false);
+});
+
+test("buildMenuModel defaults active to true when omitted (backward compat)", () => {
+  const store = openStore(":memory:");
+  expect(buildMenuModel({ p: P, e: E, store, now: 1, signedIn: true }).active).toBe(true);
+});
+
+test("buildMenuModel dedupes a live ad that matches a recent ad, live icon wins", () => {
+  const store = openStore(":memory:");
+  const m = buildMenuModel({
+    p: P, e: E, store, now: 1, signedIn: true,
+    recentAds: [{ adId: "a", text: "Acme", url: "u", icon: "stale-favicon" }],
+    liveAd: { text: "Acme", url: "https://acme.test/", icon: "data:image/png;base64,FRESH", ts: 1 },
+  });
+  const acme = m.recentAds.filter((a) => a.text === "Acme");
+  expect(acme).toHaveLength(1);
+  expect(m.recentAds[0]).toEqual({ text: "Acme", url: "https://acme.test/", icon: "data:image/png;base64,FRESH" });
+});

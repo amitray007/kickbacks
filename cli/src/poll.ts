@@ -15,11 +15,15 @@ export interface PollDeps {
 
 /** One poll cycle: fetch, detect activity, record a full sample, decide + fire alerts,
  *  persist de-dup state. Pure of auth/launchd — the caller injects authed fetchers, the
- *  activity probe, and the notifier, which keeps it unit-testable end to end. */
+ *  activity probe, and the notifier, which keeps it unit-testable end to end.
+ *
+ *  Skips the network fetch when the user is inactive — no open IDE projects, no recent
+ *  transcript/codex writes. Earnings don't change without coding activity so this is safe. */
 export async function runPoll(d: PollDeps): Promise<void> {
+  const active = d.isActive();
+  if (!active) return;   // nothing to sample; skip the API call entirely
   const p = await d.fetchPortfolio();
   const e = await d.fetchEarnings().catch(() => null);
-  const active = d.isActive();
   d.store.insertSample({
     ts: d.now, lifetimeUsd: p.lifetimeUsd, todayUsd: p.todayUsd, adId: p.ads[0]?.adId ?? "", kill: p.kill,
     active, capScope: e?.cap?.scope ?? null, capUsd: e?.cap?.capUsd ?? null, capResetS: e?.cap?.resetSeconds ?? null,

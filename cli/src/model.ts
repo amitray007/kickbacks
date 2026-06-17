@@ -4,6 +4,7 @@ import { ratePerHour, projectSecondsToCap, earningState, fmtUsd, fmtDuration } f
 import { sparkline } from "./ui";
 import { lastEarnedAgoSeconds } from "./history";
 import type { RecentAd } from "./ads";
+import type { LiveAd } from "./live";
 
 /** Ad icon: the API's custom icon if present, else the site's own favicon (derived from the
  *  click URL's domain) — fills the blank-box ads that ship no icon. No third-party service. */
@@ -42,6 +43,8 @@ export interface MenuModel {
   lastEarnedAgoSeconds: number | null;
   collecting: boolean;
   recentAds: { text: string; url: string; icon: string }[];
+  liveAdActive: boolean;   // the headline ad came from the extension's local cache (live), not the API
+  active: boolean;         // user has open IDE activity right now (hint: back off poll cadence when false)
 }
 
 export interface MenuInput {
@@ -51,6 +54,8 @@ export interface MenuInput {
   now: number;
   signedIn: boolean;
   recentAds?: RecentAd[];
+  liveAd?: LiveAd | null;   // the ad the extension is serving right now (local cache); null → use the API ad
+  active?: boolean;         // true when the user has open IDE activity (back-off hint for the bar app)
 }
 
 const STATUS: Record<MenuState, string> = {
@@ -68,7 +73,7 @@ export function buildMenuModel(i: MenuInput): MenuModel {
       today: "$0.00", lifetime: "$0.00", rate: "", trend: "flat", cap: "", capScope: null, capPct: 0,
       resets: "", todayUsd: 0, hourUsd: 0, lifetimeUsd: 0, projection: "", spark: "", ad: "", adUrl: "", status: STATUS["signed-out"], ageSeconds: 0,
       menuValue: "—", viewThresholdSeconds: null, ads: [], lastEarnedAgoSeconds: null, collecting: false,
-      recentAds: [],
+      recentAds: [], liveAdActive: false, active: false,
     };
   }
   const p = i.p, e = i.e;
@@ -87,6 +92,18 @@ export function buildMenuModel(i: MenuInput): MenuModel {
   const cap = e?.cap ?? null;
   const eta = cap ? projectSecondsToCap(p.todayUsd, cap.capUsd, rate) : null;
   const ad = p.ads[0];
+  // Hybrid source: the headline ad is whatever the extension is serving *right now*
+  // (its local cache), falling back to the API portfolio ad when the local cache is
+  // absent/stale/unreadable. The local ad also leads the recent list, carrying its
+  // real (data:) icon instead of a derived favicon.
+  const live = i.liveAd ?? null;
+  const adText = live?.text ?? ad?.text ?? "";
+  const adUrl = live?.url ?? ad?.clickUrl ?? "";
+  const mappedRecent = (i.recentAds ?? []).map((a) => ({ text: a.text, url: a.url, icon: iconFor(a.icon, a.url) }));
+  const recentAds = live
+    ? [{ text: live.text, url: live.url, icon: iconFor(live.icon, live.url) },
+       ...mappedRecent.filter((a) => a.text !== live.text)].slice(0, 3)
+    : mappedRecent;
   // Trailing-60-min earnings for the (client-side) hourly cap. Best-effort: needs ≥2
   // samples in the window, so it's only as dense as the panel/poller sampling.
   const hourAgo = i.now - 3_600_000;
@@ -104,7 +121,7 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     todayUsd: p.todayUsd, hourUsd, lifetimeUsd: p.lifetimeUsd,
     projection: eta !== null && eta > 0 ? `~${fmtDuration(eta)}` : "",
     spark: samples.length >= 2 ? sparkline(samples.map((s) => s.todayUsd)) : "",
-    ad: ad?.text ?? "", adUrl: ad?.clickUrl ?? "",
+    ad: adText, adUrl,
     status: STATUS[state],
     ageSeconds: latest ? Math.max(0, Math.round((i.now - latest.ts) / 1000)) : 0,
     menuValue: p.todayUsd.toFixed(2),
@@ -112,6 +129,8 @@ export function buildMenuModel(i: MenuInput): MenuModel {
     ads: p.ads.map((a) => ({ text: a.text, url: a.clickUrl, icon: iconFor(a.iconUrl, a.clickUrl) })),
     lastEarnedAgoSeconds: lastEarnedAgoSeconds(samples, i.now),
     collecting: samples.length < 2,
-    recentAds: (i.recentAds ?? []).map((a) => ({ text: a.text, url: a.url, icon: iconFor(a.icon, a.url) })),
+    recentAds,
+    liveAdActive: !!live,
+    active: i.active ?? true,
   };
 }

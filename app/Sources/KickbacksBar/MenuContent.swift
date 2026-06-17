@@ -251,20 +251,27 @@ struct MenuContent: View {
   }
 
   // Recent ads: current first (full opacity), the prior couple dimmed. Capped to 3 by the CLI.
+  // When the top ad is the extension's live cache (`liveAdActive`), it's the ad on screen
+  // right now — mark it "serving now"; the rest are history.
   // In demo mode, shows real ads if available; demo ads only when there are none.
   private var recentAdsSection: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      Text("RECENT ADS").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
+    let live = m.liveAdActive == true
+    return VStack(alignment: .leading, spacing: 6) {
+      Text(live ? "NOW SERVING" : "RECENT ADS").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
       ForEach(Array(vm.effRecentAds.enumerated()), id: \.offset) { idx, ad in
-        adRow(ad).opacity(idx == 0 ? 1 : 0.5)
+        adRow(ad, live: live && idx == 0).opacity(idx == 0 ? 1 : 0.5)
       }
     }
   }
 
-  private func adRow(_ ad: AdItem) -> some View {
+  private func adRow(_ ad: AdItem, live: Bool = false) -> some View {
     Button { openURL(ad.url) } label: {
       HStack(spacing: 8) {
         adIcon(ad.icon)
+        if live {
+          Circle().fill(.green).frame(width: 6, height: 6)   // green "serving now" dot
+            .help("Serving right now")
+        }
         Text(ad.text).lineLimit(1)
         Spacer(minLength: 4)
         Image(systemName: "arrow.up.right").font(.caption2).foregroundStyle(.secondary)

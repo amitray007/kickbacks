@@ -133,6 +133,7 @@ All optional, set via the environment:
 | `KICKBACKS_CONFIG_DIR` | `~/.config/kickbacks` | where your tokens + history live |
 | `KICKBACKS_POLL_SECONDS` | `180` | how often the background poller samples |
 | `KICKBACKS_ACTIVITY_DIRS` | `~/.claude/projects` | what counts as "actively coding" |
+| `KICKBACKS_LIVE_AD_FILE` | `~/.vibe-ads/cli-ad.json` | the extension's local ad cache — read (never written) to show the ad serving *right now*; falls back to the API ad if absent/stale |
 | `KICKBACKS_BASE` | the Kickbacks backend | ⚠️ your bearer token is sent here — point it only at hosts you trust |
 
 ## Privacy & security
