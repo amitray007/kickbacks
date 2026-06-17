@@ -35,7 +35,7 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Build artifacts, upload to the release, bump the formula
+      - name: Build artifacts, upload to the release, bump formula + cask
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
@@ -43,23 +43,38 @@ jobs:
         run: |
           bash scripts/install-app.sh "$RUNNER_TEMP/apps"   # builds dist/kickbacks + dist/Kickbacks.app
           cp app/.build/release/KickbacksBar dist/kickbacks-bar
-          (cd dist && zip -j kickbacks-cli-macos.zip kickbacks kickbacks-bar && ditto -c -k --keepParent Kickbacks.app Kickbacks.app.zip)
-          gh release upload "$TAG" dist/kickbacks-cli-macos.zip dist/Kickbacks.app.zip --clobber
 
-          url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${TAG}.tar.gz"
-          sha="$(curl -fsSL "$url" | shasum -a 256 | awk '{print $1}')"
-          sed -i '' -E "s#archive/refs/tags/v[0-9][0-9.]*\.tar\.gz#archive/refs/tags/${TAG}.tar.gz#" Formula/kickbacks.rb
-          sed -i '' -E "s#sha256 \"(replace_on_release|[a-f0-9]{64})\"#sha256 \"${sha}\"#" Formula/kickbacks.rb
-          # main is branch-protected, so land the formula bump via an auto-merged PR.
-          if ! git diff --quiet Formula/kickbacks.rb; then
+          # CLI zip (formula) + app zip (legacy direct download)
+          (cd dist && zip -j kickbacks-cli-macos.zip kickbacks kickbacks-bar && ditto -c -k --keepParent Kickbacks.app Kickbacks.app.zip)
+
+          # DMG for cask (drag-to-Applications UX)
+          mkdir -p /tmp/kickbacks-dmg
+          cp -R dist/Kickbacks.app /tmp/kickbacks-dmg/
+          ln -s /Applications /tmp/kickbacks-dmg/Applications
+          hdiutil create -volname "Kickbacks" -srcfolder /tmp/kickbacks-dmg -ov -format UDZO dist/Kickbacks.dmg
+
+          gh release upload "$TAG" dist/kickbacks-cli-macos.zip dist/Kickbacks.app.zip dist/Kickbacks.dmg --clobber
+
+          # Bump Formula/kickbacks.rb (prebuilt CLI zip url + sha256).
+          formula_sha="$(shasum -a 256 dist/kickbacks-cli-macos.zip | awk '{print $1}')"
+          sed -i '' -E "s#/releases/download/v[0-9][0-9.]*/kickbacks-cli-macos\.zip#/releases/download/${TAG}/kickbacks-cli-macos.zip#" Formula/kickbacks.rb
+          sed -i '' -E "s#sha256 \"(replace_on_release|[a-f0-9]{64})\"#sha256 \"${formula_sha}\"#" Formula/kickbacks.rb
+
+          # Bump Casks/kickbacks.rb (DMG version + sha256).
+          cask_sha="$(shasum -a 256 dist/Kickbacks.dmg | awk '{print $1}')"
+          sed -i '' -E "s#version \"[0-9][0-9.]*\"#version \"${TAG#v}\"#" Casks/kickbacks.rb
+          sed -i '' -E "s#sha256 \"(replace_on_release|[a-f0-9]{64})\"#sha256 \"${cask_sha}\"#" Casks/kickbacks.rb
+
+          # Land both bumps via an auto-merged PR (main is branch-protected).
+          if ! git diff --quiet Formula/kickbacks.rb Casks/kickbacks.rb; then
             branch="brew-bump-${TAG}"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git switch -c "$branch"
-            git add Formula/kickbacks.rb
+            git add Formula/kickbacks.rb Casks/kickbacks.rb
             git commit -m "chore(brew): kickbacks ${TAG}"
             git push origin "$branch"
             gh pr create --base main --head "$branch" \
-              --title "chore(brew): kickbacks ${TAG}" --body "Automated Homebrew formula bump for ${TAG}."
-            gh pr merge "$branch" --squash --auto || echo "formula PR opened — merge it to publish the brew bump"
+              --title "chore(brew): kickbacks ${TAG}" --body "Automated Homebrew formula + cask bump for ${TAG}."
+            gh pr merge "$branch" --squash --auto || echo "brew-bump PR opened — merge it to publish the bump"
           fi

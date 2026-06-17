@@ -35,6 +35,7 @@ Kickbacks answers those from your menu bar, in any app, even with VS Code closed
 - **The history the API throws away.** It quietly samples into a local SQLite database, so you get this week, this month, your best day, a daily average, and where you're trending.
 - **A nudge when something's off.** A background check pings you when you hit a cap or cross a lifetime milestone — no need to keep the editor open.
 - **Shareable cards.** Turn today, the week, or your all-time total into a polished image worth posting.
+- **Auto-updates.** The menu-bar app checks for new releases in the background and offers to update with one click — runs `brew upgrade` and relaunches itself.
 
 ### Built for screenshots and screen-shares
 
@@ -59,12 +60,26 @@ And when you want to show off a good day, the share card turns any view — toda
 
 ## Install
 
-It's a [Homebrew](https://brew.sh) tap that builds from source — no code-signing or notarization,
-nothing to trust but the code you can read right here.
+No code-signing or notarization — nothing to trust but the code you can read right here.
+
+### Homebrew (recommended)
+
+Add the tap once (required for third-party taps):
 
 ```bash
 brew tap amitray007/kickbacks https://github.com/amitray007/kickbacks
-brew trust amitray007/kickbacks      # one-time — Homebrew gates third-party taps
+brew trust amitray007/kickbacks
+```
+
+**Menu-bar app** — prebuilt, drag-to-Applications, no compiler needed:
+
+```bash
+brew install --cask kickbacks
+```
+
+**CLI + in-app auto-update** — prebuilt arm64 binaries:
+
+```bash
 brew install kickbacks
 
 kickbacks login                      # sign in with Google
@@ -73,9 +88,19 @@ kickbacks bar install                # keep the menu-bar app running at login
 kickbacks poller install             # background checks + cap / milestone alerts
 ```
 
-Updating later is just `brew update && brew upgrade kickbacks`. Not a Homebrew person? Clone the
-repo and run `scripts/install-app.sh` — it builds a self-contained `Kickbacks.app` (the CLI tucked
-inside) and drops it in `/Applications`.
+Updating: `brew update && brew upgrade kickbacks` (or `brew upgrade --cask kickbacks`).
+The menu-bar app also checks for updates in the background and offers a one-click upgrade.
+
+### Direct download
+
+Download `Kickbacks.dmg` from the [latest release](https://github.com/amitray007/kickbacks/releases/latest),
+open it, and drag `Kickbacks.app` to `/Applications`. On first launch right-click → Open to bypass
+Gatekeeper (the app is unsigned).
+
+### Build from source
+
+Clone the repo and run `scripts/install-app.sh` — builds a self-contained `Kickbacks.app` and drops
+it in `/Applications`.
 
 ## The commands
 
