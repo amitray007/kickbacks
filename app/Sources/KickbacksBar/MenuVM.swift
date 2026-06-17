@@ -19,6 +19,7 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
   @Published private(set) var menuBarStyle: MenuBarStyle = .today   // what the menu bar shows
   @Published private(set) var hideAmounts = false      // mask $ amounts (for screen sharing)
   @Published private(set) var demoMode = false         // show fake demo data
+  @Published private(set) var showDemoLabel = true     // show "Demo mode" label in bottom bar
   @Published private(set) var pinned = false           // floating mini HUD visible
   @Published private(set) var lastUpdated: Date?       // when a fresh model was last applied — drives "Updated Nm ago"
   @Published private(set) var hourlyCapUsd: Double = 20    // personal hourly cap (editable in Settings)
@@ -56,6 +57,7 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
     menuBarStyle = MenuBarStyle(rawValue: UserDefaults.standard.string(forKey: "menuBarStyle") ?? "") ?? .today
     hideAmounts = UserDefaults.standard.bool(forKey: "hideAmounts")
     demoMode = UserDefaults.standard.bool(forKey: "demoMode")
+    showDemoLabel = UserDefaults.standard.object(forKey: "showDemoLabel") as? Bool ?? true
     hourlyCapUsd = UserDefaults.standard.object(forKey: "hourlyCapUsd") as? Double ?? 20
     dailyCapUsd = UserDefaults.standard.object(forKey: "dailyCapUsd") as? Double ?? 200
     milestoneSeen = UserDefaults.standard.object(forKey: "milestoneSeen") as? Double
@@ -102,6 +104,7 @@ enum UpdateState: Equatable { case idle, checking, available, updating, failed }
   func setMenuBarStyle(_ s: MenuBarStyle) { menuBarStyle = s; UserDefaults.standard.set(s.rawValue, forKey: "menuBarStyle") }
   func setHideAmounts(_ on: Bool) { hideAmounts = on; UserDefaults.standard.set(on, forKey: "hideAmounts") }
   func setDemoMode(_ on: Bool) { demoMode = on; UserDefaults.standard.set(on, forKey: "demoMode") }
+  func setShowDemoLabel(_ on: Bool) { showDemoLabel = on; UserDefaults.standard.set(on, forKey: "showDemoLabel") }
   func setHourlyCap(_ v: Double) { hourlyCapUsd = max(0, v); UserDefaults.standard.set(hourlyCapUsd, forKey: "hourlyCapUsd") }
   func setDailyCap(_ v: Double) { dailyCapUsd = max(0, v); UserDefaults.standard.set(dailyCapUsd, forKey: "dailyCapUsd") }
   func setPinned(_ on: Bool) { pinned = on; UserDefaults.standard.set(on, forKey: "miniPinned"); mini?.setVisible(on) }

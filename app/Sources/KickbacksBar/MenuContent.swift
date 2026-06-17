@@ -359,7 +359,7 @@ struct MenuContent: View {
   }
 
   private var updatedText: String {
-    if vm.demoMode { return "Demo mode" }
+    if vm.demoMode && vm.showDemoLabel { return "Demo mode" }
     guard let t = vm.lastUpdated else { return "Updating…" }
     return "Updated \(agoText(max(0, Int(now.timeIntervalSince(t)))))"
   }

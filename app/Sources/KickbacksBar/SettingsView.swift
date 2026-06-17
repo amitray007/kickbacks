@@ -58,6 +58,11 @@ struct SettingsView: View {
         Toggle("Demo mode", isOn: Binding(get: { vm.demoMode }, set: { vm.setDemoMode($0) }))
         Text("Show believable sample numbers instead of your real earnings.")
           .font(.caption).foregroundStyle(.secondary)
+
+        Toggle("Show \"Demo mode\" label", isOn: Binding(get: { vm.showDemoLabel }, set: { vm.setShowDemoLabel($0) }))
+          .disabled(!vm.demoMode)
+        Text("Hide the label to share screenshots without giving it away.")
+          .font(.caption).foregroundStyle(.secondary)
       }
 
       Section("General") {
