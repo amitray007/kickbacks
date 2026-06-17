@@ -210,7 +210,7 @@ struct MenuContent: View {
       if let ago = m.lastEarnedAgoSeconds, m.state == .killed {
         Text("Last earned \(agoText(ago))").font(.caption).foregroundStyle(.secondary)
       }
-      if !m.recentAds.isEmpty { Divider(); recentAdsSection }
+      if !vm.effRecentAds.isEmpty { Divider(); recentAdsSection }
       Divider()
       statsSection
     }
@@ -253,11 +253,12 @@ struct MenuContent: View {
   // Recent ads: current first (full opacity), the prior couple dimmed. Capped to 3 by the CLI.
   // When the top ad is the extension's live cache (`liveAdActive`), it's the ad on screen
   // right now — mark it "serving now"; the rest are history.
+  // In demo mode, shows real ads if available; demo ads only when there are none.
   private var recentAdsSection: some View {
     let live = m.liveAdActive == true
     return VStack(alignment: .leading, spacing: 6) {
       Text(live ? "NOW SERVING" : "RECENT ADS").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary).kerning(0.6)
-      ForEach(Array(m.recentAds.enumerated()), id: \.offset) { idx, ad in
+      ForEach(Array(vm.effRecentAds.enumerated()), id: \.offset) { idx, ad in
         adRow(ad, live: live && idx == 0).opacity(idx == 0 ? 1 : 0.5)
       }
     }
@@ -365,7 +366,7 @@ struct MenuContent: View {
   }
 
   private var updatedText: String {
-    if vm.demoMode { return "Demo mode" }
+    if vm.demoMode && vm.showDemoLabel { return "Demo mode" }
     guard let t = vm.lastUpdated else { return "Updating…" }
     return "Updated \(agoText(max(0, Int(now.timeIntervalSince(t)))))"
   }
