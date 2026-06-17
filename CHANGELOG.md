@@ -2,6 +2,30 @@
 
 Notable changes per release. Loosely follows [Keep a Changelog](https://keepachangelog.com); versions are git tags.
 
+## [0.3.0](https://github.com/amitray007/kickbacks/compare/v0.2.0...v0.3.0) (2026-06-17)
+
+
+### Features
+
+* **demo:** add setting to hide the Demo mode label ([9f08cfc](https://github.com/amitray007/kickbacks/commit/9f08cfc478179fd14a37d42467c26a279886775b))
+* **dist:** add Kickbacks.dmg + Homebrew cask for drag-to-Applications install ([6457d73](https://github.com/amitray007/kickbacks/commit/6457d737e86435dbeafc013f3c86d76091f81277))
+* **dist:** add Kickbacks.dmg + Homebrew cask for drag-to-Applications install ([b08f7d7](https://github.com/amitray007/kickbacks/commit/b08f7d789676d1d64f7564fdb06b7f34198c8ff5))
+* **dist:** Kickbacks.dmg + Homebrew cask ([6457d73](https://github.com/amitray007/kickbacks/commit/6457d737e86435dbeafc013f3c86d76091f81277))
+* show the live ad from the extension's local cache, with API fallback ([#6](https://github.com/amitray007/kickbacks/issues/6)) ([4df32c3](https://github.com/amitray007/kickbacks/commit/4df32c3755d1a65963df715be248b07585b2ce88))
+
+
+### Bug Fixes
+
+* **brew:** install prebuilt arm64 binaries (no source build) ([b1240f5](https://github.com/amitray007/kickbacks/commit/b1240f550c36aa99cbb0b2f977bac03ba61050c0))
+* **brew:** install prebuilt arm64 binaries instead of building from source ([b1240f5](https://github.com/amitray007/kickbacks/commit/b1240f550c36aa99cbb0b2f977bac03ba61050c0))
+* **brew:** install prebuilt arm64 binaries instead of building from source ([dd672cc](https://github.com/amitray007/kickbacks/commit/dd672cc39c35a11de6e34f19858ec3c045a63885))
+* **demo:** real ads in demo mode + hide Demo mode label option ([eafa94f](https://github.com/amitray007/kickbacks/commit/eafa94f7d7bc504644127ec058d5e788a81bfd1f))
+* **demo:** show real ads in demo mode, fall back to demo ads only when none exist ([eafa94f](https://github.com/amitray007/kickbacks/commit/eafa94f7d7bc504644127ec058d5e788a81bfd1f))
+* **demo:** show real ads in demo mode; fall back to demo ads only when none exist ([d9dbe02](https://github.com/amitray007/kickbacks/commit/d9dbe021914023ca76b63a4d149739bfc45ea1df))
+* **update:** .app bundle path wins in classify() when cask + formula both installed ([388704c](https://github.com/amitray007/kickbacks/commit/388704c1b616917217f8e976a8c7620122db4d2d))
+* **update:** check .app bundle path before CLI sibling in classify() ([388704c](https://github.com/amitray007/kickbacks/commit/388704c1b616917217f8e976a8c7620122db4d2d))
+* **update:** check .app bundle path before CLI sibling in classify() ([b57e1b3](https://github.com/amitray007/kickbacks/commit/b57e1b360e449b7f866f7c9e67b7ce1c962c725a))
+
 ## [0.2.0](https://github.com/amitray007/kickbacks/compare/v0.1.0...v0.2.0) (2026-06-16)
 
 
