@@ -91,11 +91,18 @@ kickbacks poller install             # background checks + cap / milestone alert
 Updating: `brew update && brew upgrade kickbacks` (or `brew upgrade --cask kickbacks`).
 The menu-bar app also checks for updates in the background and offers a one-click upgrade.
 
+> **First launch — Gatekeeper prompt?** The app is unsigned, so macOS will block it on the first open.
+> Run this once to clear the quarantine flag:
+> ```bash
+> xattr -dr com.apple.quarantine /Applications/Kickbacks.app
+> ```
+> Or right-click the app in Finder → **Open** → **Open**.
+
 ### Direct download
 
 Download `Kickbacks.dmg` from the [latest release](https://github.com/amitray007/kickbacks/releases/latest),
-open it, and drag `Kickbacks.app` to `/Applications`. On first launch right-click → Open to bypass
-Gatekeeper (the app is unsigned).
+open it, and drag `Kickbacks.app` to `/Applications`. Same Gatekeeper note applies — run
+`xattr -dr com.apple.quarantine /Applications/Kickbacks.app` on first launch, or right-click → Open.
 
 ### Build from source
 
