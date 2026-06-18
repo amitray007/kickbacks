@@ -2,6 +2,13 @@
 
 Notable changes per release. Loosely follows [Keep a Changelog](https://keepachangelog.com); versions are git tags.
 
+## [0.3.1](https://github.com/amitray007/kickbacks/compare/v0.3.0...v0.3.1) (2026-06-18)
+
+
+### Bug Fixes
+
+* **cask:** use symbol form for depends_on macos ([#15](https://github.com/amitray007/kickbacks/issues/15)) ([a1ba91a](https://github.com/amitray007/kickbacks/commit/a1ba91a036c638f8104b5b6351580099bbe9a5f5))
+
 ## [0.3.0](https://github.com/amitray007/kickbacks/compare/v0.2.0...v0.3.0) (2026-06-17)
 
 
