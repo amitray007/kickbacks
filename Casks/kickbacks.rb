@@ -10,7 +10,7 @@ cask "kickbacks" do
   desc "Read-only menu-bar app for your own Kickbacks.ai earnings (unofficial)"
   homepage "https://github.com/amitray007/kickbacks"
 
-  depends_on macos: ">= :ventura"
+  depends_on macos: :ventura
 
   app "Kickbacks.app"
 
